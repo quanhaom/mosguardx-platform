@@ -1,26 +1,88 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f3f7f5;
+  --foreground: #13231d;
+  --primary: #0f8f68;
+  --primary-dark: #086348;
+  --sidebar: #10251f;
+  --border: #dce8e2;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--background);
 }
 
 body {
-  background: var(--background);
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 80% 0%, rgba(34, 197, 148, 0.08), transparent 28rem),
+    var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.mgx-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.mgx-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #b8cbc2;
+}
+
+.map-grid {
+  background-color: #e6f0eb;
+  background-image:
+    linear-gradient(rgba(26, 93, 70, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 93, 70, 0.08) 1px, transparent 1px);
+  background-size: 38px 38px;
+}
+
+.heat-point::before,
+.heat-point::after {
+  position: absolute;
+  content: "";
+  border-radius: 999px;
+}
+
+.heat-point::before {
+  inset: -18px;
+  background: currentColor;
+  opacity: 0.12;
+}
+
+.heat-point::after {
+  inset: -8px;
+  background: currentColor;
+  opacity: 0.2;
+  animation: pulse-map 2.4s infinite;
+}
+
+@keyframes pulse-map {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.22;
+  }
+
+  50% {
+    transform: scale(1.25);
+    opacity: 0.08;
+  }
 }
