@@ -1,4 +1,4 @@
-﻿import type { Alert, Station } from "@/types";
+import type { Alert, Station } from "@/types";
 
 export const stations: Station[] = [
   {

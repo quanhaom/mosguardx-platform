@@ -1,4 +1,4 @@
-﻿export type RiskLevel = "low" | "medium" | "high" | "critical";
+export type RiskLevel = "low" | "medium" | "high" | "critical";
 
 export interface Station {
   id: string;
