@@ -8,6 +8,7 @@ import {
   Cpu,
   LayoutDashboard,
   Map,
+  ScanSearch,
   Menu,
   Radio,
   Settings,
@@ -22,6 +23,11 @@ const navigation = [
   { href: "/alerts", label: "Cảnh báo", icon: Bell, badge: 2 },
   { href: "/devices", label: "Thiết bị", icon: Cpu },
   { href: "/reports", label: "Báo cáo", icon: BarChart3 },
+  {
+  href: "/detection",
+  label: "AI Detection",
+  icon: ScanSearch,
+  },
   { href: "/settings", label: "Cấu hình", icon: Settings },
 ];
 

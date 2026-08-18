@@ -43,3 +43,28 @@ next-env.d.ts
 .vercel
 
 .vercel
+
+ai-service/.venv/
+ai-service/.env
+ai-service/models/*.pt
+ai-service/models/*.onnx
+ai-service/__pycache__/
+ai-service/.pytest_cache/
+
+
+
+
+# Node packages đã cài
+node_modules/
+
+# Python packages đã cài
+.venv/
+venv/
+env/
+ai-service/.venv/
+ai-service/venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
