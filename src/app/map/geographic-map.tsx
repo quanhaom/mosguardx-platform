@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import type { LatLngExpression } from "leaflet";
 import {
   Circle,
@@ -12,10 +12,7 @@ import {
   useMap,
 } from "react-leaflet";
 
-import type {
-  RiskLevel,
-  Station,
-} from "@/types";
+import type { RiskLevel, Station } from "@/types";
 
 export type GeographicMapProps = {
   stations: Station[];
@@ -25,54 +22,77 @@ export type GeographicMapProps = {
   onSelect: (stationId: string) => void;
 };
 
-const HANOI_CENTER: LatLngExpression = [
-  21.0285,
-  105.8542,
-];
+const VIETNAM_CENTER: LatLngExpression = [14.5, 109.5];
 
-const riskColors: Record<
-  RiskLevel,
-  string
-> = {
+const riskColors: Record<RiskLevel, string> = {
   critical: "#b91c1c",
   high: "#f97316",
   medium: "#f59e0b",
   low: "#10b981",
 };
 
-const riskLabels: Record<
-  RiskLevel,
-  string
-> = {
+const riskLabels: Record<RiskLevel, string> = {
   critical: "Rất cao",
   high: "Cao",
   medium: "Trung bình",
   low: "Thấp",
 };
 
-function MapFocus({
-  station,
-}: {
-  station?: Station;
-}) {
+const archipelagos = [
+  {
+    id: "hoang-sa",
+    name: "Quần đảo Hoàng Sa",
+    position: [16.5, 112] as LatLngExpression,
+  },
+  {
+    id: "truong-sa",
+    name: "Quần đảo Trường Sa",
+    position: [9.42, 114.42] as LatLngExpression,
+  },
+];
+
+function MapResizeFix() {
   const map = useMap();
 
   useEffect(() => {
+    const container = map.getContainer();
+    const updateSize = () => map.invalidateSize({ animate: false });
+    const firstTimer = window.setTimeout(updateSize, 0);
+    const secondTimer = window.setTimeout(updateSize, 350);
+    const observer = new ResizeObserver(updateSize);
+
+    observer.observe(container);
+    window.addEventListener("resize", updateSize);
+
+    return () => {
+      window.clearTimeout(firstTimer);
+      window.clearTimeout(secondTimer);
+      observer.disconnect();
+      window.removeEventListener("resize", updateSize);
+    };
+  }, [map]);
+
+  return null;
+}
+
+function MapFocus({ station }: { station?: Station }) {
+  const map = useMap();
+  const firstRender = useRef(true);
+
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+
     if (!station) {
       return;
     }
 
-    map.flyTo(
-      [
-        station.latitude,
-        station.longitude,
-      ],
-      Math.max(map.getZoom(), 13),
-      {
-        animate: true,
-        duration: 0.8,
-      },
-    );
+    map.flyTo([station.latitude, station.longitude], Math.max(map.getZoom(), 13), {
+      animate: true,
+      duration: 0.8,
+    });
   }, [map, station]);
 
   return null;
@@ -85,158 +105,144 @@ export default function GeographicMap({
   showDensity,
   onSelect,
 }: GeographicMapProps) {
-  const selected = stations.find(
-    (station) =>
-      station.id === selectedId,
-  );
+  const selected = stations.find((station) => station.id === selectedId);
 
   return (
-    <MapContainer
-      center={HANOI_CENTER}
-      zoom={12}
-      minZoom={5}
-      maxZoom={19}
-      scrollWheelZoom
-      className="h-full w-full"
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    <div className="relative h-full min-h-[420px] w-full overflow-hidden bg-[#0b2942]">
+      <MapContainer
+        center={VIETNAM_CENTER}
+        zoom={5}
+        minZoom={4}
         maxZoom={19}
-      />
+        scrollWheelZoom
+        zoomControl
+        className="h-full min-h-[420px] w-full"
+      >
+        <TileLayer
+          attribution="Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          maxZoom={19}
+          crossOrigin="anonymous"
+        />
 
-      <MapFocus station={selected} />
+        <TileLayer
+          attribution="Labels &copy; Esri"
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+          minZoom={4}
+          maxZoom={19}
+          opacity={0.95}
+          zIndex={250}
+          crossOrigin="anonymous"
+        />
 
-      {stations.map((station) => {
-        const active =
-          station.id === selectedId;
+        <MapResizeFix />
+        <MapFocus station={selected} />
 
-        const value = Math.round(
-          station.mosquitoCount *
-            multiplier,
-        );
+        {archipelagos.map((archipelago) => (
+          <CircleMarker
+            key={archipelago.id}
+            center={archipelago.position}
+            radius={8}
+            pathOptions={{
+              color: "#ffffff",
+              fillColor: "#dc2626",
+              fillOpacity: 1,
+              opacity: 1,
+              weight: 3,
+            }}
+          >
+            <Tooltip permanent direction="top" offset={[0, -9]} opacity={1}>
+              <span className="block whitespace-nowrap text-center font-black text-red-700">
+                {archipelago.name}
+              </span>
+              <span className="block text-center text-[10px] font-black uppercase tracking-[0.14em] text-red-600">
+                Việt Nam
+              </span>
+            </Tooltip>
 
-        const color =
-          riskColors[station.risk];
+            <Popup>
+              <div className="min-w-[220px] text-center">
+                <strong className="text-red-700">{archipelago.name}</strong>
+                <p className="mt-1 text-xs font-extrabold tracking-wider text-red-600">
+                  VIỆT NAM
+                </p>
+                <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                  Nhãn địa danh tiếng Việt do MosGuardX chủ động hiển thị. Điểm
+                  đánh dấu mang tính đại diện, không thể hiện ranh giới pháp lý.
+                </p>
+              </div>
+            </Popup>
+          </CircleMarker>
+        ))}
 
-        const markerRadius = Math.min(
-          30,
-          Math.max(
-            11,
-            10 + value / 8,
-          ),
-        );
+        {stations.map((station) => {
+          const active = station.id === selectedId;
+          const value = Math.round(station.mosquitoCount * multiplier);
+          const color = riskColors[station.risk];
+          const markerRadius = Math.min(30, Math.max(11, 10 + value / 8));
+          const densityRadius = Math.max(350, value * 12);
 
-        const densityRadius =
-          Math.max(350, value * 12);
+          return (
+            <Fragment key={station.id}>
+              {showDensity && (
+                <Circle
+                  center={[station.latitude, station.longitude]}
+                  radius={densityRadius}
+                  pathOptions={{
+                    color,
+                    fillColor: color,
+                    fillOpacity: active ? 0.25 : 0.15,
+                    opacity: active ? 0.65 : 0.35,
+                    weight: active ? 2 : 1,
+                  }}
+                  eventHandlers={{ click: () => onSelect(station.id) }}
+                />
+              )}
 
-        return (
-          <div key={station.id}>
-            {showDensity && (
-              <Circle
-                center={[
-                  station.latitude,
-                  station.longitude,
-                ]}
-                radius={densityRadius}
+              <CircleMarker
+                center={[station.latitude, station.longitude]}
+                radius={active ? markerRadius + 4 : markerRadius}
                 pathOptions={{
-                  color,
+                  color: active ? "#10251f" : "#ffffff",
                   fillColor: color,
-                  fillOpacity: active
-                    ? 0.22
-                    : 0.12,
-                  opacity: active
-                    ? 0.55
-                    : 0.25,
-                  weight: active ? 2 : 1,
+                  fillOpacity: station.online ? 0.94 : 0.5,
+                  opacity: 1,
+                  weight: active ? 4 : 3,
                 }}
-                eventHandlers={{
-                  click: () =>
-                    onSelect(
-                      station.id,
-                    ),
-                }}
-              />
-            )}
-
-            <CircleMarker
-              center={[
-                station.latitude,
-                station.longitude,
-              ]}
-              radius={
-                active
-                  ? markerRadius + 4
-                  : markerRadius
-              }
-              pathOptions={{
-                color: active
-                  ? "#10251f"
-                  : "#ffffff",
-                fillColor: color,
-                fillOpacity: station.online
-                  ? 0.92
-                  : 0.45,
-                opacity: 1,
-                weight: active ? 4 : 3,
-              }}
-              eventHandlers={{
-                click: () =>
-                  onSelect(station.id),
-              }}
-            >
-              <Tooltip
-                direction="top"
-                offset={[0, -10]}
-                opacity={0.96}
+                eventHandlers={{ click: () => onSelect(station.id) }}
               >
-                <strong>
-                  {station.name}
-                </strong>
+                <Tooltip direction="top" offset={[0, -8]} opacity={1}>
+                  <div className="min-w-[170px]">
+                    <strong className="text-[#16352a]">{station.name}</strong>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {station.district}
+                    </div>
+                    <div className="mt-2 text-xs font-semibold" style={{ color }}>
+                      {value} muỗi · Nguy cơ {riskLabels[station.risk]}
+                    </div>
+                  </div>
+                </Tooltip>
 
-                <br />
+                <Popup>
+                  <div className="min-w-[190px]">
+                    <strong className="text-[#16352a]">{station.name}</strong>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {station.district}
+                    </div>
+                    <div className="mt-2 text-xs font-semibold" style={{ color }}>
+                      {value} muỗi · Nguy cơ {riskLabels[station.risk]}
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-500">
+                      {station.online ? "Đang kết nối" : "Mất kết nối"}
+                    </div>
+                  </div>
+                </Popup>
+              </CircleMarker>
+            </Fragment>
+          );
+        })}
+      </MapContainer>
 
-                {station.district} ·{" "}
-                {value} lượt ghi nhận
-              </Tooltip>
-
-              <Popup>
-                <div className="min-w-[190px]">
-                  <strong>
-                    {station.name}
-                  </strong>
-
-                  <p>
-                    {station.district},
-                    Hà Nội
-                  </p>
-
-                  <p>
-                    Mật độ minh họa:{" "}
-                    {value}
-                  </p>
-
-                  <p>
-                    Mức nguy cơ:{" "}
-                    {
-                      riskLabels[
-                        station.risk
-                      ]
-                    }
-                  </p>
-
-                  <p>
-                    Trạng thái:{" "}
-                    {station.online
-                      ? "Trực tuyến"
-                      : "Mất kết nối"}
-                  </p>
-                </div>
-              </Popup>
-            </CircleMarker>
-          </div>
-        );
-      })}
-    </MapContainer>
+    </div>
   );
 }
