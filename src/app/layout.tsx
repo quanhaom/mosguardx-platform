@@ -15,11 +15,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "MosguardX Operations",
+    default: "MosguardX | Cảnh báo sớm nguy cơ dịch tễ",
     template: "%s | MosguardX",
   },
   description:
-    "NÃƒÂ¡Ã‚Â»Ã‚Ân tÃƒÂ¡Ã‚ÂºÃ‚Â£ng giÃƒÆ’Ã‚Â¡m sÃƒÆ’Ã‚Â¡t muÃƒÂ¡Ã‚Â»Ã¢â‚¬â€i thÃƒÆ’Ã‚Â´ng minh vÃƒÆ’Ã‚Â  cÃƒÂ¡Ã‚ÂºÃ‚Â£nh bÃƒÆ’Ã‚Â¡o dÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¹ch tÃƒÂ¡Ã‚Â»Ã¢â‚¬Â¦ sÃƒÂ¡Ã‚Â»Ã¢â‚¬Âºm",
+    "Nền tảng giám sát muỗi thông minh và cảnh báo sớm nguy cơ dịch tễ.",
 };
 
 export default function RootLayout({
