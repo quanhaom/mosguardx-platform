@@ -14,6 +14,7 @@ from fastapi import (
     Header,
     HTTPException,
     Query,
+    Response,
     Request,
     UploadFile,
     status,
@@ -433,6 +434,10 @@ def root() -> dict[str, str]:
         "readiness": "/health/ready",
     }
 
+
+@app.head("/", include_in_schema=False)
+def root_head() -> Response:
+    return Response(status_code=200)
 
 @app.get(
     "/health/live",
