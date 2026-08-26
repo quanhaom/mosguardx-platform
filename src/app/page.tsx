@@ -1426,38 +1426,38 @@ function LandingContent() {
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {[
               [
-                "Phan Hoàng Quân",
+                "Trần Thị Cẩm Vân <3 ",
                 t(
                   "AI, IoT và nền tảng",
                   "AI, IoT, and platform",
                 ),
               ],
               [
-                t("Bổ sung tên", "Name to be added"),
+                t("Nguyễn Ngọc Vũ"),
                 t(
                   "Phần cứng và vi điều khiển",
                   "Hardware and microcontrollers",
                 ),
               ],
               [
-                t("Bổ sung tên", "Name to be added"),
-                t(
-                  "Nghiên cứu thị trường",
-                  "Market research",
-                ),
-              ],
-              [
-                t("Bổ sung tên", "Name to be added"),
+                t("Trần Thị Lương"),
                 t(
                   "Mô hình kinh doanh",
                   "Business model",
                 ),
               ],
               [
-                t("Bổ sung tên", "Name to be added"),
+                t("Nguyễn Thị Thu Trang"),
                 t(
                   "Vận hành và đối tác",
                   "Operations and partnerships",
+                ),
+              ],
+                          [
+                t("Phan Hoàng Quân"),
+                t(
+                  "AI, IoT và nền tảng",
+                  "AI, IoT, and platform",
                 ),
               ],
             ].map(([name, role], index) => (
