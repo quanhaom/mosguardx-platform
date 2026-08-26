@@ -15,10 +15,12 @@ import {
 import {
   ChangeEvent,
   FormEvent,
+  useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
+import { useLanguage } from "@/components/i18n/language-context";
 
 type ApiHealth = {
   status: string;
@@ -71,7 +73,7 @@ const speciesNames: Record<string, string> = {
   japonicus_koreicus: "Aedes japonicus/koreicus",
 };
 
-const speciesDescriptions: Record<string, string> = {
+const speciesDescriptionsVi: Record<string, string> = {
   aegypti: "Muỗi vằn có liên quan đến nguy cơ sốt xuất huyết.",
   "aedes-aegypti":
     "Muỗi vằn có liên quan đến nguy cơ sốt xuất huyết.",
@@ -97,6 +99,33 @@ const speciesDescriptions: Record<string, string> = {
     "Nhóm Aedes xâm lấn cần tiếp tục theo dõi và xác minh.",
 };
 
+const speciesDescriptionsEn: Record<string, string> = {
+  aegypti:
+    "Aedes aegypti is associated with dengue transmission risk.",
+  "aedes-aegypti":
+    "Aedes aegypti is associated with dengue transmission risk.",
+
+  albopictus:
+    "The Asian tiger mosquito is often most active during the day.",
+  "aedes-albopictus":
+    "The Asian tiger mosquito is often most active during the day.",
+
+  culex:
+    "This mosquito group is commonly found near stagnant water and drains.",
+
+  anopheles:
+    "This mosquito group is associated with malaria transmission risk.",
+
+  culiseta:
+    "This mosquito group is commonly found in cooler climates.",
+
+  "japonicus-koreicus":
+    "This invasive Aedes group requires further monitoring and verification.",
+
+  japonicus_koreicus:
+    "This invasive Aedes group requires further monitoring and verification.",
+};
+
 const detectionColors = [
   "#10b981",
   "#f59e0b",
@@ -116,11 +145,21 @@ function getSpeciesName(species: string) {
   return speciesNames[normalized] ?? species;
 }
 
-function getSpeciesDescription(species: string) {
+function getSpeciesDescription(
+  species: string,
+  language: "vi" | "en",
+) {
   const normalized = normalizeSpecies(species);
 
+  if (language === "en") {
+    return (
+      speciesDescriptionsEn[normalized] ??
+      "The result requires further verification using expert data."
+    );
+  }
+
   return (
-    speciesDescriptions[normalized] ??
+    speciesDescriptionsVi[normalized] ??
     "Kết quả cần được xác minh thêm bằng dữ liệu chuyên môn."
   );
 }
@@ -133,26 +172,39 @@ function clampPercentage(value: number) {
   return Math.min(100, Math.max(0, value));
 }
 
-async function readJsonResponse(response: Response) {
+async function readJsonResponse(
+  response: Response,
+  language: "vi" | "en",
+) {
   const contentType = response.headers.get("content-type") ?? "";
   const rawText = await response.text();
 
   if (!contentType.includes("application/json")) {
     throw new Error(
       rawText.startsWith("<")
-        ? "Server trả về HTML thay vì JSON. Hãy kiểm tra API route."
-        : rawText || `Server trả về HTTP ${response.status}`,
+        ? language === "vi"
+          ? "Server trả về HTML thay vì JSON. Hãy kiểm tra API route."
+          : "The server returned HTML instead of JSON. Check the API route."
+        : rawText ||
+          (language === "vi"
+            ? `Server trả về HTTP ${response.status}`
+            : `The server returned HTTP ${response.status}`),
     );
   }
 
   try {
     return JSON.parse(rawText);
   } catch {
-    throw new Error("Server trả về JSON không hợp lệ.");
+    throw new Error(
+      language === "vi"
+        ? "Server trả về JSON không hợp lệ."
+        : "The server returned invalid JSON.",
+    );
   }
 }
 
 export default function AiApiPage() {
+  const { language, tr } = useLanguage();
   const [health, setHealth] = useState<ApiHealth | null>(null);
   const [healthError, setHealthError] = useState("");
   const [checking, setChecking] = useState(true);
@@ -186,7 +238,7 @@ export default function AiApiPage() {
     return Object.entries(summary);
   }, [result]);
 
-  async function checkHealth() {
+  const checkHealth = useCallback(async () => {
     setChecking(true);
     setHealthError("");
 
@@ -195,13 +247,16 @@ export default function AiApiPage() {
         cache: "no-store",
       });
 
-      const data = await readJsonResponse(response);
+      const data = await readJsonResponse(response, language);
 
       if (!response.ok) {
         const detail =
           typeof data?.detail === "string"
             ? data.detail
-            : "Không thể kết nối backend AI.";
+            : tr(
+                "Không thể kết nối backend AI.",
+                "Unable to connect to the AI backend.",
+              );
 
         throw new Error(detail);
       }
@@ -213,16 +268,23 @@ export default function AiApiPage() {
       setHealthError(
         error instanceof Error
           ? error.message
-          : "Không thể kết nối backend AI.",
+          : tr(
+              "Không thể kết nối backend AI.",
+              "Unable to connect to the AI backend.",
+            ),
       );
     } finally {
       setChecking(false);
     }
-  }
+  }, [language, tr]);
 
   useEffect(() => {
-    void checkHealth();
-  }, []);
+    const timer = window.setTimeout(() => {
+      void checkHealth();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [checkHealth]);
 
   useEffect(() => {
     return () => {
@@ -259,7 +321,10 @@ export default function AiApiPage() {
       setPreview("");
 
       setPredictError(
-        "Chỉ chấp nhận ảnh JPEG, PNG hoặc WEBP.",
+        tr(
+          "Chỉ chấp nhận ảnh JPEG, PNG hoặc WEBP.",
+          "Only JPEG, PNG, or WEBP images are accepted.",
+        ),
       );
 
       return;
@@ -270,7 +335,10 @@ export default function AiApiPage() {
       setPreview("");
 
       setPredictError(
-        "Dung lượng ảnh không được vượt quá 10 MB.",
+        tr(
+          "Dung lượng ảnh không được vượt quá 10 MB.",
+          "The image size must not exceed 10 MB.",
+        ),
       );
 
       return;
@@ -287,7 +355,10 @@ export default function AiApiPage() {
 
     if (!file) {
       setPredictError(
-        "Hãy chọn một ảnh trước khi chạy nhận diện.",
+        tr(
+          "Hãy chọn một ảnh trước khi chạy nhận diện.",
+          "Select an image before running detection.",
+        ),
       );
 
       return;
@@ -310,7 +381,7 @@ export default function AiApiPage() {
         cache: "no-store",
       });
 
-      const data = await readJsonResponse(response);
+      const data = await readJsonResponse(response, language);
 
       if (!response.ok) {
         const detail =
@@ -320,7 +391,10 @@ export default function AiApiPage() {
 
         throw new Error(
           detail ??
-            `Nhận diện thất bại: HTTP ${response.status}`,
+            tr(
+              `Nhận diện thất bại: HTTP ${response.status}`,
+              `Detection failed: HTTP ${response.status}`,
+            ),
         );
       }
 
@@ -329,7 +403,10 @@ export default function AiApiPage() {
       setPredictError(
         error instanceof Error
           ? error.message
-          : "Không thể gọi API nhận diện.",
+          : tr(
+              "Không thể gọi API nhận diện.",
+              "Unable to call the detection API.",
+            ),
       );
     } finally {
       setPredicting(false);
@@ -346,18 +423,25 @@ export default function AiApiPage() {
             </p>
 
             <h2 className="mt-3 text-3xl font-bold">
-              Nhận diện và phân loại loài muỗi
+              {tr(
+                "Nhận diện và phân loại loài muỗi",
+                "Mosquito detection and species classification",
+              )}
             </h2>
 
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              Tải ảnh lên để phát hiện đối tượng, vẽ bounding
-              box, phân loại loài và hiển thị độ tin cậy của
-              model.
+              {tr(
+                "Tải ảnh lên để phát hiện đối tượng, vẽ bounding box, phân loại loài và hiển thị độ tin cậy của model.",
+                "Upload an image to detect objects, draw bounding boxes, classify species, and display model confidence.",
+              )}
             </p>
           </div>
 
           <span className="h-fit rounded-full bg-amber-300/10 px-4 py-2 text-xs font-bold text-amber-200">
-            KẾT QUẢ AI CẦN ĐƯỢC XÁC MINH
+            {tr(
+              "KẾT QUẢ AI CẦN ĐƯỢC XÁC MINH",
+              "AI RESULTS REQUIRE VERIFICATION",
+            )}
           </span>
         </div>
       </section>
@@ -368,10 +452,10 @@ export default function AiApiPage() {
           label="Backend API"
           value={
             checking
-              ? "Đang kiểm tra"
+              ? tr("Đang kiểm tra", "Checking")
               : health
-                ? "Đang hoạt động"
-                : "Mất kết nối"
+                ? tr("Đang hoạt động", "Operational")
+                : tr("Mất kết nối", "Disconnected")
           }
           tone={
             checking
@@ -387,10 +471,10 @@ export default function AiApiPage() {
           label="Model AI"
           value={
             checking
-              ? "Đang kiểm tra"
+              ? tr("Đang kiểm tra", "Checking")
               : health?.model_loaded
-                ? "Đã tải model"
-                : "Chưa sẵn sàng"
+                ? tr("Đã tải model", "Model loaded")
+                : tr("Chưa sẵn sàng", "Not ready")
           }
           tone={
             health?.model_loaded ? "success" : "error"
@@ -399,8 +483,8 @@ export default function AiApiPage() {
 
         <StatusCard
           icon={Activity}
-          label="Phiên bản API"
-          value={health?.version ?? "Chưa xác định"}
+          label={tr("Phiên bản API", "API version")}
+          value={health?.version ?? tr("Chưa xác định", "Unknown")}
           tone={health ? "success" : "pending"}
         />
       </section>
@@ -413,13 +497,20 @@ export default function AiApiPage() {
           />
 
           <div className="flex-1">
-            <strong>Không kết nối được backend AI</strong>
+            <strong>
+              {tr(
+                "Không kết nối được backend AI",
+                "Unable to connect to the AI backend",
+              )}
+            </strong>
 
             <p className="mt-1">{healthError}</p>
 
             <p className="mt-2 text-xs">
-              Kiểm tra FastAPI đang chạy tại cổng 8000 và
-              biến AI_API_URL trong .env.local.
+              {tr(
+                "Kiểm tra FastAPI đang chạy tại cổng 8000 và biến AI_API_URL trong .env.local.",
+                "Check that FastAPI is running on port 8000 and verify AI_API_URL in .env.local.",
+              )}
             </p>
           </div>
 
@@ -428,7 +519,7 @@ export default function AiApiPage() {
             onClick={() => void checkHealth()}
             className="rounded-lg bg-red-100 px-3 py-2 text-xs font-bold"
           >
-            Thử lại
+            {tr("Thử lại", "Retry")}
           </button>
         </div>
       )}
@@ -445,11 +536,14 @@ export default function AiApiPage() {
 
             <div>
               <h3 className="font-bold text-[#16352a]">
-                Ảnh kiểm thử
+                {tr("Ảnh kiểm thử", "Test image")}
               </h3>
 
               <p className="text-xs text-slate-500">
-                JPEG, PNG hoặc WEBP · tối đa 10 MB
+                {tr(
+                  "JPEG, PNG hoặc WEBP · tối đa 10 MB",
+                  "JPEG, PNG, or WEBP · up to 10 MB",
+                )}
               </p>
             </div>
           </div>
@@ -461,7 +555,10 @@ export default function AiApiPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={preview}
-                    alt="Ảnh kiểm thử nhận diện muỗi"
+                    alt={tr(
+                      "Ảnh kiểm thử nhận diện muỗi",
+                      "Mosquito detection test image",
+                    )}
                     className="block h-auto max-h-[460px] max-w-full object-contain"
                   />
 
@@ -548,8 +645,10 @@ export default function AiApiPage() {
                     result.detections.length === 0 && (
                       <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/35">
                         <span className="rounded-xl bg-white/90 px-4 py-2 text-xs font-bold text-slate-700 shadow">
-                          Không phát hiện đối tượng vượt
-                          ngưỡng
+                          {tr(
+                            "Không phát hiện đối tượng vượt ngưỡng",
+                            "No objects detected above the threshold",
+                          )}
                         </span>
                       </div>
                     )}
@@ -563,11 +662,14 @@ export default function AiApiPage() {
                 />
 
                 <strong className="mt-4 text-sm text-[#16352a]">
-                  Nhấn để chọn ảnh
+                  {tr("Nhấn để chọn ảnh", "Click to select an image")}
                 </strong>
 
                 <span className="mt-1 text-xs text-slate-400">
-                  Ảnh chỉ được gửi khi bạn chạy nhận diện
+                  {tr(
+                    "Ảnh chỉ được gửi khi bạn chạy nhận diện",
+                    "The image is sent only when you run detection",
+                  )}
                 </span>
               </>
             )}
@@ -598,7 +700,7 @@ export default function AiApiPage() {
                 htmlFor="confidence"
                 className="text-sm font-bold text-[#16352a]"
               >
-                Ngưỡng tin cậy
+                {tr("Ngưỡng tin cậy", "Confidence threshold")}
               </label>
 
               <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
@@ -622,8 +724,10 @@ export default function AiApiPage() {
             />
 
             <div className="mt-2 flex justify-between text-[10px] text-slate-400">
-              <span>Phát hiện nhiều hơn</span>
-              <span>Độ chắc chắn cao hơn</span>
+              <span>{tr("Phát hiện nhiều hơn", "More detections")}</span>
+              <span>
+                {tr("Độ chắc chắn cao hơn", "Higher confidence")}
+              </span>
             </div>
           </div>
 
@@ -653,12 +757,12 @@ export default function AiApiPage() {
                   size={18}
                   className="animate-spin"
                 />
-                Đang nhận diện...
+                {tr("Đang nhận diện...", "Detecting...")}
               </>
             ) : (
               <>
                 <BrainCircuit size={18} />
-                Chạy nhận diện AI
+                {tr("Chạy nhận diện AI", "Run AI detection")}
               </>
             )}
           </button>
@@ -672,13 +776,13 @@ export default function AiApiPage() {
               </p>
 
               <h3 className="mt-1 text-xl font-bold text-[#16352a]">
-                Kết quả nhận diện
+                {tr("Kết quả nhận diện", "Detection results")}
               </h3>
             </div>
 
             {result && (
               <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                Thành công
+                {tr("Thành công", "Success")}
               </span>
             )}
           </div>
@@ -691,29 +795,31 @@ export default function AiApiPage() {
               />
 
               <h4 className="mt-5 font-bold text-slate-500">
-                Chưa có kết quả
+                {tr("Chưa có kết quả", "No results yet")}
               </h4>
 
               <p className="mt-2 max-w-sm text-sm leading-6 text-slate-400">
-                Chọn ảnh và chạy nhận diện để xem bounding
-                box, số lượng, loài dự đoán và độ tin cậy.
+                {tr(
+                  "Chọn ảnh và chạy nhận diện để xem bounding box, số lượng, loài dự đoán và độ tin cậy.",
+                  "Select an image and run detection to view bounding boxes, counts, predicted species, and confidence scores.",
+                )}
               </p>
             </div>
           ) : (
             <div className="mt-6">
               <div className="grid gap-3 sm:grid-cols-3">
                 <ResultMetric
-                  label="Số đối tượng"
+                  label={tr("Số đối tượng", "Object count")}
                   value={String(result.mosquito_count)}
                 />
 
                 <ResultMetric
-                  label="Model"
+                  label={tr("Mô hình", "Model")}
                   value={result.model_version}
                 />
 
                 <ResultMetric
-                  label="Thời gian"
+                  label={tr("Thời gian", "Inference time")}
                   value={`${result.inference_ms} ms`}
                 />
               </div>
@@ -721,7 +827,7 @@ export default function AiApiPage() {
               {speciesSummary.length > 0 && (
                 <div className="mt-6">
                   <p className="text-xs font-bold tracking-wider text-slate-400">
-                    PHÂN BỐ THEO LOÀI
+                    {tr("PHÂN BỐ THEO LOÀI", "SPECIES DISTRIBUTION")}
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -753,13 +859,15 @@ export default function AiApiPage() {
 
               <div className="mt-7">
                 <h4 className="font-bold text-[#16352a]">
-                  Các đối tượng phát hiện
+                  {tr("Các đối tượng phát hiện", "Detected objects")}
                 </h4>
 
                 {result.detections.length === 0 ? (
                   <p className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-700">
-                    Không phát hiện đối tượng vượt ngưỡng
-                    tin cậy.
+                    {tr(
+                      "Không phát hiện đối tượng vượt ngưỡng tin cậy.",
+                      "No objects were detected above the confidence threshold.",
+                    )}
                   </p>
                 ) : (
                   <div className="mgx-scrollbar mt-4 max-h-[500px] space-y-3 overflow-y-auto pr-1">
@@ -776,7 +884,7 @@ export default function AiApiPage() {
                             <div className="flex items-start justify-between gap-4">
                               <div>
                                 <p className="text-xs text-slate-400">
-                                  Detection #{index + 1}
+                                  {tr("Phát hiện", "Detection")} #{index + 1}
                                 </p>
 
                                 <div className="mt-1 flex items-center gap-2">
@@ -796,7 +904,7 @@ export default function AiApiPage() {
                                 </div>
 
                                 <p className="mt-1 text-xs text-slate-400">
-                                  Class ID:{" "}
+                                  {tr("Mã lớp", "Class ID")}:{" "}
                                   {detection.class_id}
                                 </p>
                               </div>
@@ -816,6 +924,7 @@ export default function AiApiPage() {
                             <p className="mt-3 text-xs leading-5 text-slate-500">
                               {getSpeciesDescription(
                                 detection.species,
+                                language,
                               )}
                             </p>
 
@@ -863,7 +972,7 @@ export default function AiApiPage() {
 
               <details className="mt-6 rounded-2xl bg-[#10251f] p-4 text-xs text-emerald-100">
                 <summary className="cursor-pointer font-bold">
-                  Xem JSON response
+                  {tr("Xem JSON response", "View JSON response")}
                 </summary>
 
                 <pre className="mgx-scrollbar mt-4 max-h-[400px] overflow-auto whitespace-pre-wrap leading-6">
@@ -872,9 +981,10 @@ export default function AiApiPage() {
               </details>
 
               <p className="mt-5 rounded-xl bg-amber-50 p-4 text-xs leading-5 text-amber-700">
-                Kết quả phân loại do model AI tạo ra và có
-                thể sai. Không sử dụng như kết luận dịch tễ
-                hoặc kết luận sinh học chính thức.
+                {tr(
+                  "Kết quả phân loại do model AI tạo ra và có thể sai. Không sử dụng như kết luận dịch tễ hoặc kết luận sinh học chính thức.",
+                  "Classification results are generated by an AI model and may be incorrect. Do not use them as official epidemiological or biological conclusions.",
+                )}
               </p>
             </div>
           )}

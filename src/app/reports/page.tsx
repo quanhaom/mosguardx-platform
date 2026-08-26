@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { Download, FileBarChart } from "lucide-react";
+import { useLanguage } from "@/components/i18n/language-context";
 import PageIntro from "@/components/ui/page-intro";
 import { stations } from "@/data/mock-data";
 
 export default function ReportsPage() {
+  const { tr } = useLanguage();
   const [message, setMessage] = useState("");
 
   function exportCsv() {
@@ -31,30 +33,43 @@ export default function ReportsPage() {
     anchor.click();
     URL.revokeObjectURL(url);
 
-    setMessage("Đã xuất báo cáo CSV thành công.");
+    setMessage(
+      tr(
+        "Đã xuất báo cáo CSV thành công.",
+        "The CSV report was exported successfully.",
+      ),
+    );
   }
 
   return (
     <div>
       <PageIntro
-        eyebrow="BÁO CÁO VẬN HÀNH"
-        title="Báo cáo và phân tích"
-        description="Tổng hợp dữ liệu mạng lưới phục vụ báo cáo và thảo luận với nhóm."
+        eyebrow={tr("BÁO CÁO VẬN HÀNH", "OPERATIONS REPORTS")}
+        title={tr("Báo cáo và phân tích", "Reports and analytics")}
+        description={tr(
+          "Tổng hợp dữ liệu mạng lưới phục vụ báo cáo và thảo luận với nhóm.",
+          "Aggregate network data for reporting and team discussions.",
+        )}
       />
 
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         <article className="rounded-2xl border border-[#dce8e2] bg-white p-6">
           <FileBarChart className="text-emerald-700" />
-          <h3 className="mt-4 font-bold">Báo cáo mật độ trạm</h3>
+          <h3 className="mt-4 font-bold">
+            {tr("Báo cáo mật độ trạm", "Station density report")}
+          </h3>
           <p className="mt-2 text-sm text-slate-500">
-            Dữ liệu mật độ, khu vực, nguy cơ và trạng thái thiết bị.
+            {tr(
+              "Dữ liệu mật độ, khu vực, nguy cơ và trạng thái thiết bị.",
+              "Density, area, risk, and device status data.",
+            )}
           </p>
           <button
             onClick={exportCsv}
             className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white"
           >
             <Download size={17} />
-            Xuất CSV
+            {tr("Xuất CSV", "Export CSV")}
           </button>
         </article>
       </section>

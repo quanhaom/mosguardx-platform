@@ -13,6 +13,7 @@ import {
   Radio,
 } from "lucide-react";
 
+import { useLanguage } from "@/components/i18n/language-context";
 import PageIntro from "@/components/ui/page-intro";
 import { stations } from "@/data/mock-data";
 import type {
@@ -21,6 +22,16 @@ import type {
 import type {
   GeographicMapProps,
 } from "../map/geographic-map";
+
+function MapLoading() {
+  const { tr } = useLanguage();
+
+  return (
+    <div className="flex h-full items-center justify-center bg-slate-100 text-sm font-semibold text-slate-500">
+      {tr("Đang tải bản đồ địa lý...", "Loading geographic map...")}
+    </div>
+  );
+}
 
 const GeographicMap =
   dynamic<GeographicMapProps>(
@@ -34,26 +45,23 @@ const GeographicMap =
     {
       ssr: false,
 
-      loading: () => (
-        <div className="flex h-full items-center justify-center bg-slate-100 text-sm font-semibold text-slate-500">
-          Đang tải bản đồ địa lý...
-        </div>
-      ),
+      loading: () => <MapLoading />,
     },
   );
 
 const periods = [
-  "24 giờ",
-  "7 ngày",
-  "30 ngày",
+  { id: "24h", vi: "24 giờ", en: "24 hours" },
+  { id: "7d", vi: "7 ngày", en: "7 days" },
+  { id: "30d", vi: "30 ngày", en: "30 days" },
 ] as const;
 
-type Period =
-  (typeof periods)[number];
+type Period = (typeof periods)[number]["id"];
 
 type RiskStyle = {
-  label: string;
-  shortLabel: string;
+  labelVi: string;
+  labelEn: string;
+  shortLabelVi: string;
+  shortLabelEn: string;
   marker: string;
   text: string;
   soft: string;
@@ -65,8 +73,10 @@ const riskStyles: Record<
   RiskStyle
 > = {
   critical: {
-    label: "Nguy cơ rất cao",
-    shortLabel: "Rất cao",
+    labelVi: "Nguy cơ rất cao",
+    labelEn: "Critical risk",
+    shortLabelVi: "Rất cao",
+    shortLabelEn: "Critical",
     marker: "bg-red-700",
     text: "text-red-700",
     soft: "bg-red-50",
@@ -74,8 +84,10 @@ const riskStyles: Record<
   },
 
   high: {
-    label: "Nguy cơ cao",
-    shortLabel: "Cao",
+    labelVi: "Nguy cơ cao",
+    labelEn: "High risk",
+    shortLabelVi: "Cao",
+    shortLabelEn: "High",
     marker: "bg-orange-500",
     text: "text-orange-600",
     soft: "bg-orange-50",
@@ -83,8 +95,10 @@ const riskStyles: Record<
   },
 
   medium: {
-    label: "Nguy cơ trung bình",
-    shortLabel: "Trung bình",
+    labelVi: "Nguy cơ trung bình",
+    labelEn: "Medium risk",
+    shortLabelVi: "Trung bình",
+    shortLabelEn: "Medium",
     marker: "bg-amber-400",
     text: "text-amber-600",
     soft: "bg-amber-50",
@@ -92,8 +106,10 @@ const riskStyles: Record<
   },
 
   low: {
-    label: "Nguy cơ thấp",
-    shortLabel: "Thấp",
+    labelVi: "Nguy cơ thấp",
+    labelEn: "Low risk",
+    shortLabelVi: "Thấp",
+    shortLabelEn: "Low",
     marker: "bg-emerald-500",
     text: "text-emerald-600",
     soft: "bg-emerald-50",
@@ -104,20 +120,51 @@ const riskStyles: Record<
 function getMultiplier(
   period: Period,
 ) {
-  if (period === "30 ngày") {
+  if (period === "30d") {
     return 1.25;
   }
 
-  if (period === "7 ngày") {
+  if (period === "7d") {
     return 1.1;
   }
 
   return 1;
 }
 
+function localizeStationName(name: string, language: "vi" | "en") {
+  if (language === "vi") {
+    return name;
+  }
+
+  return name.replace(/^Trạm\s+/, "") + " Station";
+}
+
+function localizeRelativeTime(value: string, language: "vi" | "en") {
+  if (language === "vi") {
+    return value;
+  }
+
+  if (value === "Vừa xong") {
+    return "Just now";
+  }
+
+  const minuteMatch = value.match(/^(\d+)\s+phút trước$/);
+  if (minuteMatch) {
+    return `${minuteMatch[1]} minutes ago`;
+  }
+
+  const hourMatch = value.match(/^(\d+)\s+giờ trước$/);
+  if (hourMatch) {
+    return `${hourMatch[1]} hours ago`;
+  }
+
+  return value;
+}
+
 export default function MapPage() {
+  const { language, tr } = useLanguage();
   const [period, setPeriod] =
-    useState<Period>("24 giờ");
+    useState<Period>("24h");
 
   const [
     selectedId,
@@ -178,8 +225,10 @@ export default function MapPage() {
   if (!selected) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-700">
-        Chưa có dữ liệu trạm để
-        hiển thị trên bản đồ.
+        {tr(
+          "Chưa có dữ liệu trạm để hiển thị trên bản đồ.",
+          "No station data is available for the map.",
+        )}
       </div>
     );
   }
@@ -190,28 +239,37 @@ export default function MapPage() {
   return (
     <div>
       <PageIntro
-        eyebrow="BẢN ĐỒ ĐỊA LÝ · OPENSTREETMAP"
-        title="Bản đồ phân bố mật độ muỗi"
-        description="Bản đồ địa lý tương tác sử dụng tọa độ thật của từng trạm. Số liệu mật độ hiện vẫn là dữ liệu minh họa."
+        eyebrow={tr(
+          "BẢN ĐỒ ĐỊA LÝ · OPENSTREETMAP",
+          "GEOGRAPHIC MAP · OPENSTREETMAP",
+        )}
+        title={tr(
+          "Bản đồ phân bố mật độ muỗi",
+          "Mosquito density distribution map",
+        )}
+        description={tr(
+          "Bản đồ địa lý tương tác sử dụng tọa độ thật của từng trạm. Số liệu mật độ hiện vẫn là dữ liệu minh họa.",
+          "An interactive geographic map using the real coordinates of each station. Density values are still demonstration data.",
+        )}
         action={
           <div className="flex rounded-xl border border-slate-200 bg-white p-1">
             {periods.map(
               (item) => (
                 <button
-                  key={item}
+                  key={item.id}
                   type="button"
                   onClick={() =>
                     setPeriod(
-                      item,
+                      item.id,
                     )
                   }
                   className={`rounded-lg px-3 py-2 text-xs font-bold transition sm:px-4 ${
-                    period === item
+                    period === item.id
                       ? "bg-emerald-600 text-white"
                       : "text-slate-500 hover:bg-slate-50"
                   }`}
                 >
-                  {item}
+                  {tr(item.vi, item.en)}
                 </button>
               ),
             )}
@@ -222,7 +280,7 @@ export default function MapPage() {
       <section className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           icon={MapPin}
-          label="Trạm hiển thị"
+          label={tr("Trạm hiển thị", "Visible stations")}
           value={String(
             stations.length,
           )}
@@ -231,7 +289,7 @@ export default function MapPage() {
 
         <SummaryCard
           icon={AlertTriangle}
-          label="Nguy cơ cao"
+          label={tr("Nguy cơ cao", "High-risk stations")}
           value={String(
             highRiskCount,
           )}
@@ -240,7 +298,7 @@ export default function MapPage() {
 
         <SummaryCard
           icon={Layers3}
-          label="Mật độ trung bình"
+          label={tr("Mật độ trung bình", "Average density")}
           value={String(
             averageDensity,
           )}
@@ -249,7 +307,7 @@ export default function MapPage() {
 
         <SummaryCard
           icon={Radio}
-          label="Trạm trực tuyến"
+          label={tr("Trạm trực tuyến", "Online stations")}
           value={`${onlineCount}/${stations.length}`}
           color="text-blue-600"
         />
@@ -260,14 +318,17 @@ export default function MapPage() {
           <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center">
             <div>
               <h3 className="font-bold text-[#16352a]">
-                Mạng lưới MosguardX ·
-                Hà Nội
+                {tr(
+                  "Mạng lưới MosguardX · Hà Nội",
+                  "MosguardX Network · Hanoi",
+                )}
               </h3>
 
               <p className="mt-1 text-xs text-slate-500">
-                Kéo, phóng to hoặc
-                chọn marker để xem
-                thông tin trạm.
+                {tr(
+                  "Kéo, phóng to hoặc chọn marker để xem thông tin trạm.",
+                  "Pan, zoom, or select a marker to view station information.",
+                )}
               </p>
             </div>
 
@@ -288,7 +349,7 @@ export default function MapPage() {
                 className="h-4 w-4 accent-emerald-600"
               />
 
-              Hiển thị vùng mật độ
+              {tr("Hiển thị vùng mật độ", "Show density areas")}
             </label>
           </div>
 
@@ -305,7 +366,7 @@ export default function MapPage() {
                 showDensity
               }
               onSelect={(
-                stationId,
+                stationId: string,
               ) =>
                 setSelectedId(
                   stationId,
@@ -314,12 +375,12 @@ export default function MapPage() {
             />
 
             <div className="pointer-events-none absolute right-4 top-4 z-[500] rounded-lg bg-amber-50/95 px-3 py-2 text-[10px] font-bold text-amber-700 shadow">
-              MẬT ĐỘ MINH HỌA
+              {tr("MẬT ĐỘ MINH HỌA", "DEMO DENSITY")}
             </div>
 
             <div className="absolute bottom-7 left-4 z-[500] rounded-xl bg-white/95 p-3 text-[10px] font-semibold text-slate-600 shadow-lg">
               <p className="mb-2 font-bold text-[#16352a]">
-                Mức nguy cơ
+                {tr("Mức nguy cơ", "Risk level")}
               </p>
 
               <div className="flex flex-wrap gap-3">
@@ -343,10 +404,9 @@ export default function MapPage() {
                       />
 
                       {
-                        riskStyles[
-                          risk
-                        ]
-                          .shortLabel
+                        language === "vi"
+                          ? riskStyles[risk].shortLabelVi
+                          : riskStyles[risk].shortLabelEn
                       }
                     </span>
                   ),
@@ -368,7 +428,9 @@ export default function MapPage() {
               className={`rounded-full border px-3 py-1.5 text-[10px] font-bold ${selectedRisk.soft} ${selectedRisk.text} ${selectedRisk.border}`}
             >
               {
-                selectedRisk.label
+                language === "vi"
+                  ? selectedRisk.labelVi
+                  : selectedRisk.labelEn
               }
             </span>
           </div>
@@ -378,18 +440,21 @@ export default function MapPage() {
           </p>
 
           <h3 className="mt-1 text-xl font-bold text-[#16352a]">
-            {selected.name}
+            {localizeStationName(selected.name, language)}
           </h3>
 
           <p className="mt-1 text-sm text-slate-500">
-            {selected.district},
-            Hà Nội
+            {selected.district},{" "}
+            {tr("Hà Nội", "Hanoi")}
           </p>
 
           <div className="mt-6 space-y-3">
             <InfoRow
-              label="Khoảng thời gian"
-              value={period}
+              label={tr("Khoảng thời gian", "Time period")}
+              value={tr(
+                periods.find((item) => item.id === period)?.vi ?? "24 giờ",
+                periods.find((item) => item.id === period)?.en ?? "24 hours",
+              )}
               icon={
                 <CalendarDays
                   size={16}
@@ -398,7 +463,7 @@ export default function MapPage() {
             />
 
             <InfoRow
-              label="Mật độ"
+              label={tr("Mật độ", "Density")}
               value={String(
                 Math.round(
                   selected.mosquitoCount *
@@ -408,7 +473,7 @@ export default function MapPage() {
             />
 
             <InfoRow
-              label="Tọa độ"
+              label={tr("Tọa độ", "Coordinates")}
               value={`${selected.latitude.toFixed(
                 4,
               )}, ${selected.longitude.toFixed(
@@ -417,20 +482,20 @@ export default function MapPage() {
             />
 
             <InfoRow
-              label="Pin"
+              label={tr("Pin", "Battery")}
               value={`${selected.battery}%`}
             />
 
             <InfoRow
-              label="Cập nhật"
+              label={tr("Cập nhật", "Last update")}
               value={
-                selected.lastSeen
+                localizeRelativeTime(selected.lastSeen, language)
               }
             />
 
             <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4">
               <span className="text-sm text-slate-500">
-                Trạng thái
+                {tr("Trạng thái", "Status")}
               </span>
 
               <strong
@@ -449,8 +514,8 @@ export default function MapPage() {
                 />
 
                 {selected.online
-                  ? "Trực tuyến"
-                  : "Mất kết nối"}
+                  ? tr("Trực tuyến", "Online")
+                  : tr("Mất kết nối", "Offline")}
               </strong>
             </div>
           </div>
@@ -458,12 +523,10 @@ export default function MapPage() {
       </section>
 
       <p className="mt-4 text-xs leading-5 text-slate-400">
-        Nền bản đồ và tọa độ là
-        dữ liệu địa lý thật. Mật
-        độ, cảnh báo và trạng thái
-        trạm hiện là dữ liệu minh
-        họa, chưa phải kết luận dịch
-        tễ chính thức.
+        {tr(
+          "Nền bản đồ và tọa độ là dữ liệu địa lý thật. Mật độ, cảnh báo và trạng thái trạm hiện là dữ liệu minh họa, chưa phải kết luận dịch tễ chính thức.",
+          "The basemap and coordinates use real geographic data. Station density, alerts, and status are demonstration data and are not official epidemiological conclusions.",
+        )}
       </p>
     </div>
   );

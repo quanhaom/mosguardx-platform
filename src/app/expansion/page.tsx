@@ -13,6 +13,10 @@ import {
 import PublicShell from "../../components/layout/public-shell";
 import { stations } from "../../data/mock-data";
 
+import {
+  useLanguage,
+} from "../../components/i18n/language-context";
+
 import type {
   GeographicMapProps,
 } from "../map/geographic-map";
@@ -31,79 +35,151 @@ const ExpansionMap =
 
       loading: () => (
         <div className="flex h-full items-center justify-center bg-slate-100 text-sm font-semibold text-slate-500">
-          Đang tải bản đồ Việt Nam...
+          Loading map...
         </div>
       ),
     },
   );
 
-const locations = [
-  {
-    name: "Hà Nội",
-    status: "Pilot",
-    description:
-      "Địa bàn thí điểm đầu tiên của MosguardX.",
-  },
-  {
-    name: "TP. Hồ Chí Minh",
-    status: "Coming soon",
-    description:
-      "Đánh giá đối tác và điều kiện triển khai.",
-  },
-  {
-    name: "Bình Dương",
-    status: "Coming soon",
-    description:
-      "Định hướng mạng lưới khu công nghiệp.",
-  },
-  {
-    name: "Đồng Nai",
-    status: "Coming soon",
-    description:
-      "Khảo sát nhu cầu và hạ tầng.",
-  },
-  {
-    name: "Gia Lai",
-    status: "Coming soon",
-    description:
-      "Nghiên cứu điều kiện địa hình.",
-  },
-  {
-    name: "Kiên Giang",
-    status: "Coming soon",
-    description:
-      "Định hướng khu vực du lịch và biên giới.",
-  },
-];
-
-const roadmap = [
-  {
-    number: "01",
-    title: "Pilot Hà Nội",
-    description:
-      "Lắp đặt prototype, xác minh khả năng thu nhận ảnh và đánh giá dữ liệu AI.",
-  },
-  {
-    number: "02",
-    title: "Xác thực thực địa",
-    description:
-      "So sánh tín hiệu MosguardX với kết quả kiểm tra chuyên môn tại địa phương.",
-  },
-  {
-    number: "03",
-    title: "Chuẩn hóa hệ thống",
-    description:
-      "Chuẩn hóa thiết bị, API, mô hình dữ liệu và quy trình vận hành.",
-  },
-  {
-    number: "04",
-    title: "Nhân rộng mạng lưới",
-    description:
-      "Triển khai theo tỉnh, khu vực và mạng lưới đối tác.",
-  },
-];
-
 export default function ExpansionPage() {
+  const { tr } = useLanguage();
+
+  const locations = [
+    {
+      name: tr(
+        "Hà Nội",
+        "Hanoi",
+      ),
+
+      status: "Pilot",
+
+      description: tr(
+        "Địa bàn thí điểm đầu tiên của MosguardX.",
+        "The first pilot area of MosguardX.",
+      ),
+    },
+    {
+      name: tr(
+        "TP. Hồ Chí Minh",
+        "Ho Chi Minh City",
+      ),
+
+      status: "Coming soon",
+
+      description: tr(
+        "Đánh giá đối tác và điều kiện triển khai.",
+        "Evaluating partners and deployment conditions.",
+      ),
+    },
+    {
+      name: tr(
+        "Bình Dương",
+        "Binh Duong",
+      ),
+
+      status: "Coming soon",
+
+      description: tr(
+        "Định hướng mạng lưới khu công nghiệp.",
+        "Planned industrial-zone network.",
+      ),
+    },
+    {
+      name: tr(
+        "Đồng Nai",
+        "Dong Nai",
+      ),
+
+      status: "Coming soon",
+
+      description: tr(
+        "Khảo sát nhu cầu và hạ tầng.",
+        "Assessing local needs and infrastructure.",
+      ),
+    },
+    {
+      name: tr(
+        "Gia Lai",
+        "Gia Lai",
+      ),
+
+      status: "Coming soon",
+
+      description: tr(
+        "Nghiên cứu điều kiện địa hình.",
+        "Studying local terrain conditions.",
+      ),
+    },
+    {
+      name: tr(
+        "Kiên Giang",
+        "Kien Giang",
+      ),
+
+      status: "Coming soon",
+
+      description: tr(
+        "Định hướng khu vực du lịch và biên giới.",
+        "Planned coverage for tourism and border areas.",
+      ),
+    },
+  ];
+
+  const roadmap = [
+    {
+      number: "01",
+
+      title: tr(
+        "Pilot Hà Nội",
+        "Hanoi pilot",
+      ),
+
+      description: tr(
+        "Lắp đặt prototype, xác minh khả năng thu nhận ảnh và đánh giá dữ liệu AI.",
+        "Assemble the prototype, verify image capture and evaluate AI data.",
+      ),
+    },
+    {
+      number: "02",
+
+      title: tr(
+        "Xác thực thực địa",
+        "Field validation",
+      ),
+
+      description: tr(
+        "So sánh tín hiệu MosguardX với kết quả kiểm tra chuyên môn tại địa phương.",
+        "Compare MosguardX signals with professional local assessments.",
+      ),
+    },
+    {
+      number: "03",
+
+      title: tr(
+        "Chuẩn hóa hệ thống",
+        "System standardisation",
+      ),
+
+      description: tr(
+        "Chuẩn hóa thiết bị, API, mô hình dữ liệu và quy trình vận hành.",
+        "Standardise devices, APIs, data models and operating procedures.",
+      ),
+    },
+    {
+      number: "04",
+
+      title: tr(
+        "Nhân rộng mạng lưới",
+        "Network expansion",
+      ),
+
+      description: tr(
+        "Triển khai theo tỉnh, khu vực và mạng lưới đối tác.",
+        "Expand through provinces, regions and partner networks.",
+      ),
+    },
+  ];
+
   return (
     <PublicShell>
       <main>
@@ -116,21 +192,25 @@ export default function ExpansionPage() {
           <div className="relative mx-auto max-w-7xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/10 px-4 py-2 text-[10px] font-bold tracking-[0.18em] text-emerald-300">
               <Globe2 size={14} />
-              LỘ TRÌNH MỞ RỘNG
+
+              {tr(
+                "LỘ TRÌNH MỞ RỘNG",
+                "EXPANSION ROADMAP",
+              )}
             </span>
 
             <h1 className="mt-7 max-w-5xl text-4xl font-bold tracking-tight md:text-6xl">
-              Bắt đầu tại Hà Nội, hướng
-              tới mạng lưới Việt Nam và
-              Đông Dương.
+              {tr(
+                "Bắt đầu tại Hà Nội, hướng tới mạng lưới Việt Nam và Đông Dương.",
+                "Starting in Hanoi, expanding toward a Vietnam and Indochina network.",
+              )}
             </h1>
 
             <p className="mt-6 max-w-3xl text-base leading-8 text-slate-300">
-              MosguardX được thiết kế
-              theo mô hình dữ liệu đa
-              cấp, từ trạm, quận huyện,
-              tỉnh thành đến mạng lưới
-              khu vực.
+              {tr(
+                "MosguardX được thiết kế theo mô hình dữ liệu đa cấp, từ trạm, quận huyện, tỉnh thành đến mạng lưới khu vực.",
+                "MosguardX is designed around a multi-level data model, from individual stations and districts to provinces and regional networks.",
+              )}
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -138,7 +218,11 @@ export default function ExpansionPage() {
                 href="#vietnam-map"
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-400 px-5 py-3.5 text-sm font-bold text-[#10251f]"
               >
-                Xem bản đồ Việt Nam
+                {tr(
+                  "Xem bản đồ Việt Nam",
+                  "View Vietnam map",
+                )}
+
                 <ArrowRight size={17} />
               </a>
 
@@ -146,22 +230,23 @@ export default function ExpansionPage() {
                 href="/map"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-5 py-3.5 text-sm font-bold text-white"
               >
-                Mở bản đồ vận hành
+                {tr(
+                  "Mở bản đồ vận hành",
+                  "Open operations map",
+                )}
               </Link>
             </div>
 
             <p className="mt-7 max-w-3xl rounded-xl border border-amber-300/15 bg-amber-300/10 p-4 text-xs leading-6 text-amber-100">
-              Các địa phương có trạng thái
-              “Coming soon” chỉ thể hiện
-              định hướng nghiên cứu và mở
-              rộng, không ngụ ý MosguardX
-              đã triển khai thiết bị hoặc
-              ký kết hợp đồng tại đó.
+              {tr(
+                "Các địa phương có trạng thái “Coming soon” chỉ thể hiện định hướng nghiên cứu và mở rộng, không ngụ ý MosguardX đã triển khai thiết bị hoặc ký kết hợp đồng tại đó.",
+                "Locations marked “Coming soon” represent research and expansion plans only. They do not imply that MosguardX has deployed devices or signed contracts there.",
+              )}
             </p>
           </div>
         </section>
 
-        {/* Bản đồ thật */}
+        {/* Geographic map */}
         <section
           id="vietnam-map"
           className="bg-white py-20"
@@ -170,22 +255,24 @@ export default function ExpansionPage() {
             <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
               <div className="max-w-3xl">
                 <p className="text-xs font-bold tracking-[0.18em] text-emerald-700">
-                  VIỆT NAM VÀ BIỂN ĐẢO
+                  {tr(
+                    "VIỆT NAM VÀ BIỂN ĐẢO",
+                    "VIETNAM AND ITS ISLANDS",
+                  )}
                 </p>
 
                 <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#16352a] md:text-4xl">
-                  Bản đồ địa lý cho lộ
-                  trình phát triển
-                  MosguardX.
+                  {tr(
+                    "Bản đồ địa lý cho lộ trình phát triển MosguardX.",
+                    "A geographic map for the MosguardX expansion roadmap.",
+                  )}
                 </h2>
 
                 <p className="mt-4 text-sm leading-7 text-slate-600">
-                  Bản đồ hiển thị các trạm
-                  minh họa tại Hà Nội, các
-                  địa phương nằm trong định
-                  hướng mở rộng và vị trí
-                  hai quần đảo Hoàng Sa,
-                  Trường Sa của Việt Nam.
+                  {tr(
+                    "Bản đồ hiển thị các trạm minh họa tại Hà Nội, các địa phương nằm trong định hướng mở rộng và vị trí hai quần đảo Hoàng Sa, Trường Sa của Việt Nam.",
+                    "The map displays illustrative stations in Hanoi, planned expansion locations and the positions of Vietnam’s Hoang Sa and Truong Sa archipelagos.",
+                  )}
                 </p>
               </div>
 
@@ -193,7 +280,10 @@ export default function ExpansionPage() {
                 href="/map"
                 className="inline-flex h-fit items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-700"
               >
-                Xem dashboard bản đồ
+                {tr(
+                  "Xem dashboard bản đồ",
+                  "Open map dashboard",
+                )}
 
                 <ArrowRight size={17} />
               </Link>
@@ -208,20 +298,23 @@ export default function ExpansionPage() {
 
                   <div>
                     <h3 className="text-sm font-bold text-[#16352a]">
-                      MosguardX Expansion
-                      Map
+                      MosguardX Expansion Map
                     </h3>
 
                     <p className="mt-1 text-xs text-slate-500">
-                      Kéo, phóng to hoặc
-                      sử dụng nút chuyển
-                      nhanh trên bản đồ
+                      {tr(
+                        "Kéo, phóng to hoặc sử dụng nút chuyển nhanh trên bản đồ",
+                        "Drag, zoom or use the quick-navigation buttons",
+                      )}
                     </p>
                   </div>
                 </div>
 
                 <span className="h-fit rounded-full bg-amber-50 px-3 py-1.5 text-[10px] font-bold text-amber-700">
-                  LỘ TRÌNH MINH HỌA
+                  {tr(
+                    "LỘ TRÌNH MINH HỌA",
+                    "ILLUSTRATIVE ROADMAP",
+                  )}
                 </span>
               </div>
 
@@ -231,19 +324,22 @@ export default function ExpansionPage() {
                   selectedId=""
                   multiplier={1}
                   showDensity={false}
-                  onSelect={() => undefined}
+                  onSelect={() => {}}
                 />
 
                 <div className="pointer-events-none absolute bottom-7 right-4 z-[500] max-w-[280px] rounded-xl bg-[#10251f]/95 p-4 text-xs leading-5 text-white shadow-xl">
                   <strong className="text-emerald-300">
-                    Phạm vi MVP
+                    {tr(
+                      "Phạm vi MVP",
+                      "MVP scope",
+                    )}
                   </strong>
 
                   <p className="mt-1 text-slate-300">
-                    Hà Nội là điểm pilot.
-                    Các trạm và số liệu
-                    đang hiển thị là dữ
-                    liệu minh họa.
+                    {tr(
+                      "Hà Nội là điểm pilot. Các trạm và số liệu đang hiển thị là dữ liệu minh họa.",
+                      "Hanoi is the pilot location. The displayed stations and metrics are illustrative.",
+                    )}
                   </p>
                 </div>
               </div>
@@ -252,36 +348,40 @@ export default function ExpansionPage() {
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                 <p className="text-xs font-bold text-emerald-800">
-                  Hoàng Sa và Trường Sa
+                  {tr(
+                    "Hoàng Sa và Trường Sa",
+                    "Hoang Sa and Truong Sa",
+                  )}
                 </p>
 
                 <p className="mt-2 text-xs leading-5 text-emerald-700">
-                  Marker thể hiện vị trí
-                  tương đối của hai quần
-                  đảo Việt Nam, không đại
-                  diện cho đường biên giới
-                  hoặc ranh giới hàng hải.
+                  {tr(
+                    "Marker thể hiện vị trí tương đối của hai quần đảo Việt Nam, không đại diện cho đường biên giới hoặc ranh giới hàng hải.",
+                    "Markers show the approximate positions of the two Vietnamese archipelagos and do not represent national or maritime boundaries.",
+                  )}
                 </p>
               </div>
 
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                 <p className="text-xs font-bold text-amber-800">
-                  Trạng thái dữ liệu
+                  {tr(
+                    "Trạng thái dữ liệu",
+                    "Data status",
+                  )}
                 </p>
 
                 <p className="mt-2 text-xs leading-5 text-amber-700">
-                  Nền bản đồ và tọa độ là
-                  dữ liệu địa lý. Mạng
-                  lưới trạm và kế hoạch
-                  mở rộng hiện là dữ liệu
-                  trình diễn.
+                  {tr(
+                    "Nền bản đồ và tọa độ là dữ liệu địa lý. Mạng lưới trạm và kế hoạch mở rộng hiện là dữ liệu trình diễn.",
+                    "The basemap and coordinates are geographic data. The station network and expansion plan are currently illustrative.",
+                  )}
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Danh sách địa phương */}
+        {/* Locations */}
         <section className="bg-[#f3f7f5] py-20">
           <div className="mx-auto grid max-w-7xl gap-10 px-5 md:px-8 lg:grid-cols-[0.85fr_1.15fr]">
             <div>
@@ -291,20 +391,24 @@ export default function ExpansionPage() {
               />
 
               <p className="mt-6 text-xs font-bold tracking-[0.18em] text-emerald-700">
-                TRẠNG THÁI THEO ĐỊA PHƯƠNG
+                {tr(
+                  "TRẠNG THÁI THEO ĐỊA PHƯƠNG",
+                  "STATUS BY LOCATION",
+                )}
               </p>
 
               <h2 className="mt-3 text-3xl font-bold text-[#16352a]">
-                Một điểm pilot và năm địa
-                phương định hướng.
+                {tr(
+                  "Một điểm pilot và năm địa phương định hướng.",
+                  "One pilot and five planned locations.",
+                )}
               </h2>
 
               <p className="mt-4 text-sm leading-7 text-slate-600">
-                Mỗi địa phương cần được
-                khảo sát về sinh thái,
-                hạ tầng, đối tác y tế và
-                điều kiện vận hành trước
-                khi triển khai.
+                {tr(
+                  "Mỗi địa phương cần được khảo sát về sinh thái, hạ tầng, đối tác y tế và điều kiện vận hành trước khi triển khai.",
+                  "Each location requires ecological, infrastructure, healthcare-partner and operational assessments before deployment.",
+                )}
               </p>
             </div>
 
@@ -354,13 +458,17 @@ export default function ExpansionPage() {
           <div className="mx-auto max-w-7xl px-5 md:px-8">
             <div className="max-w-3xl">
               <p className="text-xs font-bold tracking-[0.18em] text-emerald-700">
-                LỘ TRÌNH NHÂN RỘNG
+                {tr(
+                  "LỘ TRÌNH NHÂN RỘNG",
+                  "SCALING ROADMAP",
+                )}
               </p>
 
               <h2 className="mt-3 text-3xl font-bold text-[#16352a] md:text-4xl">
-                Phát triển theo bằng chứng,
-                không mở rộng chỉ bằng giả
-                định.
+                {tr(
+                  "Phát triển theo bằng chứng, không mở rộng chỉ bằng giả định.",
+                  "Evidence-led development, not assumption-led expansion.",
+                )}
               </h2>
             </div>
 
@@ -391,7 +499,7 @@ export default function ExpansionPage() {
           </div>
         </section>
 
-        {/* Đông Dương */}
+        {/* Indochina */}
         <section className="bg-[#12352b] py-20 text-white">
           <div className="mx-auto grid max-w-7xl gap-10 px-5 md:px-8 lg:grid-cols-2 lg:items-center">
             <div>
@@ -405,44 +513,61 @@ export default function ExpansionPage() {
               </p>
 
               <h2 className="mt-3 text-4xl font-bold">
-                Một chuẩn dữ liệu có thể
-                thích nghi theo từng vùng.
+                {tr(
+                  "Một chuẩn dữ liệu có thể thích nghi theo từng vùng.",
+                  "A data standard adaptable to each region.",
+                )}
               </h2>
             </div>
 
             <div className="space-y-5 text-sm leading-7 text-slate-300">
               <p>
-                Sau giai đoạn xác thực tại
-                Việt Nam, MosguardX định
-                hướng hợp tác nghiên cứu và
-                thí điểm tại Lào, Campuchia.
+                {tr(
+                  "Sau giai đoạn xác thực tại Việt Nam, MosguardX định hướng hợp tác nghiên cứu và thí điểm tại Lào, Campuchia.",
+                  "After validation in Vietnam, MosguardX aims to pursue research partnerships and pilots in Laos and Cambodia.",
+                )}
               </p>
 
               <p>
-                Mọi bước mở rộng phụ thuộc
-                vào đối tác y tế, điều kiện
-                sinh thái địa phương, khả
-                năng vận hành thiết bị và
-                bằng chứng thực địa.
+                {tr(
+                  "Mọi bước mở rộng phụ thuộc vào đối tác y tế, điều kiện sinh thái địa phương, khả năng vận hành thiết bị và bằng chứng thực địa.",
+                  "Every expansion step depends on healthcare partners, local ecology, device-operating capacity and field evidence.",
+                )}
               </p>
 
               <div className="flex flex-wrap items-center gap-3 pt-2 text-xs font-bold text-emerald-300">
                 <span className="flex items-center gap-2">
                   <CircleDot size={15} />
+
                   Pilot
                 </span>
 
                 <ArrowRight size={15} />
 
-                <span>Xác thực</span>
+                <span>
+                  {tr(
+                    "Xác thực",
+                    "Validate",
+                  )}
+                </span>
 
                 <ArrowRight size={15} />
 
-                <span>Chuẩn hóa</span>
+                <span>
+                  {tr(
+                    "Chuẩn hóa",
+                    "Standardise",
+                  )}
+                </span>
 
                 <ArrowRight size={15} />
 
-                <span>Nhân rộng</span>
+                <span>
+                  {tr(
+                    "Nhân rộng",
+                    "Scale",
+                  )}
+                </span>
               </div>
             </div>
           </div>
@@ -461,8 +586,10 @@ export default function ExpansionPage() {
               </div>
 
               <h2 className="mt-3 text-2xl font-bold text-[#10251f]">
-                Khám phá trung tâm điều
-                hành thí điểm tại Hà Nội.
+                {tr(
+                  "Khám phá trung tâm điều hành thí điểm tại Hà Nội.",
+                  "Explore the pilot operations centre in Hanoi.",
+                )}
               </h2>
             </div>
 
@@ -470,7 +597,10 @@ export default function ExpansionPage() {
               href="/dashboard"
               className="inline-flex h-fit items-center gap-2 rounded-xl bg-[#10251f] px-5 py-3.5 text-sm font-bold text-white"
             >
-              Mở Dashboard
+              {tr(
+                "Mở Dashboard",
+                "Open Dashboard",
+              )}
 
               <ArrowRight size={17} />
             </Link>
