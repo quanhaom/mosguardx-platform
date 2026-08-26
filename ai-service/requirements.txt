@@ -4,3 +4,4 @@ ultralytics==8.4.120
 python-multipart==0.0.20
 pydantic-settings==2.10.1
 pillow==11.3.0
+supabase==2.31.0
