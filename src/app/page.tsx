@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -805,102 +806,102 @@ function LandingContent() {
           </div>
         </section>
 
-        {/* AI */}
-        <section
-          id="ai"
-          className="scroll-mt-20 bg-[#0f2c24] py-20 text-white"
-        >
-          <div className="mx-auto grid max-w-7xl gap-10 px-5 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-            <div>
-              <SectionHeading
-                eyebrow={t("AI NHẬN DIỆN", "AI RECOGNITION")}
-                title={t(
-                  "Không chỉ tìm bounding box, mà còn tạo một bản ghi có thể xác minh.",
-                  "Not just bounding boxes, but verifiable records.",
-                )}
-                description={t(
-                  "Mỗi phát hiện đi kèm nhóm loài, độ tin cậy, thời gian, trạm và mã theo dõi. Trường hợp dưới ngưỡng được đưa vào hàng chờ kiểm tra thủ công.",
-                  "Each detection includes species group, confidence score, timestamp, station, and tracking ID. Low-confidence cases are queued for manual review.",
-                )}
-                inverted
-              />
+      {/* AI */}
+      <section
+        id="ai"
+        className="scroll-mt-32 bg-[#0f2c24] py-20 text-white"
+      >
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div>
+            <SectionHeading
+              eyebrow={t("AI NHẬN DIỆN", "AI RECOGNITION")}
+              title={t(
+                "Không chỉ tìm bounding box, mà còn tạo một bản ghi có thể xác minh.",
+                "Not just bounding boxes, but verifiable records.",
+              )}
+              description={t(
+                "Mỗi phát hiện đi kèm nhóm loài, độ tin cậy, thời gian, trạm và mã theo dõi. Trường hợp dưới ngưỡng được đưa vào hàng chờ kiểm tra thủ công.",
+                "Each detection includes species group, confidence score, timestamp, station, and tracking ID. Low-confidence cases are queued for manual review.",
+              )}
+              inverted
+            />
 
-              <div className="mt-7 space-y-3">
-                {[
-                  t(
-                    "Bounding box và phân loại nhóm loài",
-                    "Bounding boxes and species-group classification",
-                  ),
-                  t(
-                    "Theo dõi cá thể để hạn chế đếm trùng",
-                    "Individual tracking to reduce duplicate counting",
-                  ),
-                  t(
-                    "Lưu ảnh gốc phục vụ quá trình xác minh",
-                    "Original image storage for verification",
-                  ),
-                  t(
-                    "API tích hợp với dashboard và hệ thống đối tác",
-                    "API integration with dashboards and partner systems",
-                  ),
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-start gap-3 text-sm text-slate-200"
-                  >
-                    <CheckCircle2
-                      className="mt-0.5 shrink-0 text-emerald-300"
-                      size={18}
-                    />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <p className="mt-7 rounded-2xl border border-amber-300/15 bg-amber-300/10 p-4 text-xs leading-6 text-amber-100">
-                {t(
-                  "AI hỗ trợ giám sát côn trùng; kết quả không phải chẩn đoán bệnh hoặc kết luận dịch tễ độc lập.",
-                  "AI supports insect monitoring; its output is not a medical diagnosis or an independent epidemiological conclusion.",
-                )}
-              </p>
+            <div className="mt-7 space-y-3">
+              {[
+                t(
+                  "Bounding box và phân loại nhóm loài",
+                  "Bounding boxes and species-group classification",
+                ),
+                t(
+                  "Theo dõi cá thể để hạn chế đếm trùng",
+                  "Individual tracking to reduce duplicate counting",
+                ),
+                t(
+                  "Lưu ảnh gốc phục vụ quá trình xác minh",
+                  "Original image storage for verification",
+                ),
+                t(
+                  "API tích hợp với dashboard và hệ thống đối tác",
+                  "API integration with dashboards and partner systems",
+                ),
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-start gap-3 text-sm text-slate-200"
+                >
+                  <CheckCircle2
+                    className="mt-0.5 shrink-0 text-emerald-300"
+                    size={18}
+                  />
+                  <span>{item}</span>
+                </div>
+              ))}
             </div>
 
-            <div className="rounded-[30px] border border-white/10 bg-black/20 p-4 shadow-2xl">
-              <div className="flex items-center justify-between px-2 pb-4">
-                <div className="flex items-center gap-2 text-xs font-bold text-emerald-300">
-                  <BrainCircuit size={17} />
-                  AI INFERENCE VIEW
-                </div>
+            <p className="mt-7 rounded-2xl border border-amber-300/15 bg-amber-300/10 p-4 text-xs leading-6 text-amber-100">
+              {t(
+                "AI hỗ trợ giám sát côn trùng; kết quả không phải chẩn đoán bệnh hoặc kết luận dịch tễ độc lập.",
+                "AI supports insect monitoring; its output is not a medical diagnosis or an independent epidemiological conclusion.",
+              )}
+            </p>
+          </div>
 
-                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-400" />
+          {/* Ảnh kết quả AI */}
+          <div className="rounded-[30px] border border-white/10 bg-black/20 p-4 shadow-2xl">
+            <div className="flex items-center justify-between px-2 pb-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-300">
+                <BrainCircuit size={17} />
+                AI INFERENCE VIEW
               </div>
 
-              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 bg-[#071813]">
-                <div className="absolute inset-[18%_20%_20%_16%] border-2 border-emerald-300">
-                  <span className="absolute -top-7 left-[-2px] bg-emerald-300 px-2 py-1 text-[10px] font-bold text-[#10251f]">
-                    {t(
-                      "Nhóm loài · độ tin cậy",
-                      "Species group · confidence",
-                    )}
-                  </span>
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-400" />
+            </div>
 
-                  <span className="absolute -bottom-7 right-[-2px] bg-white/10 px-2 py-1 text-[9px] font-bold text-emerald-100">
-                    TRACK ID · —
-                  </span>
-                </div>
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 bg-[#071813]">
+              <Image
+                src="/images/ai-inference-result.png"
+                alt={t(
+                  "Kết quả AI nhận diện và phân loại muỗi của MosguardX",
+                  "MosguardX AI mosquito detection and classification result",
+                )}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-contain"
+              />
 
-                <div className="absolute inset-x-0 bottom-6 text-center">
-                  <span className="rounded-full border border-white/10 bg-black/40 px-4 py-2 text-[10px] font-bold tracking-[0.12em] text-slate-300">
-                    {t(
-                      "THAY BẰNG ẢNH INFERENCE THỰC TẾ",
-                      "REPLACE WITH REAL INFERENCE IMAGE",
-                    )}
-                  </span>
-                </div>
+              <div className="absolute inset-x-0 bottom-4 flex justify-center px-4">
+                <span className="rounded-full border border-white/10 bg-[#071813]/85 px-4 py-2 text-[10px] font-bold tracking-[0.1em] text-emerald-200 shadow-lg backdrop-blur">
+                  {t(
+                    "KẾT QUẢ INFERENCE THỰC TẾ",
+                    "REAL INFERENCE RESULT",
+                  )}
+                </span>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
         {/* DEMO */}
         <section
