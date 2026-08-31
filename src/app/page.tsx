@@ -714,12 +714,28 @@ function LandingContent() {
                     <RadioTower size={42} />
                   </span>
 
-                  <h3 className="mt-7 text-2xl font-bold text-[#16352a]">
-                    {t(
-                      "HÌNH ẢNH THIẾT BỊ HOÀN THIỆN",
-                      "FINAL DEVICE IMAGE",
-                    )}
-                  </h3>
+                  <div className="mt-7">
+                    <h3 className="text-2xl font-bold text-[#16352a]">
+                      {t(
+                        "HÌNH ẢNH THIẾT BỊ HOÀN THIỆN",
+                        "FINAL DEVICE IMAGE",
+                      )}
+                    </h3>
+
+                    <div className="relative mt-5 aspect-[4/3] w-full overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-lg">
+                      <Image
+                        src="/images/camvan.jpg"
+                        alt={t(
+                          "Thiết bị MosGuardX hoàn thiện",
+                          "Final MosGuardX device",
+                        )}
+                        fill
+                        priority
+                        sizes="(max-width: 768px) 100vw, 900px"
+                        className="object-contain p-4"
+                      />
+                    </div>
+                  </div>
 
                   <p className="mt-3 text-sm leading-7 text-slate-600">
                     {t(
@@ -1429,8 +1445,8 @@ function LandingContent() {
               [
                 "Trần Thị Cẩm Vân <3 ",
                 t(
-                  "AI, IoT và nền tảng",
-                  "AI, IoT, and platform",
+                  "Trưởng nhóm",
+                  "Leader",
                 ),
               ],
               [
