@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Cpu, Search } from "lucide-react";
-import { useLanguage } from "@/components/i18n/language-context";
+import { Cpu, Droplets, Search, Thermometer } from "lucide-react";
 import PageIntro from "@/components/ui/page-intro";
-import { stations } from "@/data/mock-data";
+import { useStations } from "@/hooks/use-stations";
 
 export default function DevicesPage() {
-  const { language, tr } = useLanguage();
   const [query, setQuery] = useState("");
+  const { stations, source, loading } = useStations();
 
   const devices = stations.filter((station) =>
     `${station.id} ${station.name} ${station.district}`
@@ -19,28 +18,30 @@ export default function DevicesPage() {
   return (
     <div>
       <PageIntro
-        eyebrow={tr("MẠNG LƯỚI IOT", "IOT NETWORK")}
-        title={tr("Quản lý thiết bị", "Device management")}
-        description={tr(
-          "Theo dõi trạng thái kết nối, pin và dữ liệu gần nhất của các trạm MosguardX.",
-          "Monitor connectivity, battery levels, and the latest data from MosguardX stations.",
-        )}
+        eyebrow="MẠNG LƯỚI IOT"
+        title="Quản lý thiết bị"
+        description="Theo dõi trạng thái kết nối, pin và dữ liệu gần nhất của các trạm MosguardX."
         action={
           <button className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white">
-            {tr("+ Thêm thiết bị", "+ Add device")}
+            + Thêm thiết bị
           </button>
         }
       />
+
+      <div className={`mb-5 rounded-xl border px-4 py-3 text-xs font-semibold ${source === "live" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+        {loading
+          ? "Đang đồng bộ dữ liệu cảm biến..."
+          : source === "live"
+            ? "Dữ liệu trực tiếp từ các trạm · tự cập nhật mỗi 30 giây"
+            : "Chưa kết nối được dữ liệu trạm thật; nhiệt độ và độ ẩm chưa khả dụng."}
+      </div>
 
       <label className="mb-5 flex max-w-md items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
         <Search size={18} className="text-slate-400" />
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder={tr(
-            "Tìm theo mã hoặc khu vực...",
-            "Search by ID or area...",
-          )}
+          placeholder="Tìm theo mã hoặc khu vực..."
           className="w-full bg-transparent text-sm outline-none"
         />
       </label>
@@ -62,46 +63,42 @@ export default function DevicesPage() {
                     : "bg-slate-100 text-slate-500"
                 }`}
               >
-                {station.online
-                  ? tr("Trực tuyến", "Online")
-                  : tr("Mất kết nối", "Offline")}
+                {station.online ? "Trực tuyến" : "Mất kết nối"}
               </span>
             </div>
 
             <h3 className="mt-5 font-bold text-[#16352a]">{station.id}</h3>
-            <p className="text-sm text-slate-500">
-              {language === "en"
-                ? station.name.replace(/^Trạm\s+/, "") + " Station"
-                : station.name}
-            </p>
+            <p className="text-sm text-slate-500">{station.name}</p>
 
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">
-                  {tr("Pin", "Battery")}
-                </p>
+                <p className="text-xs text-slate-500">Pin</p>
                 <strong>{station.battery}%</strong>
               </div>
               <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-slate-500">
-                  {tr("Muỗi / 24h", "Mosquitoes / 24h")}
-                </p>
+                <p className="text-xs text-slate-500">Muỗi / 24h</p>
                 <strong>{station.mosquitoCount}</strong>
+              </div>
+              <div className="rounded-xl bg-orange-50 p-3">
+                <p className="flex items-center gap-1.5 text-xs text-orange-700"><Thermometer size={14} />Nhiệt độ</p>
+                <strong>{station.temperature == null ? "--" : `${station.temperature.toFixed(1)} °C`}</strong>
+              </div>
+              <div className="rounded-xl bg-blue-50 p-3">
+                <p className="flex items-center gap-1.5 text-xs text-blue-700"><Droplets size={14} />Độ ẩm</p>
+                <strong>{station.humidity == null ? "--" : `${station.humidity.toFixed(1)}%`}</strong>
               </div>
             </div>
 
+            <p className="mt-3 text-[11px] text-slate-400">
+              Cảm biến cập nhật: {station.environmentUpdatedAt ?? station.lastSeen}
+            </p>
+
             <button className="mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-xs font-bold text-slate-600">
-              {tr("Xem chi tiết", "View details")}
+              Xem chi tiết
             </button>
           </article>
         ))}
       </section>
-
-      {devices.length === 0 && (
-        <div className="rounded-2xl border border-[#dce8e2] bg-white p-12 text-center text-sm text-slate-500">
-          {tr("Không tìm thấy thiết bị.", "No devices found.")}
-        </div>
-      )}
     </div>
   );
 }
