@@ -61,7 +61,7 @@ const presentationSections = [
   { id: "business", vi: "Kinh doanh", en: "Business" },
   { id: "expansion", vi: "Mở rộng", en: "Expansion" },
   { id: "team", vi: "Đội ngũ", en: "Team" },
-  { id: "product", vi: "Sản phẩm", en: "Product" },
+  { id: "product-3d", vi: "Sản phẩm", en: "Product" },
 ];
 
 const systemSteps: Card[] = [
