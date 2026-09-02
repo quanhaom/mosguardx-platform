@@ -1117,107 +1117,144 @@ function LandingContent() {
                     </p>
                   </div>
 
+                  <h3 className="mt-3 text-2xl font-bold text-[#4a3510]">
+                    {t(
+                      "Hình ảnh và dữ liệu minh chứng thực nghiệm",
+                      "Experiment evidence and records",
+                    )}
+                  </h3>
+
                   <p className="mt-3 text-sm leading-7 text-amber-950/70">
+                    {t(
+                      "Các hình ảnh dưới đây ghi lại bố trí hiện trường, dữ liệu thô và kết quả xác minh trong quá trình đánh giá MosGuardX.",
+                      "The images below document the field setup, raw data, and validation results collected during the MosGuardX evaluation.",
+                    )}
                   </p>
                 </div>
-
-                <span className="h-fit rounded-full bg-amber-200 px-4 py-2 text-[10px] font-bold tracking-[0.12em] text-amber-900">
-                  {t(
-                    "CHỜ DỮ LIỆU THỰC NGHIỆM",
-                    "AWAITING EXPERIMENT DATA",
-                  )}
-                </span>
               </div>
-
 
               <figure className="mt-7 overflow-hidden rounded-2xl border border-amber-300/50 bg-white shadow-sm">
-              <div className="relative aspect-video w-full bg-amber-100">
-                <Image
-                  src="/images/experiment-session-01.jpg"
-                  alt={t(
-                    "Bố trí thực nghiệm dẫn dụ muỗi MosGuardX",
-                    "MosGuardX mosquito-attraction experiment setup",
-                  )}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 1200px"
-                  className="object-cover"
-                />
+                <div className="relative aspect-video w-full bg-amber-100">
+                  <Image
+                    src="/images/experiment-session-01.jpg"
+                    alt={t(
+                      "Bố trí thực nghiệm dẫn dụ muỗi MosGuardX",
+                      "MosGuardX mosquito-attraction experiment setup",
+                    )}
+                    fill
+                    priority={false}
+                    sizes="(max-width: 768px) 100vw, 1200px"
+                    className="object-cover"
+                  />
 
-                <span className="absolute left-4 top-4 rounded-full bg-black/65 px-3 py-1.5 text-[10px] font-bold tracking-[0.12em] text-white backdrop-blur">
-                  {t("ẢNH THỰC NGHIỆM", "EXPERIMENT PHOTO")}
-                </span>
-              </div>
+                  <span className="absolute left-4 top-4 rounded-full bg-black/65 px-3 py-1.5 text-[10px] font-bold tracking-[0.12em] text-white backdrop-blur">
+                    {t("ẢNH THỰC NGHIỆM", "EXPERIMENT PHOTO")}
+                  </span>
+                </div>
 
-              <figcaption className="flex flex-col justify-between gap-2 px-5 py-4 text-xs leading-5 text-amber-950/70 sm:flex-row">
-                <span>
-                  {t(
-                    "Bố trí camera, thiết bị và mồi dẫn dụ trong phiên thử nghiệm.",
-                    "Camera, device, and attractant setup during the experiment.",
-                  )}
-                </span>
+                <figcaption className="flex flex-col justify-between gap-2 px-5 py-4 text-xs leading-5 text-amber-950/70 sm:flex-row">
+                  <span>
+                    {t(
+                      "Bố trí camera, thiết bị và mồi dẫn dụ trong phiên thử nghiệm.",
+                      "Camera, device, and attractant setup during the experiment.",
+                    )}
+                  </span>
 
-                <strong className="shrink-0 text-amber-800">
-                  {t("Phiên 01", "Session 01")}
-                </strong>
-              </figcaption>
-            </figure>
+                  <strong className="shrink-0 text-amber-800">
+                    {t("Phiên 01", "Session 01")}
+                  </strong>
+                </figcaption>
+              </figure>
+
               <div className="mt-7 grid gap-4 md:grid-cols-3">
                 {[
-                  {
-                    icon: Camera,
-                    title: t(
-                      "Ảnh hiện trường",
-                      "Field images",
-                    ),
-                    description: t(
-                      "Ảnh bố trí bẫy, mã trạm và điều kiện thử nghiệm.",
-                      "Trap setup images, station ID, and experimental conditions.",
-                    ),
-                  },
-                  {
-                    icon: Database,
-                    title: t(
-                      "Dữ liệu thô",
-                      "Raw data",
-                    ),
-                    description: t(
-                      "Số trap-night, mẫu hợp lệ, số mẫu và biên bản đếm.",
-                      "Trap-nights, valid samples, specimen counts, and counting records.",
-                    ),
-                  },
-                  {
-                    icon: ShieldCheck,
-                    title: t(
-                      "Kết quả xác minh",
-                      "Validation results",
-                    ),
-                    description: t(
-                      "Loài, giới tính hoặc nhóm loài do chuyên gia xác nhận.",
-                      "Species, sex, or species group confirmed by specialists.",
-                    ),
-                  },
+              {
+                icon: Camera,
+                image: "/images/real.jpg",
+                alt: t(
+                  "Ảnh hiện trường bố trí bẫy MosGuardX",
+                  "MosGuardX trap field setup",
+                ),
+                title: t(
+                  "Ảnh hiện trường",
+                  "Field images",
+                ),
+                description: t(
+                  "Bố trí thiết bị, camera, vị trí mồi và điều kiện trong phiên thực nghiệm.",
+                  "Device, camera, attractant position, and conditions during the experiment.",
+                ),
+              },
+              {
+                icon: Database,
+                image: "/images/data.jpg",
+                alt: t(
+                  "Bảng dữ liệu thô của phiên thực nghiệm",
+                  "Raw experiment data table",
+                ),
+                title: t(
+                  "Dữ liệu thô",
+                  "Raw data",
+                ),
+                description: t(
+                  "Số cá thể ghi nhận, thời điểm xuất hiện và kết quả đếm theo từng loại mồi.",
+                  "Recorded individuals, appearance times, and counts for each attractant.",
+                ),
+              },
+              {
+                icon: ShieldCheck,
+                image: "/images/sample.png",
+                alt: t(
+                  "Kết quả xác minh mẫu muỗi",
+                  "Mosquito specimen validation results",
+                ),
+                title: t(
+                  "Kết quả xác minh",
+                  "Validation results",
+                ),
+                description: t(
+                  "Ảnh mẫu, loài hoặc nhóm loài được đối chiếu với kết quả nhận diện của AI.",
+                  "Specimen images and species groups compared with AI recognition results.",
+                ),
+              },
                 ].map(
-                  ({ icon: Icon, title, description }) => (
+                  ({
+                    icon: Icon,
+                    image,
+                    alt,
+                    title,
+                    description,
+                  }) => (
                     <article
                       key={title}
-                      className="min-h-44 rounded-2xl border border-dashed border-amber-400/70 bg-white/70 p-5"
+                      className="group overflow-hidden rounded-2xl border border-amber-300/60 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
                     >
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
-                        <Icon size={19} />
-                      </span>
+                      <div className="relative aspect-[4/3] w-full overflow-hidden bg-amber-100">
+                        <Image
+                          src={image}
+                          alt={alt}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover transition duration-500 "
+                        />
 
-                      <h4 className="mt-4 font-bold text-[#4a3510]">
-                        {title}
-                      </h4>
+                        <span className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-black/60 text-amber-200 backdrop-blur">
+                          <Icon size={18} />
+                        </span>
+                      </div>
 
-                      <p className="mt-2 text-xs leading-5 text-amber-950/65">
-                        {description}
-                      </p>
+                      <div className="p-5">
+                        <h4 className="font-bold text-[#4a3510]">
+                          {title}
+                        </h4>
+
+                        <p className="mt-2 text-xs leading-5 text-amber-950/65">
+                          {description}
+                        </p>
+                      </div>
                     </article>
                   ),
                 )}
               </div>
-            </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
@@ -1256,6 +1293,7 @@ function LandingContent() {
                 </article>
               ))}
             </div>
+          </div>
           </div>
         </section>
 
