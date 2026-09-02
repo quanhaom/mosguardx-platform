@@ -111,8 +111,17 @@ async def lifespan(app: FastAPI):
         app.state.store = store
 
         store.ensure_model(
-            settings.resolved_model_path
+            settings.resolved_model_path,
+            settings.model_storage_bucket,
+            settings.model_storage_path,
         )
+
+        if settings.classifier_enabled:
+            store.ensure_model(
+                settings.resolved_classifier_path,
+                settings.classifier_storage_bucket,
+                settings.classifier_storage_path,
+            )
 
         logger.info("Supabase backend is ready")
     except Exception as exc:
@@ -127,7 +136,38 @@ async def lifespan(app: FastAPI):
             model_path=settings.resolved_model_path,
             image_size=settings.image_size,
             model_version=settings.model_version,
+            classifier_path=(
+                settings.resolved_classifier_path
+                if settings.classifier_enabled
+                else None
+            ),
+            classifier_image_size=(
+                settings.classifier_image_size
+            ),
+            classifier_batch_size=(
+                settings.classifier_batch_size
+            ),
+            classifier_model_version=(
+                settings.classifier_model_version
+                if settings.classifier_enabled
+                else None
+            ),
+            classifier_review_threshold=(
+                settings.classifier_review_threshold
+            ),
+            classifier_review_species=(
+                settings.classifier_review_species
+            ),
         )
+
+        if (
+            settings.classifier_enabled
+            and settings.classifier_required
+            and not app.state.detector.classifier_loaded
+        ):
+            raise RuntimeError(
+                "Worker C classifier is required but not loaded"
+            )
 
         logger.info(
             "AI model loaded: %s",
@@ -331,6 +371,22 @@ def database_detection_to_api(
         "species": str(row["species"]),
         "species_vi": row.get("species_vi"),
         "confidence": float(row["confidence"]),
+        "detector_confidence": (
+            float(row["detector_confidence"])
+            if row.get("detector_confidence") is not None
+            else None
+        ),
+        "classification_confidence": (
+            float(row["classification_confidence"])
+            if row.get("classification_confidence") is not None
+            else None
+        ),
+        "classification_model_version": row.get(
+            "classification_model_version"
+        ),
+        "review_required": bool(
+            row.get("review_required", False)
+        ),
         "bounding_box": {
             "x1": float(row["x1"]),
             "y1": float(row["y1"]),
@@ -456,6 +512,19 @@ def liveness(
         backend_connected=(
             request.app.state.store is not None
         ),
+        classifier_loaded=bool(
+            request.app.state.detector
+            and getattr(
+                request.app.state.detector,
+                "classifier_loaded",
+                False,
+            )
+        ),
+        classifier_model_version=(
+            settings.classifier_model_version
+            if settings.classifier_enabled
+            else None
+        ),
     )
 
 
@@ -482,6 +551,14 @@ def readiness(
         errors["model"] = (
             request.app.state.model_error
         )
+    elif (
+        settings.classifier_enabled
+        and settings.classifier_required
+        and not request.app.state.detector.classifier_loaded
+    ):
+        errors["classifier"] = (
+            "Worker C classifier is not loaded"
+        )
 
     if errors:
         raise HTTPException(
@@ -498,6 +575,14 @@ def readiness(
         version=settings.app_version,
         model_loaded=True,
         backend_connected=True,
+        classifier_loaded=bool(
+            request.app.state.detector.classifier_loaded
+        ),
+        classifier_model_version=(
+            settings.classifier_model_version
+            if settings.classifier_enabled
+            else None
+        ),
     )
 
 
@@ -856,6 +941,19 @@ async def create_station_observation(
                     "confidence": detection[
                         "confidence"
                     ],
+                    "detector_confidence": detection.get(
+                        "detector_confidence"
+                    ),
+                    "classification_confidence": detection.get(
+                        "classification_confidence"
+                    ),
+                    "classification_model_version": detection.get(
+                        "classification_model_version"
+                    ),
+                    "review_required": detection.get(
+                        "review_required",
+                        False,
+                    ),
                     "x1": bounding_box["x1"],
                     "y1": bounding_box["y1"],
                     "x2": bounding_box["x2"],

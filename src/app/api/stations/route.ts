@@ -93,9 +93,10 @@ export async function GET() {
   }
 
   try {
-    const [stationResult, observationResult] = await Promise.allSettled([
+    const [stationResult, observationResult, alertResult] = await Promise.allSettled([
       getJson(`${apiUrl}/v1/stations`),
       getJson(`${apiUrl}/v1/observations?limit=200`),
+      getJson(`${apiUrl}/v1/alerts?limit=200`),
     ]);
 
     if (stationResult.status === "rejected") throw stationResult.reason;
@@ -103,6 +104,9 @@ export async function GET() {
     const rawStations = listFromPayload(stationResult.value, ["stations", "items", "data"]);
     const rawObservations = observationResult.status === "fulfilled"
       ? listFromPayload(observationResult.value, ["observations", "items", "data"])
+      : [];
+    const rawAlerts = alertResult.status === "fulfilled"
+      ? listFromPayload(alertResult.value, ["alerts", "items", "data"])
       : [];
 
     const latestByStation = new Map<string, UnknownRecord>();
@@ -114,34 +118,58 @@ export async function GET() {
       }
     }
 
+    const latestAlertByStation = new Map<string, UnknownRecord>();
+    for (const item of rawAlerts) {
+      const alert = record(item);
+      if (alert.status === "resolved") continue;
+      const id = observationStationId(alert);
+      if (id && isNewer(alert, latestAlertByStation.get(id))) {
+        latestAlertByStation.set(id, alert);
+      }
+    }
+
     const metadataById = new Map(stationMetadata.map((item) => [item.id, item]));
     const stations: Station[] = rawStations.flatMap((item) => {
       const rawStation = record(item);
       const id = stationId(rawStation);
       if (!id) return [];
 
-      const metadata = metadataById.get(id) ?? stationMetadata[0];
+      const metadata = metadataById.get(id);
       const nestedLatest = record(rawStation.latest_observation ?? rawStation.latestObservation);
       const latest = Object.keys(nestedLatest).length ? nestedLatest : (latestByStation.get(id) ?? {});
+      const latestAlert = latestAlertByStation.get(id) ?? {};
       const location = record(rawStation.location);
+      const mosquitoCount = numberOrNull(
+        rawStation.mosquito_count,
+        rawStation.total_detected,
+        latest.mosquito_count,
+        latest.total_detected,
+        metadata?.mosquitoCount,
+      ) ?? 0;
+      const stationStatus = stringOrNull(rawStation.status);
 
       return [{
         id,
         name: stringOrNull(rawStation.name, metadata?.name) ?? id,
-        district: stringOrNull(rawStation.district, location.district, metadata?.district) ?? "Chưa cập nhật",
+        district: stringOrNull(rawStation.district, location.district, rawStation.address, metadata?.district) ?? "Chưa cập nhật",
         latitude: numberOrNull(rawStation.latitude, rawStation.lat, location.latitude, metadata?.latitude) ?? 21.0285,
         longitude: numberOrNull(rawStation.longitude, rawStation.lng, location.longitude, metadata?.longitude) ?? 105.8542,
-        mosquitoCount: numberOrNull(
-          rawStation.mosquito_count,
-          rawStation.total_detected,
-          latest.mosquito_count,
-          latest.total_detected,
-          metadata?.mosquitoCount,
-        ) ?? 0,
-        risk: risk(rawStation.risk ?? rawStation.risk_level, metadata?.risk ?? "low"),
-        online: typeof rawStation.online === "boolean" ? rawStation.online : (metadata?.online ?? true),
+        mosquitoCount,
+        risk: risk(
+          rawStation.risk
+            ?? rawStation.risk_level
+            ?? latest.risk
+            ?? latest.risk_level
+            ?? latestAlert.level,
+          metadata?.risk ?? "low",
+        ),
+        online: typeof rawStation.online === "boolean"
+          ? rawStation.online
+          : stationStatus
+            ? stationStatus === "online"
+            : (metadata?.online ?? false),
         battery: numberOrNull(rawStation.battery, rawStation.battery_percent, latest.battery, metadata?.battery) ?? 0,
-        lastSeen: stringOrNull(rawStation.last_seen, latest.received_at, latest.captured_at, metadata?.lastSeen) ?? "Chưa cập nhật",
+        lastSeen: stringOrNull(rawStation.last_seen_at, rawStation.last_seen, latest.received_at, latest.captured_at, metadata?.lastSeen) ?? "Chưa cập nhật",
         temperature: numberOrNull(rawStation.temperature, latest.temperature),
         humidity: numberOrNull(rawStation.humidity, latest.humidity),
         environmentUpdatedAt: stringOrNull(

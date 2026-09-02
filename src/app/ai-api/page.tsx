@@ -27,6 +27,9 @@ type ApiHealth = {
   service: string;
   version: string;
   model_loaded: boolean;
+  backend_connected?: boolean;
+  classifier_loaded?: boolean;
+  classifier_model_version?: string | null;
   detail?: string;
 };
 
@@ -42,6 +45,10 @@ type Detection = {
   class_id: number;
   species: string;
   confidence: number;
+  detector_confidence?: number | null;
+  classification_confidence?: number | null;
+  classification_model_version?: string | null;
+  review_required?: boolean;
   bounding_box: BoundingBox;
 };
 
@@ -446,21 +453,21 @@ export default function AiApiPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatusCard
           icon={Server}
-          label="Backend API"
+          label="FastAPI + Supabase"
           value={
             checking
               ? tr("Đang kiểm tra", "Checking")
-              : health
-                ? tr("Đang hoạt động", "Operational")
+              : health?.backend_connected
+                ? tr("Đã kết nối", "Connected")
                 : tr("Mất kết nối", "Disconnected")
           }
           tone={
             checking
               ? "pending"
-              : health
+              : health?.backend_connected
                 ? "success"
                 : "error"
           }
@@ -468,7 +475,7 @@ export default function AiApiPage() {
 
         <StatusCard
           icon={BrainCircuit}
-          label="Model AI"
+          label={tr("Model phát hiện", "Detection model")}
           value={
             checking
               ? tr("Đang kiểm tra", "Checking")
@@ -478,6 +485,21 @@ export default function AiApiPage() {
           }
           tone={
             health?.model_loaded ? "success" : "error"
+          }
+        />
+
+        <StatusCard
+          icon={ShieldAlert}
+          label="Worker C"
+          value={
+            checking
+              ? tr("Đang kiểm tra", "Checking")
+              : health?.classifier_loaded
+                ? tr("Đã tải classifier", "Classifier loaded")
+                : tr("Chưa sẵn sàng", "Not ready")
+          }
+          tone={
+            health?.classifier_loaded ? "success" : "error"
           }
         />
 
@@ -920,6 +942,16 @@ export default function AiApiPage() {
                                 %
                               </strong>
                             </div>
+
+                            {detection.review_required && (
+                              <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
+                                <ShieldAlert size={15} />
+                                {tr(
+                                  "Cần chuyên gia xác minh",
+                                  "Expert review required",
+                                )}
+                              </div>
+                            )}
 
                             <p className="mt-3 text-xs leading-5 text-slate-500">
                               {getSpeciesDescription(

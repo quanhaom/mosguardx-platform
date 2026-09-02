@@ -127,6 +127,15 @@ create table if not exists public.detections (
     confidence double precision not null
         check (confidence between 0 and 1),
 
+    detector_confidence double precision
+        check (detector_confidence between 0 and 1),
+
+    classification_confidence double precision
+        check (classification_confidence between 0 and 1),
+
+    classification_model_version text,
+    review_required boolean not null default false,
+
     x1 double precision not null,
     y1 double precision not null,
     x2 double precision not null,
@@ -160,6 +169,22 @@ create index if not exists
     detections_species_idx
 on public.detections (
     species
+);
+
+-- Safe migration for databases created with the first MosGuardX schema.
+alter table public.detections
+    add column if not exists detector_confidence double precision
+        check (detector_confidence between 0 and 1),
+    add column if not exists classification_confidence double precision
+        check (classification_confidence between 0 and 1),
+    add column if not exists classification_model_version text,
+    add column if not exists review_required boolean not null default false;
+
+create index if not exists
+    detections_review_required_idx
+on public.detections (
+    review_required,
+    created_at desc
 );
 
 -- =========================================================

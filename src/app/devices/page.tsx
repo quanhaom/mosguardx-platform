@@ -32,7 +32,7 @@ export default function DevicesPage() {
         {loading
           ? "Đang đồng bộ dữ liệu cảm biến..."
           : source === "live"
-            ? "Dữ liệu trực tiếp từ các trạm · tự cập nhật mỗi 30 giây"
+            ? "Dữ liệu trực tiếp từ FastAPI và Supabase · tự cập nhật mỗi 30 giây"
             : "Chưa kết nối được dữ liệu trạm thật; nhiệt độ và độ ẩm chưa khả dụng."}
       </div>
 
