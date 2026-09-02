@@ -29,6 +29,10 @@ type Detection = {
   class_id: number;
   species: string;
   confidence: number;
+  detector_confidence?: number | null;
+  classification_confidence?: number | null;
+  classification_model_version?: string | null;
+  review_required?: boolean;
   bounding_box: BoundingBox;
   normalized_bounding_box: BoundingBox;
 };
@@ -439,6 +443,13 @@ export default function DetectionPage() {
                       <p className="mt-3 text-xs text-slate-500">
                         Class ID: {detection.class_id}
                       </p>
+
+                      {detection.review_required && (
+                        <p className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
+                          <AlertCircle size={14} />
+                          Cần chuyên gia xác minh
+                        </p>
+                      )}
                     </article>
                   ),
                 )}

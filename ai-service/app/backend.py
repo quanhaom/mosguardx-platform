@@ -46,21 +46,30 @@ class BackendStore:
     # MODEL STORAGE
     # =====================================================
 
-    def ensure_model(self, local_path: Path) -> Path:
+    def ensure_model(
+        self,
+        local_path: Path,
+        storage_bucket: str | None = None,
+        storage_path: str | None = None,
+    ) -> Path:
         if local_path.is_file() and local_path.stat().st_size > 0:
             return local_path
 
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
+        bucket = storage_bucket or self.settings.model_storage_bucket
+        remote_path = storage_path or self.settings.model_storage_path
+
         model_bytes = (
             self.client.storage
-            .from_(self.settings.model_storage_bucket)
-            .download(self.settings.model_storage_path)
+            .from_(bucket)
+            .download(remote_path)
         )
 
         if not model_bytes:
             raise RuntimeError(
-                "Không tải được model từ Supabase Storage"
+                "Không tải được model "
+                f"{bucket}/{remote_path} từ Supabase Storage"
             )
 
         temporary_path = local_path.with_suffix(

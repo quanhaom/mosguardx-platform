@@ -24,6 +24,18 @@ class Detection(BaseModel):
     species: str
     species_vi: str | None = None
     confidence: float = Field(ge=0, le=1)
+    detector_confidence: float | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+    )
+    classification_confidence: float | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+    )
+    classification_model_version: str | None = None
+    review_required: bool = False
     bounding_box: BoundingBox
     normalized_bounding_box: NormalizedBoundingBox
 
@@ -51,6 +63,8 @@ class HealthResponse(BaseModel):
     version: str
     model_loaded: bool
     backend_connected: bool = False
+    classifier_loaded: bool = False
+    classifier_model_version: str | None = None
 
 
 class StationCreate(BaseModel):
