@@ -11,6 +11,11 @@ pipeline uses two checkpoints:
 had no true-positive prediction in the current test set. Predictions below the
 configured classification threshold are also sent to manual review.
 
+Model download and Torch initialization run in a background thread so Uvicorn
+can bind its port and serve `/health/live` immediately. Configure the Render
+health check path as `/health/live`; use `/health/ready` only to confirm that
+Supabase, the detector and Worker C are all ready after startup.
+
 ## Local setup (PowerShell)
 
 ```powershell

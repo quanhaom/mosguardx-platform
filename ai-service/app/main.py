@@ -1,5 +1,6 @@
+import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timezone
 from hashlib import sha256
 from hmac import compare_digest
@@ -91,14 +92,7 @@ def get_species_vi(species: str) -> str:
     )
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    app.state.detector = None
-    app.state.model_error = None
-
-    app.state.store = None
-    app.state.backend_error = None
-
+def initialize_services(app: FastAPI) -> None:
     try:
         if not settings.supabase_configured:
             raise RuntimeError(
@@ -180,7 +174,31 @@ async def lifespan(app: FastAPI):
             "Could not initialize AI model"
         )
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.detector = None
+    app.state.model_error = None
+
+    app.state.store = None
+    app.state.backend_error = None
+
+    initialization_task = asyncio.create_task(
+        asyncio.to_thread(
+            initialize_services,
+            app,
+        )
+    )
+
+    app.state.initialization_task = initialization_task
+
     yield
+
+    if not initialization_task.done():
+        initialization_task.cancel()
+
+        with suppress(asyncio.CancelledError):
+            await initialization_task
 
     app.state.detector = None
     app.state.store = None

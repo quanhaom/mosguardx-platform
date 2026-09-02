@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "MosGuardX AI API"
-    app_version: str = "1.2.0-beta"
+    app_version: str = "1.2.1-beta"
     app_environment: str = "development"
 
     model_path: Path = Path("models/mosguardx_best.pt")
