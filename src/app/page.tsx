@@ -1512,7 +1512,7 @@ function LandingContent() {
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {[
               [
-                "Trần Thị Cẩm Vân <3 ",
+                "Trần Thị Cẩm Vân ",
                 t(
                   "Điều phối & Nghiên cứu",
                   "Coordination & Research",
