@@ -725,7 +725,7 @@ function LandingContent() {
 
                     <div className="relative mt-5 aspect-[4/3] w-full overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-lg">
                       <Image
-                        src="/images/camvan.jpg"
+                        src="/images/product.jpg"
                         alt={t(
                           "Thiết bị MosGuardX hoàn thiện",
                           "Final MosGuardX device",
@@ -739,10 +739,6 @@ function LandingContent() {
                   </div>
 
                   <p className="mt-3 text-sm leading-7 text-slate-600">
-                    {t(
-                      "Thay khung này bằng ảnh prototype nền sạch hoặc ảnh render sản phẩm sau khi hoàn thành lắp ráp.",
-                      "Replace this placeholder with a clean-background prototype photo or a product render after assembly is complete.",
-                    )}
                   </p>
 
                   <Link
@@ -1121,18 +1117,7 @@ function LandingContent() {
                     </p>
                   </div>
 
-                  <h3 className="mt-3 text-2xl font-bold text-[#4a3510]">
-                    {t(
-                      "Bằng chứng sẽ bổ sung sau thực nghiệm",
-                      "Evidence will be added after experiments",
-                    )}
-                  </h3>
-
                   <p className="mt-3 text-sm leading-7 text-amber-950/70">
-                    {t(
-                      "Các ô dưới đây cố ý để trống. Chỉ thay bằng dữ liệu, ảnh và video do nhóm thực hiện, có ngày thử nghiệm và điều kiện đi kèm.",
-                      "The fields below are intentionally left blank. Replace them only with data, images, and videos produced by the team, including the test date and conditions.",
-                    )}
                   </p>
                 </div>
 
@@ -1144,6 +1129,38 @@ function LandingContent() {
                 </span>
               </div>
 
+
+              <figure className="mt-7 overflow-hidden rounded-2xl border border-amber-300/50 bg-white shadow-sm">
+              <div className="relative aspect-video w-full bg-amber-100">
+                <Image
+                  src="/images/experiment-session-01.jpg"
+                  alt={t(
+                    "Bố trí thực nghiệm dẫn dụ muỗi MosGuardX",
+                    "MosGuardX mosquito-attraction experiment setup",
+                  )}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 1200px"
+                  className="object-cover"
+                />
+
+                <span className="absolute left-4 top-4 rounded-full bg-black/65 px-3 py-1.5 text-[10px] font-bold tracking-[0.12em] text-white backdrop-blur">
+                  {t("ẢNH THỰC NGHIỆM", "EXPERIMENT PHOTO")}
+                </span>
+              </div>
+
+              <figcaption className="flex flex-col justify-between gap-2 px-5 py-4 text-xs leading-5 text-amber-950/70 sm:flex-row">
+                <span>
+                  {t(
+                    "Bố trí camera, thiết bị và mồi dẫn dụ trong phiên thử nghiệm.",
+                    "Camera, device, and attractant setup during the experiment.",
+                  )}
+                </span>
+
+                <strong className="shrink-0 text-amber-800">
+                  {t("Phiên 01", "Session 01")}
+                </strong>
+              </figcaption>
+            </figure>
               <div className="mt-7 grid gap-4 md:grid-cols-3">
                 {[
                   {
