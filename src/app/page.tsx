@@ -61,7 +61,7 @@ const presentationSections = [
   { id: "business", vi: "Kinh doanh", en: "Business" },
   { id: "expansion", vi: "Mở rộng", en: "Expansion" },
   { id: "team", vi: "Đội ngũ", en: "Team" },
-  { id: "product-3d", vi: "Sản phẩm", en: "Product" },
+  { id: "product", vi: "Sản phẩm", en: "Product" },
 ];
 
 const systemSteps: Card[] = [
@@ -744,6 +744,18 @@ function LandingContent() {
                       "Replace this placeholder with a clean-background prototype photo or a product render after assembly is complete.",
                     )}
                   </p>
+
+                  <Link
+                    href="/product-3d"
+                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#16352a] px-5 py-3.5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-xl"
+                  >
+                    <ScanLine size={17} />
+                    {t(
+                      "Xem mô hình sản phẩm 3D",
+                      "View the interactive 3D product",
+                    )}
+                    <ArrowRight size={16} />
+                  </Link>
                 </div>
               </div>
 
@@ -766,6 +778,7 @@ function LandingContent() {
                     </p>
                   </article>
                 ))}
+
               </div>
             </div>
           </div>
