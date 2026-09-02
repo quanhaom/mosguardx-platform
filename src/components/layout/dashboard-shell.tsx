@@ -33,6 +33,7 @@ const publicRoutes = [
   "/risk-api",
   "/household",
   "/expansion",
+  "/product-3d",
 ];
 
 export default function DashboardShell({

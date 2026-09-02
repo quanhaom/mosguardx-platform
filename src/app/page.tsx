@@ -1514,8 +1514,8 @@ function LandingContent() {
               [
                 "Trần Thị Cẩm Vân <3 ",
                 t(
-                  "Trưởng nhóm",
-                  "Leader",
+                  "Điều phối & Nghiên cứu",
+                  "Coordination & Research",
                 ),
               ],
               [
@@ -1528,21 +1528,21 @@ function LandingContent() {
               [
                 t("Trần Thị Lương"),
                 t(
-                  "Mô hình kinh doanh",
-                  "Business model",
+                  "Kinh doanh & Thị trường",
+                  "Business & Market",
                 ),
               ],
               [
                 t("Nguyễn Thị Thu Trang"),
                 t(
-                  "Vận hành và đối tác",
-                  "Operations and partnerships",
+                  "Kinh doanh & Dữ liệu",
+                  "Business & Data",
                 ),
               ],
                           [
                 t("Phan Hoàng Quân"),
                 t(
-                  "AI, IoT và nền tảng",
+                  "AI, IoT & nền tảng",
                   "AI, IoT, and platform",
                 ),
               ],

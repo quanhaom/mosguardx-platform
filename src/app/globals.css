@@ -47,21 +47,6 @@ button {
   cursor: pointer;
 }
 
-.leaflet-container {
-  z-index: 0;
-  background: #dce8e2;
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-}
-
-.leaflet-popup-content {
-  margin: 14px 16px;
-  line-height: 1.6;
-}
-
-.leaflet-popup-content p {
-  margin: 4px 0;
-}
-
 .mgx-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -78,62 +63,6 @@ button {
     linear-gradient(rgba(26, 93, 70, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(26, 93, 70, 0.08) 1px, transparent 1px);
   background-size: 38px 38px;
-}
-
-.product-3d-grid {
-  background-color: #030807;
-  background-image:
-    linear-gradient(rgba(52, 211, 153, 0.075) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(52, 211, 153, 0.075) 1px, transparent 1px),
-    linear-gradient(rgba(52, 211, 153, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(52, 211, 153, 0.025) 1px, transparent 1px);
-  background-position: center;
-  background-size: 48px 48px, 48px 48px, 12px 12px, 12px 12px;
-}
-
-.product-3d-grid::after {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  content: "";
-  box-shadow: inset 0 0 140px 20px rgba(0, 0, 0, 0.82);
-}
-
-.mgx-product-canvas {
-  outline: none;
-  touch-action: none;
-}
-
-.mgx-part-panel {
-  animation: mgx-panel-in 180ms ease-out both;
-}
-
-.mgx-capture-panel {
-  animation: mgx-capture-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes mgx-panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes mgx-capture-in {
-  from {
-    opacity: 0;
-    transform: translateX(18px) scale(0.97);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
 }
 
 .heat-point::before,
@@ -167,4 +96,148 @@ button {
     transform: scale(1.25);
     opacity: 0.08;
   }
+}
+.mgx-map-surface {
+  background-color: #dcebe4;
+  background-image:
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(16, 185, 129, 0.1),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 78% 70%,
+      rgba(14, 116, 144, 0.08),
+      transparent 27%
+    ),
+    linear-gradient(
+      rgba(22, 53, 42, 0.055) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(22, 53, 42, 0.055) 1px,
+      transparent 1px
+    );
+  background-size:
+    auto,
+    auto,
+    38px 38px,
+    38px 38px;
+}
+
+.mgx-map-surface::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      30deg,
+      transparent 0,
+      transparent 90px,
+      rgba(255, 255, 255, 0.14) 91px,
+      transparent 92px
+    );
+}
+
+.mgx-map-surface::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  box-shadow: inset 0 0 90px rgba(22, 53, 42, 0.08);
+}
+.leaflet-container {
+  z-index: 0;
+  background: #dce8e2;
+  font-family:
+    var(--font-geist-sans),
+    Arial,
+    Helvetica,
+    sans-serif;
+}
+
+.leaflet-popup-content {
+  margin: 14px 16px;
+  line-height: 1.6;
+}
+
+.leaflet-popup-content p {
+  margin: 4px 0;
+}
+
+.product-3d-grid {
+  background-color: #050a08;
+  background-image:
+    linear-gradient(
+      rgba(52, 211, 153, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(52, 211, 153, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      rgba(52, 211, 153, 0.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(52, 211, 153, 0.035) 1px,
+      transparent 1px
+    ),
+    radial-gradient(
+      circle at center,
+      #10231c 0%,
+      #050a08 68%
+    );
+
+  background-size:
+    120px 120px,
+    120px 120px,
+    24px 24px,
+    24px 24px,
+    100% 100%;
+
+  background-position: center;
+}
+
+.product-3d-grid {
+  background-color: #050a08;
+
+  background-image:
+    linear-gradient(
+      rgba(52, 211, 153, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(52, 211, 153, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      rgba(52, 211, 153, 0.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(52, 211, 153, 0.035) 1px,
+      transparent 1px
+    ),
+    radial-gradient(
+      circle at center,
+      #10231c 0%,
+      #050a08 68%
+    );
+
+  background-size:
+    120px 120px,
+    120px 120px,
+    24px 24px,
+    24px 24px,
+    100% 100%;
+
+  background-position: center;
 }
