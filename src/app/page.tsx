@@ -1126,7 +1126,7 @@ function LandingContent() {
 
                   <p className="mt-3 text-sm leading-7 text-amber-950/70">
                     {t(
-                      "Các hình ảnh dưới đây ghi lại bố trí hiện trường, dữ liệu thô và kết quả xác minh trong quá trình đánh giá MosGuardX.",
+                      "Các hình ảnh dưới đây ghi lại bố trí hiện trường, dữ liệu thô và kết quả xác minh trong quá trình đánh giá mồi dẫn dụ.",
                       "The images below document the field setup, raw data, and validation results collected during the MosGuardX evaluation.",
                     )}
                   </p>
