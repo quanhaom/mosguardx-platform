@@ -7,7 +7,15 @@
  */
 /* eslint-disable react-hooks/immutability, react-hooks/set-state-in-effect */
 
-import { Bounds, Environment, Html, OrbitControls, useBounds, useGLTF } from "@react-three/drei";
+import {
+  Bounds,
+  Environment,
+  Html,
+  Line,
+  OrbitControls,
+  useBounds,
+  useGLTF,
+} from "@react-three/drei";
 import { Canvas, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -15,25 +23,40 @@ import {
   Color,
   Group,
   Material,
+  MathUtils,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
+  PointLight,
   Vector2,
   Vector3,
 } from "three";
 
 import MosquitoSwarm from "./mosquito-swarm";
+import type { MosquitoFlightPhase, MosquitoFlightState } from "./mosquito-swarm";
 import { PRODUCT_PARTS, ProductPart, ProductPartId } from "./product-catalog";
 
 type MosguardXViewerProps = {
   shellOpacity: number;
   resetSignal: number;
   mosquitoActive: boolean;
+  resetCameraSignal?: number;
   mosquitoWave: number;
   onPartHover: (part: ProductPart | null) => void;
   onReset: () => void;
   onReleaseMosquitoes: () => void;
+  onMosquitoPhaseChange?: (phase: MosquitoFlightPhase) => void;
+  onMosquitoCapture?: (capture: Product3DCapture) => void;
   onMosquitoComplete: () => void;
+};
+
+export type Product3DCapture = {
+  id: string;
+  imageUrl: string;
+  capturedAt: string;
+  sourceNode: "MGX_CAMERA";
+  simulation: true;
 };
 
 type PreparedModel = {
@@ -42,13 +65,65 @@ type PreparedModel = {
   holders: Map<ProductPartId, Group>;
   lidHolder: Group | null;
   size: number;
+  spawn: readonly [number, number, number];
+  approach: readonly [number, number, number];
   target: readonly [number, number, number];
+  capture: readonly [number, number, number];
+  fan: readonly [number, number, number];
+  exit: readonly [number, number, number];
+  debugNodes: {
+    inlet: string;
+    camera: string;
+    fan: string;
+  };
 };
 
 const MODEL_URL = "/models/mosguardx/web.gltf";
 
+// Camera tuning values are fractions of the complete CAD model size.
+const CAMERA_VIEW = {
+  resetRear: {
+    x: 0,
+    y: 0.18,
+    z: 2,
+    targetY: 0.025,
+    speed: 1.25,
+  },
+  mosquitoFollow: {
+    x: 0.16,
+    y: 0.13,
+    approachDistance: 0.95,
+    inletDistance: 0.72,
+    imagingDistance: 0.38,
+    fanDistance: 0.52,
+    exitDistance: 0.82,
+    speed: 2.0,
+  },
+} as const;
+
 function normalizeName(value: string) {
   return value.trim().toLowerCase().replace(/[\s.-]+/g, "_");
+}
+
+function nearestBoundsFaceDirection(point: Vector3, bounds: Box3) {
+  const candidates = [
+    { distance: Math.abs(point.x - bounds.min.x), direction: new Vector3(-1, 0, 0) },
+    { distance: Math.abs(bounds.max.x - point.x), direction: new Vector3(1, 0, 0) },
+    { distance: Math.abs(point.z - bounds.min.z), direction: new Vector3(0, 0, -1) },
+    { distance: Math.abs(bounds.max.z - point.z), direction: new Vector3(0, 0, 1) },
+  ];
+
+  candidates.sort((a, b) => a.distance - b.distance);
+  return candidates[0].direction;
+}
+
+function findNamedObject(
+  objects: Map<string, Object3D>,
+  aliases: readonly string[],
+) {
+  return aliases
+    .map((name) => objects.get(normalizeName(name)))
+    .find((object): object is Object3D => Boolean(object));
 }
 
 function cloneMaterial(material: Material | Material[]) {
@@ -72,6 +147,35 @@ function depthOf(object: Object3D) {
 function prepareModel(source: Object3D): PreparedModel {
   const root = source.clone(true) as Group;
   root.name = "MGX_Interactive_Root";
+  root.rotateY(Math.PI);
+  root.updateMatrixWorld(true);
+
+  // The current CAD export contains the ESP32 assembly twice. The first copy
+  // is displaced outside the enclosure, while the suffixed copy is the one
+  // mounted inside. Hide only when both copies exist so future clean exports
+  // that contain a single assembly continue to work.
+  const cadObjects = new Map<string, Object3D>();
+  root.traverse((object) => {
+    if (object.name) cadObjects.set(normalizeName(object.name), object);
+  });
+
+  const displacedElectronics = cadObjects.get(normalizeName("01_ELECTRONICS"));
+  const mountedElectronics = cadObjects.get(normalizeName("01_ELECTRONICS001"));
+  const displacedProcessor = cadObjects.get(
+    normalizeName("XIAO-ESP32S3-Sense v24"),
+  );
+  const mountedProcessor = cadObjects.get(
+    normalizeName("XIAO-ESP32S3-Sense v001"),
+  );
+
+  if (displacedElectronics && mountedElectronics) {
+    displacedElectronics.visible = false;
+  }
+
+  if (displacedProcessor && mountedProcessor) {
+    displacedProcessor.visible = false;
+  }
+
   root.updateMatrixWorld(true);
 
   const fullBounds = new Box3().setFromObject(root);
@@ -137,10 +241,79 @@ function prepareModel(source: Object3D): PreparedModel {
     holders.set(part.id, holder);
   }
 
-  const fan = parts.get("fan");
+  // Flight markers are resolved directly from CAD aliases instead of relying
+  // only on the product catalog. This keeps the route working across exports
+  // that use either MGX_* names or Fusion's original component names.
+  const fan =
+    findNamedObject(namedObjects, ["MGX_Fan", "MGX_fan", "Fan"]) ??
+    parts.get("fan");
+  const grille =
+    findNamedObject(namedObjects, ["MGX_Grille", "MGX_Inlet", "Grille"]) ??
+    parts.get("grille");
+  const attractLed =
+    findNamedObject(namedObjects, [
+      "MGX_LED",
+      "led",
+      "MGX_LED_Attract",
+      "MGX_LED_UV",
+      "LED_Attract",
+    ]) ?? parts.get("attractLed");
+  const cameraModule =
+    findNamedObject(namedObjects, [
+      "MGX_CAMERA",
+      "MGX_Camera",
+      "Camer Module001",
+      "Camera Module001",
+      "Camer Module",
+      "Camera Module",
+      "MGX_ESP32_CAM",
+      "ESP32_CAM",
+    ]) ?? parts.get("camera");
+  const inlet = attractLed ?? grille ?? fan;
+  const inletCenter = inlet
+    ? new Box3().setFromObject(inlet).getCenter(new Vector3())
+    : new Vector3(0, -modelSize * 0.04, 0);
   const fanCenter = fan
     ? new Box3().setFromObject(fan).getCenter(new Vector3())
-    : new Vector3(0, -modelSize * 0.04, 0);
+    : inletCenter.clone();
+  const centeredBounds = new Box3().setFromObject(root);
+  const inletOutward = nearestBoundsFaceDirection(inletCenter, centeredBounds);
+  const approachCenter = inletCenter
+    .clone()
+    .addScaledVector(inletOutward, modelSize * 0.22)
+    .add(new Vector3(0, modelSize * 0.12, 0));
+  const spawnCenter = approachCenter
+    .clone()
+    .addScaledVector(inletOutward, modelSize * 0.1)
+    .add(new Vector3(0, modelSize * 0.48, 0));
+
+  // Resolve the outside direction from the enclosure face nearest MGX_LED.
+  // This remains correct when a new CAD export rotates or mirrors the model:
+  // mosquitoes start above/outside, approach the face, then cross the LED.
+
+  const captureCenter = cameraModule
+    ? new Box3().setFromObject(cameraModule).getCenter(new Vector3())
+    : fanCenter.clone().add(new Vector3(0, modelSize * 0.16, 0));
+
+    // Dịch vùng muỗi được chụp sang bên phải camera.
+  captureCenter.add(
+    new Vector3(
+      modelSize * 0.05, // sang phải
+      modelSize * 0.0, // lên/xuống
+      modelSize * 0.0, // gần/xa camera
+    ),
+  );
+
+// Bay thẳng từ tâm quạt qua lỗ thoát phía bên phải.
+  const exitCenter = fanCenter
+    .clone()
+    .add(
+      new Vector3(
+        modelSize * 3.6, // khoảng cách sang phải
+        modelSize * 0.5,  // điều chỉnh độ cao lỗ thoát
+        modelSize * 0.0,  // điều chỉnh trước/sau
+      ),
+    );
 
   return {
     root,
@@ -148,8 +321,73 @@ function prepareModel(source: Object3D): PreparedModel {
     holders,
     lidHolder,
     size: modelSize,
-    target: [fanCenter.x, fanCenter.y, fanCenter.z],
+    spawn: [spawnCenter.x, spawnCenter.y, spawnCenter.z],
+    approach: [approachCenter.x, approachCenter.y, approachCenter.z],
+    target: [inletCenter.x, inletCenter.y, inletCenter.z],
+    capture: [captureCenter.x, captureCenter.y, captureCenter.z],
+    fan: [fanCenter.x, fanCenter.y, fanCenter.z],
+    exit: [exitCenter.x, exitCenter.y, exitCenter.z],
+    debugNodes: {
+      inlet: attractLed?.name || "fallback: grille/fan",
+      camera: cameraModule?.name || "fallback: fan offset",
+      fan: fan?.name || "fallback: inlet",
+    },
   };
+}
+
+const DEBUG_POINT_STYLES = [
+  ["SPAWN", "#f97316"],
+  ["APPROACH", "#facc15"],
+  ["MGX_LED", "#c084fc"],
+  ["MGX_CAMERA", "#38bdf8"],
+  ["FAN", "#22c55e"],
+  ["EXIT", "#ef4444"],
+] as const;
+
+function FlightDebugPath({ prepared }: { prepared: PreparedModel }) {
+  const points = [
+    prepared.spawn,
+    prepared.approach,
+    prepared.target,
+    prepared.capture,
+    prepared.fan,
+    prepared.exit,
+  ];
+
+  return (
+    <group renderOrder={1000}>
+      <Line
+        points={points}
+        color="#f8fafc"
+        lineWidth={1.5}
+        dashed
+        dashSize={prepared.size * 0.025}
+        gapSize={prepared.size * 0.015}
+        depthTest={false}
+      />
+
+      {points.map((point, index) => (
+        <group key={DEBUG_POINT_STYLES[index][0]} position={point}>
+          <mesh>
+            <sphereGeometry args={[prepared.size * 0.014, 12, 8]} />
+            <meshBasicMaterial
+              color={DEBUG_POINT_STYLES[index][1]}
+              depthTest={false}
+              toneMapped={false}
+            />
+          </mesh>
+          <Html center position={[0, prepared.size * 0.04, 0]} zIndexRange={[80, 0]}>
+            <span
+              style={{ borderColor: DEBUG_POINT_STYLES[index][1] }}
+              className="whitespace-nowrap rounded border bg-black/85 px-1.5 py-0.5 text-[9px] font-black tracking-wider text-white"
+            >
+              {index + 1}. {DEBUG_POINT_STYLES[index][0]}
+            </span>
+          </Html>
+        </group>
+      ))}
+    </group>
+  );
 }
 
 function objectBelongsTo(candidate: Object3D, root: Object3D) {
@@ -200,6 +438,80 @@ function LoadingModel() {
   );
 }
 
+function CameraCaptureEffect({
+  point,
+  size,
+  signal,
+}: {
+  point: readonly [number, number, number];
+  size: number;
+  signal: number;
+}) {
+  const ringRef = useRef<Mesh>(null);
+  const lightRef = useRef<PointLight>(null);
+  const elapsed = useRef(-1);
+  const { invalidate } = useThree();
+
+  useEffect(() => {
+    if (signal === 0) return;
+    elapsed.current = 0;
+    if (ringRef.current) ringRef.current.visible = true;
+    invalidate();
+  }, [invalidate, signal]);
+
+  useFrame((_, delta) => {
+    if (elapsed.current < 0) return;
+
+    elapsed.current += Math.min(delta, 0.05);
+    const progress = MathUtils.clamp(elapsed.current / 0.72, 0, 1);
+    const flash = Math.sin(progress * Math.PI);
+
+    if (lightRef.current) lightRef.current.intensity = flash * 18;
+
+    if (ringRef.current) {
+      const ringScale = MathUtils.lerp(0.4, 3.2, progress);
+      ringRef.current.scale.setScalar(ringScale);
+      (ringRef.current.material as MeshBasicMaterial).opacity =
+        (1 - progress) * 0.82;
+    }
+
+    if (progress >= 1) {
+      elapsed.current = -1;
+      if (lightRef.current) lightRef.current.intensity = 0;
+      if (ringRef.current) ringRef.current.visible = false;
+      return;
+    }
+
+    invalidate();
+  });
+
+  const position: [number, number, number] = [point[0], point[1], point[2]];
+
+  return (
+    <>
+      <pointLight
+        ref={lightRef}
+        position={position}
+        color="#d9fff4"
+        intensity={0}
+        distance={size * 1.4}
+        decay={2}
+      />
+      <mesh ref={ringRef} position={position} renderOrder={80} visible={false}>
+        <sphereGeometry args={[size * 0.055, 18, 12]} />
+        <meshBasicMaterial
+          color="#ecfeff"
+          transparent
+          opacity={0}
+          depthTest={false}
+          wireframe
+          toneMapped={false}
+        />
+      </mesh>
+    </>
+  );
+}
+
 function InteractiveModel({
   shellOpacity,
   resetSignal,
@@ -208,6 +520,9 @@ function InteractiveModel({
   onPartHover,
   onReset,
   onReleaseMosquitoes,
+  onMosquitoPhaseChange,
+  onMosquitoCapture,
+  resetCameraSignal = 0,
   onMosquitoComplete,
 }: MosguardXViewerProps) {
   const { scene } = useGLTF(MODEL_URL);
@@ -215,8 +530,42 @@ function InteractiveModel({
   const [hoveredId, setHoveredId] = useState<ProductPartId | null>(null);
   const exploded = useRef(new Map<ProductPartId, boolean>());
   const [lidOpen, setLidOpen] = useState(false);
+  const [capturePulseSignal, setCapturePulseSignal] = useState(0);
+  const initialized = useRef(false);
+  const resetting = useRef(false);
+  const resetCameraActive = useRef(false);
   const { camera, gl, invalidate, pointer, raycaster } = useThree();
+  const controls = useThree((state) => state.controls) as unknown as
+    | { target: Vector3; update: () => void }
+    | undefined;
   const bounds = useBounds();
+  const flightState = useRef<MosquitoFlightState>({
+    active: false,
+    progress: 0,
+    focus: new Vector3(),
+    phase: "opening",
+  });
+  const captureSent = useRef(false);
+  const debugFocusRef = useRef<Mesh>(null);
+  const debugLogged = useRef(false);
+  const debugFlight =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debugFlight") === "1";
+
+  useEffect(() => {
+    if (!debugFlight || debugLogged.current) return;
+    debugLogged.current = true;
+
+    console.info("[MosGuardX flight debug] CAD nodes", prepared.debugNodes);
+    console.table([
+      { point: "SPAWN", xyz: prepared.spawn.join(", ") },
+      { point: "APPROACH", xyz: prepared.approach.join(", ") },
+      { point: "MGX_LED", xyz: prepared.target.join(", ") },
+      { point: "MGX_CAMERA", xyz: prepared.capture.join(", ") },
+      { point: "FAN", xyz: prepared.fan.join(", ") },
+      { point: "EXIT", xyz: prepared.exit.join(", ") },
+    ]);
+  }, [debugFlight, prepared]);
 
   const hitParts = useMemo(
     () =>
@@ -259,22 +608,65 @@ function InteractiveModel({
   }, [hitParts, hoveredId, invalidate]);
 
   useEffect(() => {
+    const initialLoad = !initialized.current;
+    const hadExplodedParts = Array.from(exploded.current.values()).some(Boolean);
+    initialized.current = true;
+
     exploded.current.clear();
-    setLidOpen(false);
     setHoveredId(null);
     onPartHover(null);
 
-    camera.position.set(0, 0, -5);
-    camera.up.set(0, 1, 0);
-    camera.lookAt(0, 0, 0);
+    if (initialLoad) {
+      camera.position.set(0, 0, -5);
+      camera.up.set(0, 1, 0);
+      camera.lookAt(0, 0, 0);
+    }
 
-    const timer = window.setTimeout(() => {
-      bounds.refresh(prepared.root).clip().fit();
+    resetting.current = !initialLoad;
+    resetCameraActive.current = false;
+
+    // Use a deliberately slower return. The lid begins closing only after the
+    // exploded component holders have nearly reached their assembled poses.
+    const lidDelay = initialLoad || !hadExplodedParts ? 0 : 1600;
+    const lidTimer = window.setTimeout(() => {
+      setLidOpen(false);
       invalidate();
-    }, 520);
+    }, lidDelay);
 
-    return () => window.clearTimeout(timer);
+    // Initial load needs one fit because CAD units vary. Subsequent resets keep
+    // the user's exact orbit and zoom position.
+    const initialFitTimer = window.setTimeout(() => {
+      if (initialLoad) bounds.refresh(prepared.root).clip().fit();
+      invalidate();
+    }, 120);
+
+    const resetDoneTimer = window.setTimeout(() => {
+      resetting.current = false;
+      // Camera returns only after every component has finished moving home and
+      // the lid has closed, never during the component reset animation.
+      if (!initialLoad) resetCameraActive.current = true;
+      invalidate();
+    }, initialLoad ? 0 : lidDelay + 1400);
+
+    return () => {
+      window.clearTimeout(lidTimer);
+      window.clearTimeout(initialFitTimer);
+      window.clearTimeout(resetDoneTimer);
+    };
   }, [bounds, camera, invalidate, onPartHover, prepared.root, resetSignal]);
+
+  useEffect(() => {
+    captureSent.current = false;
+    flightState.current.active = false;
+
+    // Every simulation begins assembled. Once the release phase starts, slide
+    // the lid completely away and let the swarm wait for that motion to finish.
+    if (mosquitoActive) {
+      resetCameraActive.current = false;
+      setLidOpen(true);
+    }
+    invalidate();
+  }, [invalidate, mosquitoActive, mosquitoWave]);
 
   useEffect(() => {
     const canvas = gl.domElement;
@@ -298,7 +690,8 @@ function InteractiveModel({
   }, [camera, gl, onReleaseMosquitoes, onReset, pointer, prepared.root, raycaster]);
 
   useFrame((_, delta) => {
-    const damping = 1 - Math.exp(-delta * 7.4);
+    const dampingRate = resetting.current ? 2.6 : 7.4;
+    const damping = 1 - Math.exp(-delta * dampingRate);
     let animating = false;
 
     prepared.holders.forEach((holder, id) => {
@@ -316,8 +709,11 @@ function InteractiveModel({
     });
 
     if (prepared.lidHolder) {
+      // mosquitoActive guarantees that the removable lid stays fully open for
+      // the complete internal airflow demo. Reset still closes it normally.
+      const shouldOpenLid = lidOpen || mosquitoActive;
       const target = new Vector3(0.72, 0.28, -0.32).multiplyScalar(
-        prepared.size * (lidOpen ? 1 : 0),
+        prepared.size * (shouldOpenLid ? 1 : 0),
       );
 
       prepared.lidHolder.position.lerp(target, damping);
@@ -326,6 +722,121 @@ function InteractiveModel({
         prepared.size * prepared.size * 0.0000001
       ) {
         animating = true;
+      }
+    }
+
+    if (resetCameraActive.current && !mosquitoActive) {
+      const rearTarget = new Vector3(
+        0,
+        prepared.size * CAMERA_VIEW.resetRear.targetY,
+        0,
+      );
+      const rearPosition = new Vector3(
+        prepared.size * CAMERA_VIEW.resetRear.x,
+        prepared.size * CAMERA_VIEW.resetRear.y,
+        prepared.size * CAMERA_VIEW.resetRear.z,
+      );
+      const cameraDamping =
+        1 - Math.exp(-delta * CAMERA_VIEW.resetRear.speed);
+
+      camera.position.lerp(rearPosition, cameraDamping);
+      if (controls) {
+        controls.target.lerp(rearTarget, cameraDamping);
+        controls.update();
+      } else {
+        camera.lookAt(rearTarget);
+      }
+      camera.updateMatrixWorld();
+
+      const cameraSettled =
+        camera.position.distanceToSquared(rearPosition) <
+        prepared.size * prepared.size * 0.000002;
+      const targetSettled =
+        !controls ||
+        controls.target.distanceToSquared(rearTarget) <
+          prepared.size * prepared.size * 0.000002;
+
+      if (cameraSettled && targetSettled) {
+        camera.position.copy(rearPosition);
+        if (controls) {
+          controls.target.copy(rearTarget);
+          controls.update();
+        } else {
+          camera.lookAt(rearTarget);
+        }
+        resetCameraActive.current = false;
+      } else {
+        animating = true;
+      }
+    }
+
+    if (mosquitoActive && flightState.current.active) {
+      const progress = flightState.current.progress;
+      const focus = flightState.current.focus;
+      const followDamping =
+        1 - Math.exp(-delta * CAMERA_VIEW.mosquitoFollow.speed);
+      let distance =
+        prepared.size * CAMERA_VIEW.mosquitoFollow.approachDistance;
+
+      if (progress < 0.3) {
+        const descendProgress = MathUtils.smoothstep(progress / 0.3, 0, 1);
+        distance = MathUtils.lerp(
+          prepared.size * CAMERA_VIEW.mosquitoFollow.approachDistance,
+          prepared.size * CAMERA_VIEW.mosquitoFollow.inletDistance,
+          descendProgress,
+        );
+      } else if (progress < 0.6) {
+        const captureApproach = MathUtils.smoothstep((progress - 0.3) / 0.3, 0, 1);
+        distance = MathUtils.lerp(
+          prepared.size * CAMERA_VIEW.mosquitoFollow.inletDistance,
+          prepared.size * CAMERA_VIEW.mosquitoFollow.imagingDistance,
+          captureApproach,
+        );
+      } else if (progress < 0.74) {
+        // Hold a close, stable framing while MGX_CAMERA records the swarm.
+        distance =
+          prepared.size * CAMERA_VIEW.mosquitoFollow.imagingDistance;
+      } else if (progress < 0.88) {
+        const fanProgress = MathUtils.smoothstep((progress - 0.74) / 0.14, 0, 1);
+        distance = MathUtils.lerp(
+          prepared.size * CAMERA_VIEW.mosquitoFollow.imagingDistance,
+          prepared.size * CAMERA_VIEW.mosquitoFollow.fanDistance,
+          fanProgress,
+        );
+      } else {
+        const exitProgress = MathUtils.smoothstep((progress - 0.88) / 0.12, 0, 1);
+        distance = MathUtils.lerp(
+          prepared.size * CAMERA_VIEW.mosquitoFollow.fanDistance,
+          prepared.size * CAMERA_VIEW.mosquitoFollow.exitDistance,
+          exitProgress,
+        );
+      }
+
+      const desiredCameraPosition = focus
+        .clone()
+        .add(
+          new Vector3(
+            prepared.size * CAMERA_VIEW.mosquitoFollow.x,
+            prepared.size * CAMERA_VIEW.mosquitoFollow.y,
+            distance,
+          ),
+        );
+
+      camera.position.lerp(desiredCameraPosition, followDamping);
+      if (controls) {
+        controls.target.lerp(focus, followDamping);
+        controls.update();
+      } else {
+        camera.lookAt(focus);
+      }
+      camera.updateMatrixWorld();
+      animating = true;
+    }
+
+    if (debugFocusRef.current) {
+      debugFocusRef.current.visible = debugFlight && flightState.current.active;
+      if (flightState.current.active) {
+        debugFocusRef.current.position.copy(flightState.current.focus);
       }
     }
 
@@ -372,12 +883,60 @@ function InteractiveModel({
         onClick={handleClick}
       />
 
+      {debugFlight && <FlightDebugPath prepared={prepared} />}
+
+      {debugFlight && (
+        <mesh ref={debugFocusRef} renderOrder={1001} visible={false}>
+          <sphereGeometry args={[prepared.size * 0.021, 14, 10]} />
+          <meshBasicMaterial color="#ffffff" depthTest={false} toneMapped={false} />
+        </mesh>
+      )}
+
+      <CameraCaptureEffect
+        point={prepared.capture}
+        size={prepared.size}
+        signal={capturePulseSignal}
+      />
+
       <MosquitoSwarm
         active={mosquitoActive}
         wave={mosquitoWave}
+        debug={debugFlight}
+        spawn={prepared.spawn}
+        approach={prepared.approach}
         target={prepared.target}
+        capture={prepared.capture}
+        fan={prepared.fan}
+        exit={prepared.exit}
         unit={prepared.size * 0.035}
-        onComplete={onMosquitoComplete}
+        flightState={flightState}
+        onPhaseChange={onMosquitoPhaseChange}
+        onCapture={() => {
+          if (captureSent.current) return;
+          captureSent.current = true;
+          setCapturePulseSignal((value) => value + 1);
+
+          // Wait until the current Three.js frame has been painted. Reading the
+          // canvas directly inside useFrame would capture the previous frame.
+          window.requestAnimationFrame(() => {
+            const imageUrl = gl.domElement.toDataURL("image/jpeg", 0.86);
+            if (!imageUrl || imageUrl === "data:,") return;
+
+            onMosquitoCapture?.({
+              id: `product-3d-demo-${Date.now()}`,
+              imageUrl,
+              capturedAt: new Date().toISOString(),
+              sourceNode: "MGX_CAMERA",
+              simulation: true,
+            });
+          });
+        }}
+        onComplete={() => {
+          // The complete flight is the second valid camera-reset boundary.
+          resetCameraActive.current = true;
+          invalidate();
+          onMosquitoComplete();
+        }}
       />
     </>
   );
@@ -390,7 +949,12 @@ export default function MosguardXViewer(props: MosguardXViewerProps) {
       camera={{ position: [0, 0, -5], fov: 34, near: 0.01, far: 2000 }}
       dpr={1}
       frameloop="demand"
-      gl={{ alpha: true, antialias: false, powerPreference: "high-performance" }}
+      gl={{
+        alpha: true,
+        antialias: false,
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: true,
+      }}
       shadows={false}
     >
       <ambientLight intensity={0.72} />
@@ -407,6 +971,7 @@ export default function MosguardXViewer(props: MosguardXViewerProps) {
 
       <OrbitControls
         makeDefault
+        enabled={!props.mosquitoActive}
         enableDamping
         dampingFactor={0.06}
         rotateSpeed={0.4}
