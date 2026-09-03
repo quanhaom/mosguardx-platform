@@ -713,7 +713,7 @@ function InteractiveModel({
       // mosquitoActive guarantees that the removable lid stays fully open for
       // the complete internal airflow demo. Reset still closes it normally.
       const shouldOpenLid = lidOpen || mosquitoActive;
-      const target = new Vector3(-0.88, 0.38, -0.42).multiplyScalar(
+      const target = new Vector3(-1.05, 0.42, -0.5).multiplyScalar(
         prepared.size * (shouldOpenLid ? 1 : 0),
       );
 
