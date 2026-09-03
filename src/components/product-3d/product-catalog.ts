@@ -29,7 +29,13 @@ export type ProductPart = {
 export const PRODUCT_PARTS: readonly ProductPart[] = [
   {
     id: "shellBody",
-    nodeNames: ["MGX_Shell_Body", "MGX_Body"],
+    nodeNames: [
+      "MGX_Shell_Body",
+      "MGX_Body",
+      "MGX_ENCLOSURE_BODY",
+      "body",
+      "Cut",
+    ],
     label: "Vỏ thiết bị",
     code: "MGX-SHELL",
     category: "Cơ khí",
@@ -42,13 +48,18 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
   },
   {
     id: "lid",
-    nodeNames: ["MGX_Shell_Lid", "MGX_Lid", "MGX_Cover"],
+    nodeNames: [
+      "MGX_Shell_Lid",
+      "MGX_Lid",
+      "MGX_Cover",
+      "MGX_LID",
+    ],
     label: "Nắp kỹ thuật",
     code: "MGX-LID",
     category: "Cơ khí",
     summary: "Cho phép tiếp cận khoang linh kiện để kiểm tra và bảo trì.",
     details:
-      "Nhấn chuột trái trực tiếp lên nắp để mở hoặc đóng. Chuyển động sử dụng bản lề ảo và giới hạn góc mở 110°.",
+      "Nhấn chuột trái trực tiếp lên nắp để tháo nắp ra khỏi thân hoặc gắn trở lại vị trí đóng.",
     accent: "#6ee7b7",
     explodedOffset: [0, 0, 0],
     interaction: "lid",
@@ -68,7 +79,7 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
   },
   {
     id: "fan",
-    nodeNames: ["MGX_Fan", "Fan"],
+    nodeNames: ["MGX_Fan", "Fan", "MGX_fan"],
     label: "Quạt dẫn dòng",
     code: "MGX-FAN",
     category: "Luồng khí",
@@ -81,7 +92,13 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
   },
   {
     id: "camera",
-    nodeNames: ["MGX_ESP32_CAM", "MGX_Camera", "ESP32_CAM"],
+    nodeNames: [
+      "MGX_ESP32_CAM",
+      "MGX_Camera",
+      "ESP32_CAM",
+      "Camer Module",
+      "Camera Module",
+    ],
     label: "ESP32-CAM",
     code: "MGX-CAM",
     category: "Thị giác máy tính",
@@ -94,7 +111,13 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
   },
   {
     id: "sensor",
-    nodeNames: ["MGX_SHT31", "SHT31", "MGX_Temperature_Humidity"],
+    nodeNames: [
+      "MGX_SHT31",
+      "SHT31",
+      "MGX_Temperature_Humidity",
+      "MGX_temp",
+      "MGX_humid",
+    ],
     label: "Cảm biến SHT31",
     code: "MGX-SHT31",
     category: "Môi trường",
@@ -107,7 +130,12 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
   },
   {
     id: "power",
-    nodeNames: ["MGX_Power_Module", "MGX_Power", "Power_Module"],
+    nodeNames: [
+      "MGX_Power_Module",
+      "MGX_Power",
+      "Power_Module",
+      "micro usb C Adafruit 4090 - corrected",
+    ],
     label: "Module nguồn",
     code: "MGX-POWER",
     category: "Điện tử",
@@ -120,7 +148,7 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
   },
   {
     id: "whiteLed",
-    nodeNames: ["MGX_LED_White", "LED_White"],
+    nodeNames: ["MGX_LED_White", "LED_White", "led", "MGX_LED"],
     label: "LED trắng",
     code: "MGX-LED-W",
     category: "Chiếu sáng",

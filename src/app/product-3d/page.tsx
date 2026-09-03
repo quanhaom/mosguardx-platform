@@ -46,7 +46,7 @@ export default function Product3DPage() {
     setHoveredPart(null);
     setViewMode("normal");
     setResetSignal((value) => value + 1);
-    setStatus("Đã thu linh kiện, đóng nắp và trở về mặt sau");
+    setStatus("Đã thu linh kiện, gắn nắp và trở về mặt sau");
   }, []);
 
   const releaseMosquitoes = useCallback(() => {
@@ -169,7 +169,7 @@ export default function Product3DPage() {
             <div className="mt-4 flex items-center gap-2 border-t border-white/8 pt-3 text-[10px] font-medium text-slate-400">
               <MousePointer2 size={13} className="text-emerald-300" />
               {hoveredPart.interaction === "lid"
-                ? "Nhấp trái để mở hoặc đóng nắp"
+                ? "Nhấp trái để tháo hoặc gắn nắp"
                 : hoveredPart.interaction === "explode"
                   ? "Nhấp trái để bung hoặc thu linh kiện"
                   : "Linh kiện khung cố định"}

@@ -15,7 +15,6 @@ import {
   Color,
   Group,
   Material,
-  MathUtils,
   Mesh,
   MeshStandardMaterial,
   Object3D,
@@ -41,7 +40,7 @@ type PreparedModel = {
   root: Group;
   parts: Map<ProductPartId, Object3D>;
   holders: Map<ProductPartId, Group>;
-  lidPivot: Group | null;
+  lidHolder: Group | null;
   size: number;
   target: readonly [number, number, number];
 };
@@ -116,20 +115,14 @@ function prepareModel(source: Object3D): PreparedModel {
     );
   }
 
-  let lidPivot: Group | null = null;
+  let lidHolder: Group | null = null;
   const lid = parts.get("lid");
 
   if (lid) {
-    const lidBounds = new Box3().setFromObject(lid);
-    const lidCenter = lidBounds.getCenter(new Vector3());
-    const pivotWorld = new Vector3(lidCenter.x, lidBounds.min.y, lidBounds.max.z);
-    root.worldToLocal(pivotWorld);
-
-    lidPivot = new Group();
-    lidPivot.name = "MGX_Virtual_Hinge";
-    lidPivot.position.copy(pivotWorld);
-    root.add(lidPivot);
-    lidPivot.attach(lid);
+    lidHolder = new Group();
+    lidHolder.name = "MGX_Removable_Lid";
+    root.add(lidHolder);
+    lidHolder.attach(lid);
   }
 
   for (const part of PRODUCT_PARTS) {
@@ -153,7 +146,7 @@ function prepareModel(source: Object3D): PreparedModel {
     root,
     parts,
     holders,
-    lidPivot,
+    lidHolder,
     size: modelSize,
     target: [fanCenter.x, fanCenter.y, fanCenter.z],
   };
@@ -322,14 +315,18 @@ function InteractiveModel({
       }
     });
 
-    if (prepared.lidPivot) {
-      const targetAngle = lidOpen ? Math.PI * 0.61 : 0;
-      prepared.lidPivot.rotation.x = MathUtils.lerp(
-        prepared.lidPivot.rotation.x,
-        targetAngle,
-        damping,
+    if (prepared.lidHolder) {
+      const target = new Vector3(0.72, 0.28, -0.32).multiplyScalar(
+        prepared.size * (lidOpen ? 1 : 0),
       );
-      if (Math.abs(prepared.lidPivot.rotation.x - targetAngle) > 0.0005) animating = true;
+
+      prepared.lidHolder.position.lerp(target, damping);
+      if (
+        prepared.lidHolder.position.distanceToSquared(target) >
+        prepared.size * prepared.size * 0.0000001
+      ) {
+        animating = true;
+      }
     }
 
     if (animating) invalidate();
@@ -402,7 +399,7 @@ export default function MosguardXViewer(props: MosguardXViewerProps) {
       <pointLight position={[0, -4, -3]} intensity={0.45} color="#38bdf8" />
 
       <Suspense fallback={<LoadingModel />}>
-        <Bounds fit clip observe margin={1.08}>
+        <Bounds margin={1.08}>
           <InteractiveModel {...props} />
         </Bounds>
         <Environment preset="city" environmentIntensity={0.35} />
