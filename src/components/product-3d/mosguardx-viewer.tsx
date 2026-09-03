@@ -79,13 +79,14 @@ type PreparedModel = {
 };
 
 const MODEL_URL = "/models/mosguardx/web.gltf";
+const EXPLODED_SPREAD = 1.4;
 
 // Camera tuning values are fractions of the complete CAD model size.
 const CAMERA_VIEW = {
   resetRear: {
     x: 0,
     y: 0.18,
-    z: 2,
+    z: 2.5,
     targetY: 0.025,
     speed: 1.25,
   },
@@ -699,7 +700,7 @@ function InteractiveModel({
       if (!part) return;
       const active = exploded.current.get(id) ?? false;
       const target = new Vector3(...part.explodedOffset).multiplyScalar(
-        prepared.size * (active ? 1 : 0),
+        prepared.size * (active ? EXPLODED_SPREAD : 0),
       );
 
       holder.position.lerp(target, damping);
@@ -963,7 +964,7 @@ export default function MosguardXViewer(props: MosguardXViewerProps) {
       <pointLight position={[0, -4, -3]} intensity={0.45} color="#38bdf8" />
 
       <Suspense fallback={<LoadingModel />}>
-        <Bounds margin={1.08}>
+        <Bounds margin={1.4}>
           <InteractiveModel {...props} />
         </Bounds>
         <Environment preset="city" environmentIntensity={0.35} />
