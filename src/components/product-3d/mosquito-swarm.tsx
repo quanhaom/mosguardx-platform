@@ -13,13 +13,14 @@ import {
 type MosquitoSwarmProps = {
   active: boolean;
   wave: number;
+  approach?: readonly [number, number, number];
   target: readonly [number, number, number];
   unit: number;
   onComplete: () => void;
 };
 
 const MOSQUITO_COUNT = 18;
-const FLIGHT_SECONDS = 7.2;
+const FLIGHT_SECONDS = 8.6;
 
 function seeded(index: number, salt: number) {
   const value = Math.sin(index * 9283.17 + salt * 197.31) * 43758.5453;
@@ -29,6 +30,7 @@ function seeded(index: number, salt: number) {
 export default function MosquitoSwarm({
   active,
   wave,
+  approach,
   target,
   unit,
   onComplete,
@@ -73,21 +75,37 @@ export default function MosquitoSwarm({
 
     elapsed.current += Math.min(delta, 0.05);
     const destination = new Vector3(...target);
-    let flying = 0;
+    const inletApproach = new Vector3(...(approach ?? target));    let flying = 0;
 
     agents.forEach((agent, index) => {
       const localTime = elapsed.current - agent.delay;
       const progress = MathUtils.clamp(localTime / FLIGHT_SECONDS, 0, 1);
-      const eased = progress * progress * (3 - 2 * progress);
 
       if (localTime >= 0 && progress < 1) flying += 1;
 
-      const radius = (1 - eased) * unit * (4.4 + seeded(index, 7) * 2.3);
       const angle = agent.phase + localTime * (1.7 + seeded(index, 8));
-      const position = agent.start
-        .clone()
-        .multiplyScalar(unit)
-        .lerp(destination, eased);
+      const position = new Vector3();
+      let radius: number;
+
+      if (progress < 0.58) {
+        // Stage 1: approach the light and inlet from the surrounding space.
+        const stage = MathUtils.smoothstep(progress / 0.58, 0, 1);
+        position
+          .copy(agent.start)
+          .multiplyScalar(unit)
+          .lerp(inletApproach, stage);
+        radius = MathUtils.lerp(unit * (4.8 + seeded(index, 7) * 1.8), unit * 1.6, stage);
+      } else if (progress < 0.78) {
+        // Stage 2: briefly circle the attractant zone before entering.
+        const stage = (progress - 0.58) / 0.2;
+        position.copy(inletApproach);
+        radius = MathUtils.lerp(unit * 1.6, unit * 1.04, stage);
+      } else {
+        // Stage 3: the fan rapidly pulls the mosquito through the inlet.
+        const stage = MathUtils.smoothstep((progress - 0.78) / 0.22, 0, 1);
+        position.copy(inletApproach).lerp(destination, stage);
+        radius = MathUtils.lerp(unit * 1.04, 0, stage);
+      }
 
       position.x += Math.cos(angle) * radius;
       position.y += Math.sin(angle * 1.3) * radius * 0.55;

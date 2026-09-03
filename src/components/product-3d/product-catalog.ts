@@ -4,12 +4,13 @@ export type ProductPartId =
   | "frame"
   | "fan"
   | "camera"
-  | "sensor"
+  | "sensor_humidity"
   | "power"
+  | "main"
   | "whiteLed"
   | "attractLed"
   | "baitBox"
-  | "trapChamber"
+  | "sensor_temperature"
   | "grille";
 
 export type ProductPart = {
@@ -93,12 +94,7 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
   {
     id: "camera",
     nodeNames: [
-      "MGX_ESP32_CAM",
-      "MGX_Camera",
-      "ESP32_CAM",
-      "Camer Module",
-      "Camera Module",
-    ],
+      "MGX_CAMERA"],
     label: "ESP32-CAM",
     code: "MGX-CAM",
     category: "Thị giác máy tính",
@@ -110,18 +106,14 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
     interaction: "explode",
   },
   {
-    id: "sensor",
+    id: "sensor_humidity",
     nodeNames: [
-      "MGX_SHT31",
-      "SHT31",
-      "MGX_Temperature_Humidity",
-      "MGX_temp",
-      "MGX_humid",
+      "MGX_SENSOR_HUMIDITY",
     ],
-    label: "Cảm biến SHT31",
-    code: "MGX-SHT31",
+    label: "Cảm biến độ ẩm",
+    code: "MGX-Sensor-humidity",
     category: "Môi trường",
-    summary: "Đo nhiệt độ và độ ẩm tại vị trí đặt trạm.",
+    summary: "Đo độ ẩm tại vị trí đặt trạm.",
     details:
       "Dữ liệu vi khí hậu được gắn với từng lượt ghi nhận để phân tích điều kiện thuận lợi cho hoạt động của muỗi.",
     accent: "#fbbf24",
@@ -129,15 +121,28 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
     interaction: "explode",
   },
   {
-    id: "power",
+    id: "main",
     nodeNames: [
-      "MGX_Power_Module",
-      "MGX_Power",
-      "Power_Module",
-      "micro usb C Adafruit 4090 - corrected",
+      "XIAO-ESP32S3-Sense v001",
+      "MGX_MAIN",
+      "XIAO-ESP32S3-Sense v24",
     ],
+    label: "Vi xử lý ESP32-S3",
+    code: "MGX-ESP32",
+    category: "Điện tử",
+    summary:
+      "Bộ điều khiển trung tâm của trạm, chịu trách nhiệm chụp ảnh, đọc cảm biến, điều khiển quạt và LED, sau đó gửi dữ liệu lên hệ thống AI.",
+    details:
+      "ESP32-S3 điều phối hoạt động của các linh kiện theo chương trình đã cấu hình, đồng thời tổng hợp và truyền dữ liệu lên hệ thống trung tâm.",
+    accent: "#fb7195",
+    explodedOffset: [0.82, 0.12, -0.08],
+    interaction: "explode",
+  },
+  {
+    id: "power",
+    nodeNames: ["MGX-USB-C"],
     label: "Module nguồn",
-    code: "MGX-POWER",
+    code: "MGX-USB-C",
     category: "Điện tử",
     summary: "Ổn áp và phân phối nguồn cho camera, cảm biến, LED và quạt.",
     details:
@@ -148,7 +153,7 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
   },
   {
     id: "whiteLed",
-    nodeNames: ["MGX_LED_White", "LED_White", "led", "MGX_LED"],
+    nodeNames: ["MGX_LED_White"],
     label: "LED trắng",
     code: "MGX-LED-W",
     category: "Chiếu sáng",
@@ -161,7 +166,7 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
   },
   {
     id: "attractLed",
-    nodeNames: ["MGX_LED_Attract", "MGX_LED_UV", "LED_Attract"],
+    nodeNames: [ "MGX_LED"],
     label: "LED dẫn dụ",
     code: "MGX-LED-A",
     category: "Dẫn dụ",
@@ -174,7 +179,7 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
   },
   {
     id: "baitBox",
-    nodeNames: ["MGX_Bait_Box", "MGX_Bait", "Bait_Box"],
+    nodeNames: [ "MGX_BOX"],
     label: "Hộp mồi dẫn dụ",
     code: "MGX-BAIT",
     category: "Dẫn dụ",
@@ -186,14 +191,14 @@ export const PRODUCT_PARTS: readonly ProductPart[] = [
     interaction: "explode",
   },
   {
-    id: "trapChamber",
-    nodeNames: ["MGX_Trap_Chamber", "Trap_Chamber"],
-    label: "Khoang giữ mẫu",
-    code: "MGX-TRAP",
-    category: "Thu mẫu",
-    summary: "Giữ cá thể sau khi được quạt hút vào thiết bị.",
+    id: "sensor_temperature",
+    nodeNames: ["MGX_SENSOR_TEMPERATURE"],
+    label: "Cảm biến",
+    code: "MGX-sensor-temperature",
+    category: "Môi trường",
+    summary: "Ghi nhận thông tin môi trường tại trạm để cảm báo điều kiện thuận lợi cho muỗi phát triển.",
     details:
-      "Khoang giữ mẫu tách khỏi camera và bo mạch, giúp quan sát, vệ sinh và thu hồi mẫu thuận tiện hơn.",
+      "Cảm biến nhiệt độ đặt riêng để ghi nhận nhiệt độ theo thời gian thực từ môi trường, hỗ trợ dự đoán, cảnh bảo nguy cơ bùng phát dịch bệnh về muỗi.",
     accent: "#22d3ee",
     explodedOffset: [0.68, -0.18, 0.32],
     interaction: "explode",
