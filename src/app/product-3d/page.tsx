@@ -14,7 +14,7 @@ import {
   Sparkles,
   Wind,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 
 import type { ProductPart } from "@/components/product-3d/product-catalog";
 
@@ -43,7 +43,10 @@ export default function Product3DPage() {
   const [mosquitoActive, setMosquitoActive] = useState(false);
   const [status, setStatus] = useState("Mô hình sẵn sàng");
 
-  const resetDevice = useCallback(() => {
+    const [cameraHandoffSignal, setCameraHandoffSignal] = useState(0);
+  const [handoffMode, setHandoffMode] = useState(false);
+  const [flashActive, setFlashActive] = useState(false);
+const resetDevice = useCallback(() => {
     setMosquitoActive(false);
     setHoveredPart(null);
     setViewMode("normal");
@@ -61,6 +64,34 @@ export default function Product3DPage() {
     setStatus("Đang mô phỏng đàn muỗi tiếp cận cửa hút");
   }, [mosquitoActive]);
 
+  const handleCameraHandoffReady = useCallback(() => {
+    setStatus("MGX_CAMERA · CAPTURE FRAME");
+    setFlashActive(true);
+
+    window.setTimeout(() => setFlashActive(false), 760);
+
+    window.setTimeout(() => {
+      router.push("/product-3d/image-flow");
+    }, 1050);
+  }, [router]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("handoff") !== "camera") return;
+
+    setHandoffMode(true);
+    setMosquitoActive(false);
+    setHoveredPart(null);
+    setViewMode("transparent");
+    setStatus("MGX_CAMERA · dang zoom vao vung chup");
+
+    const timer = window.setTimeout(() => {
+      setCameraHandoffSignal((value) => value + 1);
+    }, 650);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <main className="product-3d-grid relative h-[100svh] min-h-[620px] overflow-hidden bg-[#030807] text-white">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_48%,rgba(16,185,129,0.11),transparent_33%),radial-gradient(circle_at_18%_18%,rgba(56,189,248,0.08),transparent_25%)]" />
@@ -73,7 +104,9 @@ export default function Product3DPage() {
           resetSignal={resetSignal}
           mosquitoActive={mosquitoActive}
           mosquitoWave={mosquitoWave}
-          onPartHover={setHoveredPart}
+                    cameraHandoffSignal={cameraHandoffSignal}
+          onCameraHandoffReady={handleCameraHandoffReady}
+onPartHover={setHoveredPart}
           onReset={resetDevice}
           onReleaseMosquitoes={releaseMosquitoes}
           onMosquitoPhaseChange={(phase) => {
@@ -227,6 +260,41 @@ export default function Product3DPage() {
           {status}
         </div>
       </div>
+      {handoffMode && (
+        <>
+          <div className="pointer-events-none absolute inset-x-0 bottom-14 z-40 flex justify-center">
+            <div className="rounded-full border border-cyan-300/20 bg-black/70 px-4 py-2 font-mono text-[10px] font-bold tracking-[0.14em] text-cyan-100 shadow-2xl backdrop-blur-xl">
+              MGX_CAMERA - CAPTURE FRAME
+            </div>
+          </div>
+
+          <div
+            className={`mgx-shutter-flash pointer-events-none absolute inset-0 z-[100] bg-white ${
+              flashActive ? "is-active" : ""
+            }`}
+          />
+        </>
+      )}
+
+      <style jsx>{`
+        .mgx-shutter-flash {
+          opacity: 0;
+        }
+
+        .mgx-shutter-flash.is-active {
+          animation: mgxShutterFlash 760ms ease-out forwards;
+        }
+
+        @keyframes mgxShutterFlash {
+          0% { opacity: 0; }
+          10% { opacity: 0.98; }
+          26% { opacity: 0.14; }
+          42% { opacity: 0.85; }
+          67% { opacity: 0.06; }
+          100% { opacity: 0; }
+        }
+      `}</style>
+
     </main>
   );
 }

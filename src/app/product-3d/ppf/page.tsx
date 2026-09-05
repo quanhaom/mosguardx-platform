@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
@@ -64,6 +65,7 @@ const phaseCopy: Record<
 };
 
 export default function Ppf3DPage() {
+  const router = useRouter();
   const [phase, setPhase] = useState<PpfDemoPhase>("handoff");
   const [runSignal, setRunSignal] = useState(1);
   const [complete, setComplete] = useState(false);
@@ -77,7 +79,11 @@ export default function Ppf3DPage() {
 
   const handleComplete = useCallback(() => {
     setComplete(true);
-  }, []);
+
+    window.setTimeout(() => {
+      router.push("/product-3d?handoff=camera");
+    }, 1200);
+  }, [router]);
 
   const replay = () => {
     setComplete(false);

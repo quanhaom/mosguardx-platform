@@ -43,6 +43,8 @@ type MosguardXViewerProps = {
   mosquitoActive: boolean;
   resetCameraSignal?: number;
   mosquitoWave: number;
+  cameraHandoffSignal?: number;
+  onCameraHandoffReady?: () => void;
   onPartHover: (part: ProductPart | null) => void;
   onReset: () => void;
   onReleaseMosquitoes: () => void;
@@ -539,7 +541,9 @@ function InteractiveModel({
   resetSignal,
   mosquitoActive,
   mosquitoWave,
-  onPartHover,
+    cameraHandoffSignal = 0,
+  onCameraHandoffReady,
+onPartHover,
   onReset,
   onReleaseMosquitoes,
   onMosquitoPhaseChange,
@@ -556,6 +560,8 @@ function InteractiveModel({
   const initialized = useRef(false);
   const resetting = useRef(false);
   const resetCameraActive = useRef(false);
+  const cameraHandoffActive = useRef(false);
+  const cameraHandoffReadySent = useRef(false);
   const { camera, gl, invalidate, pointer, raycaster } = useThree();
   const controls = useThree((state) => state.controls) as unknown as
     | { target: Vector3; update: () => void }
@@ -692,6 +698,16 @@ function InteractiveModel({
   }, [invalidate, mosquitoActive, mosquitoWave]);
 
   useEffect(() => {
+    if (cameraHandoffSignal === 0) return;
+
+    cameraHandoffReadySent.current = false;
+    cameraHandoffActive.current = true;
+    resetCameraActive.current = false;
+    setLidOpen(true);
+    invalidate();
+  }, [cameraHandoffSignal, invalidate]);
+
+  useEffect(() => {
     const canvas = gl.domElement;
 
     const handleContextMenu = (event: MouseEvent) => {
@@ -744,6 +760,68 @@ function InteractiveModel({
         prepared.lidHolder.position.distanceToSquared(target) >
         prepared.size * prepared.size * 0.0000001
       ) {
+        animating = true;
+      }
+    }
+
+    // Close-up handoff to MGX_CAMERA.
+    if (cameraHandoffActive.current && !mosquitoActive) {
+      const cameraTarget = new Vector3(
+        prepared.capture[0],
+        prepared.capture[1],
+        prepared.capture[2],
+      );
+
+      const closePosition = cameraTarget.clone().add(
+        new Vector3(
+          prepared.size * 0.10,
+          prepared.size * 0.075,
+          prepared.size * 0.29,
+        ),
+      );
+
+      const zoomDamping = 1 - Math.exp(-delta * 1.75);
+      camera.position.lerp(closePosition, zoomDamping);
+
+      if (controls) {
+        controls.target.lerp(cameraTarget, zoomDamping);
+        controls.update();
+      } else {
+        camera.lookAt(cameraTarget);
+      }
+
+      camera.updateMatrixWorld();
+
+      const positionSettled =
+        camera.position.distanceToSquared(closePosition) <
+        prepared.size * prepared.size * 0.000006;
+
+      const targetSettled =
+        !controls ||
+        controls.target.distanceToSquared(cameraTarget) <
+          prepared.size * prepared.size * 0.000006;
+
+      if (positionSettled && targetSettled) {
+        camera.position.copy(closePosition);
+
+        if (controls) {
+          controls.target.copy(cameraTarget);
+          controls.update();
+        } else {
+          camera.lookAt(cameraTarget);
+        }
+
+        if (!cameraHandoffReadySent.current) {
+          cameraHandoffReadySent.current = true;
+          setCapturePulseSignal((value) => value + 1);
+
+          window.setTimeout(() => {
+            onCameraHandoffReady?.();
+          }, 260);
+        }
+
+        cameraHandoffActive.current = false;
+      } else {
         animating = true;
       }
     }
