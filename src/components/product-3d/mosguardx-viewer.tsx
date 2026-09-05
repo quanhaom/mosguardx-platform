@@ -15,11 +15,16 @@ import {
   OrbitControls,
   useBounds,
   useGLTF,
-} from "@react-three/drei";
-import { Canvas, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Box3,
+  useTexture,
+  } from "@react-three/drei"; import { Canvas,
+  ThreeEvent,
+  useFrame,
+  useThree,
+  createPortal } from "@react-three/fiber"; import { Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState } from "react"; import {   Box3,
   Color,
   Group,
   Material,
@@ -31,6 +36,7 @@ import {
   PointLight,
   Vector2,
   Vector3,
+  DoubleSide,
 } from "three";
 
 import MosquitoSwarm from "./mosquito-swarm";
@@ -536,6 +542,71 @@ function CameraCaptureEffect({
   );
 }
 
+
+
+function MgxLogoOnLid({ prepared }: { prepared: PreparedModel }) {
+  const logoTexture = useTexture("/branding/mgx-logo.png");
+
+  const placement = useMemo(() => {
+    const lid = prepared.parts.get("lid");
+    const holder = prepared.lidHolder;
+
+    if (!lid || !holder) return null;
+
+    prepared.root.updateMatrixWorld(true);
+
+    const worldBounds = new Box3().setFromObject(lid);
+    const worldCenter = worldBounds.getCenter(new Vector3());
+    const worldSize = worldBounds.getSize(new Vector3());
+
+    const frontWorld = new Vector3(
+      worldCenter.x,
+      worldCenter.y,
+      worldBounds.max.z,
+    );
+
+    const frontLocal = holder.worldToLocal(frontWorld.clone());
+
+    const width = Math.min(
+      Math.max(worldSize.x, worldSize.y) * 0.33,
+      prepared.size * 0.40,
+    );
+    const height = width / 1.8;
+
+    return {
+      position: [
+        frontLocal.x,
+        frontLocal.y,
+        frontLocal.z - prepared.size * 0.006,
+      ] as [number, number, number],
+      width,
+      height,
+    };
+  }, [prepared]);
+
+  if (!placement || !prepared.lidHolder) return null;
+
+  return createPortal(
+    <mesh
+      position={placement.position}
+      rotation={[0, Math.PI, 0]}
+      renderOrder={30}
+      userData={{ mgxBranding: "lid-logo-rear" }}
+    >
+      <planeGeometry args={[placement.width, placement.height]} />
+      <meshBasicMaterial
+        map={logoTexture}
+        transparent
+        alphaTest={0.02}
+        side={DoubleSide}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>,
+    prepared.lidHolder,
+  );
+}
+
 function InteractiveModel({
   shellOpacity,
   resetSignal,
@@ -983,6 +1054,7 @@ onPartHover,
         onPointerOut={clearHover}
         onClick={handleClick}
       />
+<MgxLogoOnLid prepared={prepared} />
 
       {debugFlight && <FlightDebugPath prepared={prepared} />}
 
