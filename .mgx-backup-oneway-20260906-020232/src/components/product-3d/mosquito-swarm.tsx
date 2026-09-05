@@ -109,13 +109,6 @@ export default function MosquitoSwarm({
   const elapsed = useRef(0);
   const completed = useRef(false);
   const captured = useRef(false);
-
-  // Once a wave completes it may not restart itself. PPF contact is also
-  // latched per individual mosquito.
-  const completedWave = useRef<number | null>(null);
-  const ppfContacted = useRef<boolean[]>(
-    Array.from({ length: MOSQUITO_COUNT }, () => false),
-  );
   const currentPhase = useRef<MosquitoFlightPhase>("opening");
   const localFlightState = useRef<MosquitoFlightState>({
     active: false,
@@ -124,16 +117,6 @@ export default function MosquitoSwarm({
     phase: "opening",
   });
   const sharedFlightState = flightState ?? localFlightState;
-
-  // IMPORTANT: onPhaseChange is supplied by the parent and may get a new
-  // function identity whenever the status UI re-renders. It must never be a
-  // restart trigger for the flight timeline.
-  const onPhaseChangeRef = useRef(onPhaseChange);
-
-  useEffect(() => {
-    onPhaseChangeRef.current = onPhaseChange;
-  }, [onPhaseChange]);
-
   const dummy = useMemo(() => new Object3D(), []);
   const { invalidate } = useThree();
 
@@ -152,48 +135,23 @@ export default function MosquitoSwarm({
   );
 
   useEffect(() => {
-    // active=false only hides the finished wave. It must never reset the clock
-    // or announce a new opening cycle.
-    if (!active) {
-      sharedFlightState.current.active = false;
-
-      for (const mesh of [
-        bodyRef.current,
-        leftWingRef.current,
-        rightWingRef.current,
-      ]) {
-        if (mesh) mesh.visible = false;
-      }
-
-      invalidate();
-      return;
-    }
-
-    // Defensive guard: the same wave id can only run once.
-    if (completedWave.current === wave) {
-      return;
-    }
-
     elapsed.current = 0;
     completed.current = false;
     captured.current = false;
-    ppfContacted.current.fill(false);
     sharedFlightState.current.active = false;
     sharedFlightState.current.progress = 0;
     sharedFlightState.current.phase = "opening";
     currentPhase.current = "opening";
-    onPhaseChangeRef.current?.("opening");
+    // Deactivating the swarm after completion must not announce a new
+    // "opening" phase. Only a newly activated wave starts that phase.
+    if (active) onPhaseChange?.("opening");
 
-    for (const mesh of [
-      bodyRef.current,
-      leftWingRef.current,
-      rightWingRef.current,
-    ]) {
-      if (mesh) mesh.visible = true;
+    for (const mesh of [bodyRef.current, leftWingRef.current, rightWingRef.current]) {
+      if (mesh) mesh.visible = active;
     }
 
     invalidate();
-  }, [active, invalidate, sharedFlightState, wave]);
+  }, [active, invalidate, onPhaseChange, sharedFlightState, wave]);
 
   useFrame((_, delta) => {
     if (!active || !bodyRef.current || !leftWingRef.current || !rightWingRef.current) {
@@ -289,19 +247,7 @@ export default function MosquitoSwarm({
 
       const visibleScale = localTime < 0 || progress >= 1 ? 0 : 1;
       const mosquitoSize = unit * (0.42 + seeded(index, 9) * 0.18) * visibleScale;
-
-      // PPF contact is one-way. Once this mosquito reaches MGX_BOX it stays
-      // purple for the rest of the flight.
-      if (progress >= PPF_CONTACT_PROGRESS) {
-        ppfContacted.current[index] = true;
-      }
-      const carriesPpf = ppfContacted.current[index];
-
-      // Remove most orbital jitter after contact so the mosquito visibly leaves
-      // MGX_BOX instead of looping around/re-entering the bait region.
-      if (carriesPpf) {
-        radius *= 0.18;
-      }
+      const carriesPpf = progress >= PPF_CONTACT_PROGRESS;
 
       bodyRef.current!.setColorAt(
         index,
@@ -387,7 +333,7 @@ export default function MosquitoSwarm({
       }
 
       currentPhase.current = nextPhase;
-      onPhaseChangeRef.current?.(nextPhase);
+      onPhaseChange?.(nextPhase);
     }
 
     // Capture only after most of the swarm is physically inside the imaging
@@ -402,14 +348,13 @@ export default function MosquitoSwarm({
 
     if (finished && !completed.current) {
       completed.current = true;
-      completedWave.current = wave;
       sharedFlightState.current.active = false;
       sharedFlightState.current.phase = "complete";
       currentPhase.current = "complete";
       bodyRef.current.visible = false;
       leftWingRef.current.visible = false;
       rightWingRef.current.visible = false;
-      onPhaseChangeRef.current?.("complete");
+      onPhaseChange?.("complete");
       onComplete();
       return;
     }

@@ -52,14 +52,11 @@ export default function Product3DPage() {
   }, []);
 
   const releaseMosquitoes = useCallback(() => {
-    // One wave is one-shot. Ignore a second release trigger while it is flying.
-    if (mosquitoActive) return;
-
     setResetSignal((value) => value + 1);
     setMosquitoWave((value) => value + 1);
     setMosquitoActive(true);
     setStatus("Đang mô phỏng đàn muỗi tiếp cận cửa hút");
-  }, [mosquitoActive]);
+  }, []);
 
   return (
     <main className="product-3d-grid relative h-[100svh] min-h-[620px] overflow-hidden bg-[#030807] text-white">

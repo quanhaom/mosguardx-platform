@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Box,
   ChevronLeft,
@@ -35,7 +34,6 @@ const MosguardXViewer = dynamic(
 type ViewMode = "normal" | "transparent";
 
 export default function Product3DPage() {
-  const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>("normal");
   const [hoveredPart, setHoveredPart] = useState<ProductPart | null>(null);
   const [resetSignal, setResetSignal] = useState(0);
@@ -52,14 +50,11 @@ export default function Product3DPage() {
   }, []);
 
   const releaseMosquitoes = useCallback(() => {
-    // One wave is one-shot. Ignore a second release trigger while it is flying.
-    if (mosquitoActive) return;
-
     setResetSignal((value) => value + 1);
     setMosquitoWave((value) => value + 1);
     setMosquitoActive(true);
     setStatus("Đang mô phỏng đàn muỗi tiếp cận cửa hút");
-  }, [mosquitoActive]);
+  }, []);
 
   return (
     <main className="product-3d-grid relative h-[100svh] min-h-[620px] overflow-hidden bg-[#030807] text-white">
@@ -76,22 +71,9 @@ export default function Product3DPage() {
           onPartHover={setHoveredPart}
           onReset={resetDevice}
           onReleaseMosquitoes={releaseMosquitoes}
-          onMosquitoPhaseChange={(phase) => {
-            if (phase === "bait") {
-              setStatus("Đã tiếp xúc hộp mồi PPF — cá thể mang PPF chuyển sang màu tím");
-            } else if (phase === "fan") {
-              setStatus("Muỗi mang PPF đang đi qua quạt dẫn dòng");
-            } else if (phase === "exit") {
-              setStatus("Muỗi màu tím đang rời hệ thống — chuẩn bị chuyển sang Demo 02");
-            }
-          }}
           onMosquitoComplete={() => {
             setMosquitoActive(false);
-            setStatus("Muỗi mang PPF đã rời thiết bị — chuyển sang Demo 02");
-
-            window.setTimeout(() => {
-              router.push("/product-3d/ppf");
-            }, 650);
+            setStatus("Mô phỏng hoàn tất — thiết bị đã dẫn muỗi tới cửa hút");
           }}
         />
       </div>

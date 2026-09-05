@@ -124,16 +124,6 @@ export default function MosquitoSwarm({
     phase: "opening",
   });
   const sharedFlightState = flightState ?? localFlightState;
-
-  // IMPORTANT: onPhaseChange is supplied by the parent and may get a new
-  // function identity whenever the status UI re-renders. It must never be a
-  // restart trigger for the flight timeline.
-  const onPhaseChangeRef = useRef(onPhaseChange);
-
-  useEffect(() => {
-    onPhaseChangeRef.current = onPhaseChange;
-  }, [onPhaseChange]);
-
   const dummy = useMemo(() => new Object3D(), []);
   const { invalidate } = useThree();
 
@@ -182,7 +172,7 @@ export default function MosquitoSwarm({
     sharedFlightState.current.progress = 0;
     sharedFlightState.current.phase = "opening";
     currentPhase.current = "opening";
-    onPhaseChangeRef.current?.("opening");
+    onPhaseChange?.("opening");
 
     for (const mesh of [
       bodyRef.current,
@@ -193,7 +183,7 @@ export default function MosquitoSwarm({
     }
 
     invalidate();
-  }, [active, invalidate, sharedFlightState, wave]);
+  }, [active, invalidate, onPhaseChange, sharedFlightState, wave]);
 
   useFrame((_, delta) => {
     if (!active || !bodyRef.current || !leftWingRef.current || !rightWingRef.current) {
@@ -387,7 +377,7 @@ export default function MosquitoSwarm({
       }
 
       currentPhase.current = nextPhase;
-      onPhaseChangeRef.current?.(nextPhase);
+      onPhaseChange?.(nextPhase);
     }
 
     // Capture only after most of the swarm is physically inside the imaging
@@ -409,7 +399,7 @@ export default function MosquitoSwarm({
       bodyRef.current.visible = false;
       leftWingRef.current.visible = false;
       rightWingRef.current.visible = false;
-      onPhaseChangeRef.current?.("complete");
+      onPhaseChange?.("complete");
       onComplete();
       return;
     }

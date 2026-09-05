@@ -69,7 +69,6 @@ type PreparedModel = {
   approach: readonly [number, number, number];
   target: readonly [number, number, number];
   capture: readonly [number, number, number];
-  bait: readonly [number, number, number];
   fan: readonly [number, number, number];
   exit: readonly [number, number, number];
   debugNodes: {
@@ -271,19 +270,6 @@ function prepareModel(source: Object3D): PreparedModel {
       "MGX_ESP32_CAM",
       "ESP32_CAM",
     ]) ?? parts.get("camera");
-
-  // MGX_BOX is the removable bait module in the current CAD export.
-  // For the MVP animation it is also the visual PPF-contact waypoint:
-  // each mosquito changes to purple only after physically reaching this point.
-  const baitBox =
-    findNamedObject(namedObjects, [
-      "MGX_BOX",
-      "MGX_BAIT",
-      "MGX_Bait",
-      "BaitBox",
-      "Bait Box",
-    ]) ?? parts.get("baitBox");
-
   const inlet = attractLed ?? grille ?? fan;
   const inletCenter = inlet
     ? new Box3().setFromObject(inlet).getCenter(new Vector3())
@@ -309,10 +295,6 @@ function prepareModel(source: Object3D): PreparedModel {
   const captureCenter = cameraModule
     ? new Box3().setFromObject(cameraModule).getCenter(new Vector3())
     : fanCenter.clone().add(new Vector3(0, modelSize * 0.16, 0));
-
-  const baitCenter = baitBox
-    ? new Box3().setFromObject(baitBox).getCenter(new Vector3())
-    : captureCenter.clone().lerp(fanCenter, 0.62);
 
     // Dịch vùng muỗi được chụp sang bên phải camera.
   captureCenter.add(
@@ -344,7 +326,6 @@ function prepareModel(source: Object3D): PreparedModel {
     approach: [approachCenter.x, approachCenter.y, approachCenter.z],
     target: [inletCenter.x, inletCenter.y, inletCenter.z],
     capture: [captureCenter.x, captureCenter.y, captureCenter.z],
-    bait: [baitCenter.x, baitCenter.y, baitCenter.z],
     fan: [fanCenter.x, fanCenter.y, fanCenter.z],
     exit: [exitCenter.x, exitCenter.y, exitCenter.z],
     debugNodes: {
@@ -360,7 +341,6 @@ const DEBUG_POINT_STYLES = [
   ["APPROACH", "#facc15"],
   ["MGX_LED", "#c084fc"],
   ["MGX_CAMERA", "#38bdf8"],
-  ["MGX_BOX / PPF", "#a855f7"],
   ["FAN", "#22c55e"],
   ["EXIT", "#ef4444"],
 ] as const;
@@ -371,7 +351,6 @@ function FlightDebugPath({ prepared }: { prepared: PreparedModel }) {
     prepared.approach,
     prepared.target,
     prepared.capture,
-    prepared.bait,
     prepared.fan,
     prepared.exit,
   ];
@@ -584,7 +563,6 @@ function InteractiveModel({
       { point: "APPROACH", xyz: prepared.approach.join(", ") },
       { point: "MGX_LED", xyz: prepared.target.join(", ") },
       { point: "MGX_CAMERA", xyz: prepared.capture.join(", ") },
-      { point: "MGX_BOX / PPF", xyz: prepared.bait.join(", ") },
       { point: "FAN", xyz: prepared.fan.join(", ") },
       { point: "EXIT", xyz: prepared.exit.join(", ") },
     ]);
@@ -929,7 +907,6 @@ function InteractiveModel({
         approach={prepared.approach}
         target={prepared.target}
         capture={prepared.capture}
-        bait={prepared.bait}
         fan={prepared.fan}
         exit={prepared.exit}
         unit={prepared.size * 0.035}
