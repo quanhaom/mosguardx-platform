@@ -60,7 +60,7 @@ const LOCAL_FORWARD = new Vector3(0, 1, 0);
 
 // Each mosquito changes colour independently when its own local flight
 // reaches the physical MGX_BOX / PPF-contact waypoint.
-const PPF_CONTACT_PROGRESS = 0.80;
+const PPF_CONTACT_PROGRESS = 0.62;
 const NORMAL_BODY_COLOR = new Color("#111827");
 const PPF_BODY_COLOR = new Color("#7c3aed");
 const NORMAL_WING_COLOR = new Color("#cbd5e1");
@@ -242,53 +242,48 @@ export default function MosquitoSwarm({
           unit * 1.15,
           stage,
         );
-      } else if (progress < 0.52) {
-        // Stage 2: enter through MGX_LED, the CAD inlet marker.
-        const stage = MathUtils.smoothstep((progress - 0.3) / 0.22, 0, 1);
+      } else if (progress < 0.5) {
+        // Stage 2: enter through MGX_LED / inlet.
+        const stage = MathUtils.smoothstep((progress - 0.3) / 0.2, 0, 1);
         position.copy(inletApproach).lerp(destination, stage);
         direction.copy(destination).sub(inletApproach);
-        radius = MathUtils.lerp(unit * 1.15, unit * 0.06, stage);
-      } else if (progress < 0.66) {
-        // Stage 3: move into the controlled camera chamber.
-        const stage = MathUtils.smoothstep((progress - 0.52) / 0.14, 0, 1);
-        position.copy(destination).lerp(capturePoint, stage);
-        direction.copy(capturePoint).sub(destination);
-        radius = unit * 0.06;
-      } else if (progress < 0.74) {
-        // Stage 4: hold briefly in front of MGX_CAMERA for the capture effect.
+        radius = MathUtils.lerp(unit * 1.15, unit * 0.055, stage);
+      } else if (progress < 0.62) {
+        // Stage 3: move directly from inlet to MGX_BOX / PPF.
+        // This is the only PPF contact pass.
+        const stage = MathUtils.smoothstep((progress - 0.5) / 0.12, 0, 1);
+        position.copy(destination).lerp(baitPoint, stage);
+        direction.copy(baitPoint).sub(destination);
+        radius = MathUtils.lerp(unit * 0.055, unit * 0.035, stage);
+      } else if (progress < 0.72) {
+        // Stage 4: after PPF contact, continue forward into the camera chamber.
+        // The mosquito is already purple here and never returns to MGX_BOX.
+        const stage = MathUtils.smoothstep((progress - 0.62) / 0.10, 0, 1);
+        position.copy(baitPoint).lerp(capturePoint, stage);
+        direction.copy(capturePoint).sub(baitPoint);
+        radius = unit * 0.028;
+      } else if (progress < 0.8) {
+        // Stage 5: brief imaging hold in front of MGX_CAMERA.
         position.copy(capturePoint);
-        direction.copy(baitPoint).sub(capturePoint);
-        radius = unit * 0.06;
+        direction.copy(fanPoint).sub(capturePoint);
+        radius = unit * 0.022;
         imagingCount += 1;
-      } else if (progress < 0.84) {
-        // Stage 5: fly from the imaging zone to the physical MGX_BOX.
-        const stage = MathUtils.smoothstep((progress - 0.74) / 0.10, 0, 1);
-        position.copy(capturePoint).lerp(baitPoint, stage);
-        direction.copy(baitPoint).sub(capturePoint);
-        radius = MathUtils.lerp(unit * 0.06, unit * 0.045, stage);
-      } else if (progress < 0.92) {
-        // Stage 6: after PPF contact, continue through the fan.
-        const stage = MathUtils.smoothstep((progress - 0.84) / 0.08, 0, 1);
-        position.copy(baitPoint).lerp(fanPoint, stage);
-        direction.copy(fanPoint).sub(baitPoint);
-        radius = MathUtils.lerp(unit * 0.045, unit * 0.04, stage);
+      } else if (progress < 0.9) {
+        // Stage 6: leave the imaging chamber directly through the fan.
+        const stage = MathUtils.smoothstep((progress - 0.8) / 0.10, 0, 1);
+        position.copy(capturePoint).lerp(fanPoint, stage);
+        direction.copy(fanPoint).sub(capturePoint);
+        radius = MathUtils.lerp(unit * 0.022, unit * 0.018, stage);
       } else {
-        // Stage 7: leave through the device exit while retaining purple PPF state.
-        const stage = MathUtils.smoothstep((progress - 0.92) / 0.08, 0, 1);
+        // Stage 7: continue one-way through the exit.
+        const stage = MathUtils.smoothstep((progress - 0.9) / 0.10, 0, 1);
         position.copy(fanPoint).lerp(exitPoint, stage);
         direction.copy(exitPoint).sub(fanPoint);
-        radius = MathUtils.lerp(unit * 0.04, unit * 0.02, stage);
+        radius = MathUtils.lerp(unit * 0.018, unit * 0.008, stage);
       }
 
       if (direction.lengthSq() < 0.0000001) direction.set(1, 0, 0);
       direction.normalize();
-
-      position.x += Math.cos(angle) * radius;
-      position.y += Math.sin(angle * 1.3) * radius * 0.55;
-      position.z += Math.sin(angle) * radius * 0.36;
-
-      const visibleScale = localTime < 0 || progress >= 1 ? 0 : 1;
-      const mosquitoSize = unit * (0.42 + seeded(index, 9) * 0.18) * visibleScale;
 
       // PPF contact is one-way. Once this mosquito reaches MGX_BOX it stays
       // purple for the rest of the flight.
@@ -297,11 +292,16 @@ export default function MosquitoSwarm({
       }
       const carriesPpf = ppfContacted.current[index];
 
-      // Remove most orbital jitter after contact so the mosquito visibly leaves
-      // MGX_BOX instead of looping around/re-entering the bait region.
-      if (carriesPpf) {
-        radius *= 0.18;
-      }
+      // Reduce orbital jitter BEFORE applying the position offset so the
+      // post-PPF section is visually one-way instead of looping back.
+      const orbitRadius = carriesPpf ? radius * 0.12 : radius;
+
+      position.x += Math.cos(angle) * orbitRadius;
+      position.y += Math.sin(angle * 1.3) * orbitRadius * 0.42;
+      position.z += Math.sin(angle) * orbitRadius * 0.28;
+
+      const visibleScale = localTime < 0 || progress >= 1 ? 0 : 1;
+      const mosquitoSize = unit * (0.42 + seeded(index, 9) * 0.18) * visibleScale;
 
       bodyRef.current!.setColorAt(
         index,
@@ -365,11 +365,11 @@ export default function MosquitoSwarm({
 
     let nextPhase: MosquitoFlightPhase = "opening";
     if (sequenceProgress > 0 && sequenceProgress < 0.3) nextPhase = "approach";
-    else if (sequenceProgress < 0.52 && sequenceProgress >= 0.3) nextPhase = "inlet";
-    else if (sequenceProgress < 0.74 && sequenceProgress >= 0.52) nextPhase = "imaging";
-    else if (sequenceProgress < 0.84 && sequenceProgress >= 0.74) nextPhase = "bait";
-    else if (sequenceProgress < 0.92 && sequenceProgress >= 0.84) nextPhase = "fan";
-    else if (sequenceProgress >= 0.92) nextPhase = "exit";
+    else if (sequenceProgress < 0.5 && sequenceProgress >= 0.3) nextPhase = "inlet";
+    else if (sequenceProgress < 0.62 && sequenceProgress >= 0.5) nextPhase = "bait";
+    else if (sequenceProgress < 0.8 && sequenceProgress >= 0.62) nextPhase = "imaging";
+    else if (sequenceProgress < 0.9 && sequenceProgress >= 0.8) nextPhase = "fan";
+    else if (sequenceProgress >= 0.9) nextPhase = "exit";
 
     sharedFlightState.current.phase = nextPhase;
     if (currentPhase.current !== nextPhase) {

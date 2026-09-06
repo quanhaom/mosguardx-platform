@@ -957,26 +957,26 @@ onPartHover,
           prepared.size * CAMERA_VIEW.mosquitoFollow.inletDistance,
           descendProgress,
         );
-      } else if (progress < 0.6) {
-        const captureApproach = MathUtils.smoothstep((progress - 0.3) / 0.3, 0, 1);
+      } else if (progress < 0.62) {
+        const ppfApproach = MathUtils.smoothstep((progress - 0.3) / 0.32, 0, 1);
         distance = MathUtils.lerp(
           prepared.size * CAMERA_VIEW.mosquitoFollow.inletDistance,
           prepared.size * CAMERA_VIEW.mosquitoFollow.imagingDistance,
-          captureApproach,
+          ppfApproach,
         );
-      } else if (progress < 0.74) {
-        // Hold a close, stable framing while MGX_CAMERA records the swarm.
+      } else if (progress < 0.8) {
+        // Keep a close framing from PPF contact through the imaging chamber.
         distance =
           prepared.size * CAMERA_VIEW.mosquitoFollow.imagingDistance;
-      } else if (progress < 0.88) {
-        const fanProgress = MathUtils.smoothstep((progress - 0.74) / 0.14, 0, 1);
+      } else if (progress < 0.9) {
+        const fanProgress = MathUtils.smoothstep((progress - 0.8) / 0.1, 0, 1);
         distance = MathUtils.lerp(
           prepared.size * CAMERA_VIEW.mosquitoFollow.imagingDistance,
           prepared.size * CAMERA_VIEW.mosquitoFollow.fanDistance,
           fanProgress,
         );
       } else {
-        const exitProgress = MathUtils.smoothstep((progress - 0.88) / 0.12, 0, 1);
+        const exitProgress = MathUtils.smoothstep((progress - 0.9) / 0.1, 0, 1);
         distance = MathUtils.lerp(
           prepared.size * CAMERA_VIEW.mosquitoFollow.fanDistance,
           prepared.size * CAMERA_VIEW.mosquitoFollow.exitDistance,

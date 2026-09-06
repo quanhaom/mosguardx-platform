@@ -126,10 +126,12 @@ function Swarm({
   const path = useMemo(
     () =>
       new CatmullRomCurve3([
+        // Start with a clean one-way handoff from the device exit.
         new Vector3(-1.9, 1.35, 0),
-        new Vector3(-0.7, 1.7, -0.35),
-        new Vector3(0.8, 1.85, 0.45),
-        new Vector3(2.4, 1.45, -0.65),
+        new Vector3(-0.55, 1.34, 0.04),
+        new Vector3(0.8, 1.30, 0.10),
+        // Only after clearing the device does the swarm disperse naturally.
+        new Vector3(2.4, 1.38, -0.28),
         new Vector3(3.8, 0.95, 0.15),
         new Vector3(4.75, 0.52, 0.15),
       ]),
