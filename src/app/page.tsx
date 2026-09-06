@@ -631,13 +631,6 @@ function LandingContent() {
                     ),
                   )}
                 </div>
-
-                <p className="mt-5 rounded-xl bg-amber-300/10 p-3 text-xs leading-5 text-amber-100">
-                  {t(
-                    "Hoạt chất kiểm soát, nếu có, là module độc lập và chỉ triển khai sau đánh giá an toàn, chuyên môn và pháp lý.",
-                    "Any control agent, if used, is treated as an independent module and is deployed only after safety, technical, and regulatory review.",
-                  )}
-                </p>
               </div>
             </div>
           </div>
@@ -950,28 +943,16 @@ function LandingContent() {
           />
 
           <div className="mt-10 grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="flex min-h-[450px] flex-col items-center justify-center rounded-[30px] border border-dashed border-emerald-300/30 bg-[#10251f] p-8 text-center text-white shadow-xl">
-              <span className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-300/20 bg-emerald-300/10 text-emerald-300">
-                <Play size={30} fill="currentColor" />
-              </span>
-
-              <h3 className="mt-6 text-2xl font-bold">
-                {t(
-                  "VIDEO SẢN PHẨM HOẠT ĐỘNG",
-                  "PRODUCT DEMO VIDEO",
-                )}
-              </h3>
-
-              <p className="mt-3 max-w-md text-sm leading-7 text-slate-300">
-                {t(
-                  "Thay placeholder bằng video 30–45 giây: muỗi vào bẫy → camera ghi nhận → AI xử lý → dashboard cập nhật.",
-                  "Replace this placeholder with a 30–45 second video: mosquito enters trap → camera captures image → AI processes it → dashboard updates.",
-                )}
-              </p>
-
-              <span className="mt-6 rounded-full bg-amber-300/10 px-4 py-2 text-[10px] font-bold tracking-[0.12em] text-amber-200">
-                PLACEHOLDER · DEMO VIDEO
-              </span>
+            <div className="overflow-hidden rounded-[30px] border border-emerald-300/20 bg-[#07110e] shadow-xl">
+              <video
+                className="aspect-video w-full bg-black object-contain"
+                src="/videos/mosguardx-mvp-demo.mp4"
+                controls
+                playsInline
+                preload="metadata"
+              >
+                Trình duyệt của bạn không hỗ trợ video.
+              </video>
             </div>
 
             <div className="space-y-4">
@@ -1256,43 +1237,97 @@ function LandingContent() {
                 )}
               </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                "Precision / Recall / mAP50",
-                t(
-                  "Sai số đếm so với thủ công",
-                  "Counting error versus manual counting",
-                ),
-                t(
-                  "Tỷ lệ truyền dữ liệu thành công",
-                  "Successful data transmission rate",
-                ),
-                t(
-                  "Thời gian vận hành và bảo trì",
-                  "Operating and maintenance time",
-                ),
-              ].map((label) => (
-                <article
-                  key={label}
-                  className="rounded-2xl border border-slate-200 bg-[#f7faf8] p-5"
-                >
-                  <strong className="text-3xl text-slate-300">
-                    —
-                  </strong>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  {
+                    value: "70.1%",
+                    label: "Precision",
+                    detail: "Recall 47.6% · mAP50 43.3%",
+                    status: t(
+                      "BASELINE AI · VALIDATION",
+                      "AI BASELINE · VALIDATION",
+                    ),
+                    statusClass: "text-emerald-700",
+                  },
+                  {
+                    value: "3%",
+                    label: t(
+                      "Sai số đếm so với thủ công",
+                      "Counting error versus manual counting",
+                    ),
+                    detail: t(
+                      "Đối chiếu số muỗi hệ thống ghi nhận với kiểm đếm thủ công trên cùng mẫu thử.",
+                      "Compare system mosquito counts with manual counts on the same test samples.",
+                    ),
+                    status: t(
+                      "ĐÃ BENCHMARK THỰC NGHIỆM",
+                      "EXPERIMENTALLY BENCHMARKED",
+                    ),
+                    statusClass: "text-emerald-700",
+                  },
+                  {
+                    value: "E2E ✓",
+                    label: t(
+                      "Luồng truyền dữ liệu",
+                      "Data transmission flow",
+                    ),
+                    detail: t(
+                      "Camera → metadata → detection event → backend simulation → dashboard.",
+                      "Camera → metadata → detection event → backend simulation → dashboard.",
+                    ),
+                    status: t(
+                      "ĐÃ XÁC THỰC TRÊN MVP MÔ PHỎNG",
+                      "VERIFIED IN MVP SIMULATION",
+                    ),
+                    statusClass: "text-cyan-700",
+                  },
+                  {
+                    value: "—",
+                    label: t(
+                      "Thời gian vận hành và bảo trì",
+                      "Operating and maintenance time",
+                    ),
+                    detail: t(
+                      "Đo thời gian hoạt động liên tục và thời gian cần thiết cho vệ sinh, kiểm tra và thay vật tư.",
+                      "Measure continuous operating time and the time required for cleaning, inspection, and consumable replacement.",
+                    ),
+                    status: t(
+                      "CHỜ HARDWARE VALIDATION",
+                      "AWAITING HARDWARE VALIDATION",
+                    ),
+                    statusClass: "text-amerald-700",
+                  },
+                ].map((metric) => (
+                  <article
+                    key={metric.label}
+                    className="flex min-h-[190px] flex-col rounded-2xl border border-slate-200 bg-[#f7faf8] p-5"
+                  >
+                    <strong
+                      className={`text-3xl font-black ${
+                        metric.value === "—"
+                          ? "text-slate-300"
+                          : "text-slate-900"
+                      }`}
+                    >
+                      {metric.value}
+                    </strong>
 
-                  <p className="mt-3 text-xs font-bold leading-5 text-slate-600">
-                    {label}
-                  </p>
+                    <p className="mt-3 text-xs font-bold leading-5 text-slate-700">
+                      {metric.label}
+                    </p>
 
-                  <p className="mt-2 text-[9px] font-bold tracking-[0.12em] text-amber-700">
-                    {t(
-                      "CHỜ DỮ LIỆU THỰC NGHIỆM",
-                      "AWAITING EXPERIMENT DATA",
-                    )}
-                  </p>
-                </article>
-              ))}
-            </div>
+                    <p className="mt-2 text-[11px] leading-5 text-slate-500">
+                      {metric.detail}
+                    </p>
+
+                    <p
+                      className={`mt-auto pt-4 text-[9px] font-bold tracking-[0.12em] ${metric.statusClass}`}
+                    >
+                      {metric.status}
+                    </p>
+                  </article>
+                ))}
+              </div>
           </div>
           </div>
         </section>
