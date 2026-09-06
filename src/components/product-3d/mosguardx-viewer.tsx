@@ -77,6 +77,8 @@ type PreparedModel = {
   approach: readonly [number, number, number];
   target: readonly [number, number, number];
   capture: readonly [number, number, number];
+  cameraFocus: readonly [number, number, number];
+  cameraFront: readonly [number, number, number];
   bait: readonly [number, number, number];
   fan: readonly [number, number, number];
   exit: readonly [number, number, number];
@@ -314,9 +316,13 @@ function prepareModel(source: Object3D): PreparedModel {
   // This remains correct when a new CAD export rotates or mirrors the model:
   // mosquitoes start above/outside, approach the face, then cross the LED.
 
-  const captureCenter = cameraModule
+  // Keep the physical camera center separate from the mosquito imaging zone.
+  // Handoff must zoom to the real MGX_CAMERA, not to the shifted capture zone.
+  const cameraFocusCenter = cameraModule
     ? new Box3().setFromObject(cameraModule).getCenter(new Vector3())
     : fanCenter.clone().add(new Vector3(0, modelSize * 0.16, 0));
+
+  const captureCenter = cameraFocusCenter.clone();
 
   const baitCenter = baitBox
     ? new Box3().setFromObject(baitBox).getCenter(new Vector3())
@@ -330,6 +336,19 @@ function prepareModel(source: Object3D): PreparedModel {
       modelSize * 0.0, // gần/xa camera
     ),
   );
+
+  // Front/lens direction of MGX_CAMERA.
+  // The capture zone sits in front of the lens, so cameraFocus -> captureCenter
+  // gives a stable frontal viewing axis.
+  const cameraFrontDirection = captureCenter
+    .clone()
+    .sub(cameraFocusCenter);
+
+  if (cameraFrontDirection.lengthSq() < 0.000001) {
+    cameraFrontDirection.set(1, 0, 0);
+  }
+
+  cameraFrontDirection.normalize();
 
 // Bay thẳng từ tâm quạt qua lỗ thoát phía bên phải.
   const exitCenter = fanCenter
@@ -352,6 +371,12 @@ function prepareModel(source: Object3D): PreparedModel {
     approach: [approachCenter.x, approachCenter.y, approachCenter.z],
     target: [inletCenter.x, inletCenter.y, inletCenter.z],
     capture: [captureCenter.x, captureCenter.y, captureCenter.z],
+    cameraFocus: [cameraFocusCenter.x, cameraFocusCenter.y, cameraFocusCenter.z],
+    cameraFront: [
+      cameraFrontDirection.x,
+      cameraFrontDirection.y,
+      cameraFrontDirection.z,
+    ],
     bait: [baitCenter.x, baitCenter.y, baitCenter.z],
     fan: [fanCenter.x, fanCenter.y, fanCenter.z],
     exit: [exitCenter.x, exitCenter.y, exitCenter.z],
@@ -633,6 +658,9 @@ onPartHover,
   const resetCameraActive = useRef(false);
   const cameraHandoffActive = useRef(false);
   const cameraHandoffReadySent = useRef(false);
+  const cameraHandoffLastSignal = useRef(0);
+  const cameraHandoffHoldStarted = useRef<number | null>(null);
+  const cameraHandoffStartedAt = useRef(0);
   const { camera, gl, invalidate, pointer, raycaster } = useThree();
   const controls = useThree((state) => state.controls) as unknown as
     | { target: Vector3; update: () => void }
@@ -771,8 +799,15 @@ onPartHover,
   useEffect(() => {
     if (cameraHandoffSignal === 0) return;
 
+    // React Strict Mode may execute effects more than once in development.
+    // The same signal must never restart the cinematic handoff.
+    if (cameraHandoffLastSignal.current === cameraHandoffSignal) return;
+    cameraHandoffLastSignal.current = cameraHandoffSignal;
+
     cameraHandoffReadySent.current = false;
+    cameraHandoffHoldStarted.current = null;
     cameraHandoffActive.current = true;
+    cameraHandoffStartedAt.current = performance.now();
     resetCameraActive.current = false;
     setLidOpen(true);
     invalidate();
@@ -835,23 +870,30 @@ onPartHover,
       }
     }
 
-    // Close-up handoff to MGX_CAMERA.
+    // Reliable close-up handoff to the PHYSICAL MGX_CAMERA.
+    // It is time-driven rather than waiting forever for an epsilon threshold.
     if (cameraHandoffActive.current && !mosquitoActive) {
       const cameraTarget = new Vector3(
-        prepared.capture[0],
-        prepared.capture[1],
-        prepared.capture[2],
+        prepared.cameraFocus[0],
+        prepared.cameraFocus[1],
+        prepared.cameraFocus[2],
       );
 
-      const closePosition = cameraTarget.clone().add(
-        new Vector3(
-          prepared.size * 0.10,
-          prepared.size * 0.075,
-          prepared.size * 0.29,
-        ),
-      );
+      // Approach the lens head-on instead of using the previous viewer angle.
+      const cameraFront = new Vector3(
+        prepared.cameraFront[0],
+        prepared.cameraFront[1],
+        prepared.cameraFront[2],
+      ).normalize();
 
-      const zoomDamping = 1 - Math.exp(-delta * 1.75);
+      const closePosition = cameraTarget
+        .clone()
+        .addScaledVector(cameraFront, prepared.size * 0.20)
+        .add(new Vector3(0, prepared.size * 0.010, 0));
+
+      const elapsedMs = performance.now() - cameraHandoffStartedAt.current;
+      const zoomDamping = 1 - Math.exp(-delta * 2.05);
+
       camera.position.lerp(closePosition, zoomDamping);
 
       if (controls) {
@@ -863,16 +905,8 @@ onPartHover,
 
       camera.updateMatrixWorld();
 
-      const positionSettled =
-        camera.position.distanceToSquared(closePosition) <
-        prepared.size * prepared.size * 0.000006;
-
-      const targetSettled =
-        !controls ||
-        controls.target.distanceToSquared(cameraTarget) <
-          prepared.size * prepared.size * 0.000006;
-
-      if (positionSettled && targetSettled) {
+      // At 1.25s, snap and lock exactly on the camera.
+      if (elapsedMs >= 1250) {
         camera.position.copy(closePosition);
 
         if (controls) {
@@ -882,14 +916,17 @@ onPartHover,
           camera.lookAt(cameraTarget);
         }
 
-        if (!cameraHandoffReadySent.current) {
-          cameraHandoffReadySent.current = true;
-          setCapturePulseSignal((value) => value + 1);
+        camera.updateMatrixWorld();
+      }
 
-          window.setTimeout(() => {
-            onCameraHandoffReady?.();
-          }, 260);
-        }
+      // Hold camera in frame, then guarantee shutter/callback.
+      if (elapsedMs >= 1950 && !cameraHandoffReadySent.current) {
+        cameraHandoffReadySent.current = true;
+        setCapturePulseSignal((value) => value + 1);
+
+        window.setTimeout(() => {
+          onCameraHandoffReady?.();
+        }, 260);
 
         cameraHandoffActive.current = false;
       } else {
@@ -1066,7 +1103,7 @@ onPartHover,
       )}
 
       <CameraCaptureEffect
-        point={prepared.capture}
+        point={cameraHandoffSignal > 0 ? prepared.cameraFocus : prepared.capture}
         size={prepared.size}
         signal={capturePulseSignal}
       />
@@ -1145,7 +1182,7 @@ export default function MosguardXViewer(props: MosguardXViewerProps) {
 
       <OrbitControls
         makeDefault
-        enabled={!props.mosquitoActive}
+        enabled={!props.mosquitoActive && !props.cameraHandoffSignal}
         enableDamping
         dampingFactor={0.06}
         rotateSpeed={0.4}
