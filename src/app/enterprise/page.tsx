@@ -1,633 +1,804 @@
 import Link from "next/link";
-import type { ComponentType } from "react";
+
 import {
-  Activity,
-  AlertTriangle,
   ArrowRight,
+  BarChart3,
   BellRing,
   Building2,
   CheckCircle2,
   Cpu,
-  MapPin,
+  Gauge,
+  Layers3,
+  MapPinned,
+  Network,
   Radio,
+  ShieldCheck,
+  Users,
   Wrench,
 } from "lucide-react";
 
-import {
-  enterpriseAlerts,
-  enterpriseDevices,
-  enterpriseMaintenance,
-  enterpriseSites,
-} from "@/lib/enterprise/mock-data";
+import PublicShell from "@/components/layout/public-shell";
 
-const riskClass = {
-  Low: "bg-emerald-50 text-emerald-700",
-  Medium: "bg-amber-50 text-amber-700",
-  High: "bg-red-50 text-red-700",
-};
+const capabilities = [
+  {
+    icon: Layers3,
+    title: "Multi-site operations",
+    description:
+      "Quản lý nhiều cơ sở, khu vực và điểm triển khai trong cùng một workspace.",
+  },
+  {
+    icon: Cpu,
+    title: "Device fleet",
+    description:
+      "Theo dõi trạng thái kết nối, sức khỏe và hoạt động của toàn bộ thiết bị.",
+  },
+  {
+    icon: BellRing,
+    title: "Alert workflow",
+    description:
+      "Tập trung cảnh báo từ hoạt động muỗi, thiết bị và vận hành.",
+  },
+  {
+    icon: Wrench,
+    title: "Maintenance",
+    description:
+      "Quản lý lịch kiểm tra, bảo trì và công việc kỹ thuật theo site.",
+  },
+  {
+    icon: BarChart3,
+    title: "Operational reports",
+    description:
+      "Tổng hợp dữ liệu và hiệu quả vận hành theo site, thiết bị và thời gian.",
+  },
+  {
+    icon: Users,
+    title: "Team & roles",
+    description:
+      "Phân quyền Owner, Manager, Technician và Viewer cho từng tổ chức.",
+  },
+];
 
-const severityClass = {
-  High: "bg-red-50 text-red-700",
-  Medium: "bg-amber-50 text-amber-700",
-  Low: "bg-sky-50 text-sky-700",
-};
+const workflow = [
+  {
+    number: "01",
+    title: "Site",
+    description:
+      "Tổ chức địa điểm triển khai.",
+  },
+  {
+    number: "02",
+    title: "Device",
+    description:
+      "Thu thập dữ liệu tại hiện trường.",
+  },
+  {
+    number: "03",
+    title: "Alert",
+    description:
+      "Phát hiện sự kiện cần chú ý.",
+  },
+  {
+    number: "04",
+    title: "Action",
+    description:
+      "Điều phối xử lý và bảo trì.",
+  },
+];
 
-const deviceStatusClass = {
-  Online: "bg-emerald-500",
-  Offline: "bg-red-500",
-  Maintenance: "bg-amber-500",
-};
+const audiences = [
+  "Doanh nghiệp nhiều cơ sở",
+  "Khách sạn & khu nghỉ dưỡng",
+  "Nhà máy & khu công nghiệp",
+  "PCO / đơn vị vận hành",
+];
 
-export default function EnterpriseOverviewPage() {
-  const totalDevices =
-    enterpriseDevices.length;
-
-  const onlineDevices =
-    enterpriseDevices.filter(
-      (device) =>
-        device.status === "Online",
-    ).length;
-
-  const openAlerts =
-    enterpriseAlerts.filter(
-      (alert) =>
-        alert.status !== "Resolved",
-    ).length;
-
-  const pendingMaintenance =
-    enterpriseMaintenance.filter(
-      (job) =>
-        job.status !== "Completed",
-    ).length;
-
-  const fleetAvailability =
-    Math.round(
-      (onlineDevices /
-        totalDevices) *
-        100,
-    );
-
+export default function EnterprisePage() {
   return (
-    <div className="space-y-6">
-      {/* HERO */}
+    <PublicShell>
+      <main className="overflow-hidden bg-[#f4f8f6] text-[#16352a]">
+        {/* =====================================================
+            HERO
+        ===================================================== */}
 
-      <section className="relative overflow-hidden rounded-[30px] bg-[#16352a] p-7 text-white md:p-9">
-        <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
+        <section className="relative overflow-hidden bg-[#0b211b] text-white">
+          {/* Background */}
 
-        <div className="relative">
-          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -left-40 top-20 h-[420px] w-[420px] rounded-full bg-emerald-400/[0.07] blur-3xl" />
+
+            <div className="absolute -right-32 -top-32 h-[520px] w-[520px] rounded-full bg-teal-300/[0.08] blur-3xl" />
+
+            <div
+              className="absolute inset-0 opacity-[0.045]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(rgba(255,255,255,.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.2) 1px, transparent 1px)",
+                backgroundSize:
+                  "48px 48px",
+              }}
+            />
+          </div>
+
+          <div className="relative mx-auto grid min-h-[720px] max-w-7xl gap-16 px-5 py-20 md:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:py-24">
+            {/* LEFT */}
+
             <div>
-              <p className="text-[10px] font-bold tracking-[0.18em] text-emerald-300">
-                MOSGUARDX ENTERPRISE · B2B
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/[0.08] px-4 py-2">
+                <Building2
+                  size={15}
+                  className="text-emerald-300"
+                />
+
+                <span className="text-[10px] font-bold tracking-[0.18em] text-emerald-300">
+                  MOSGUARDX ENTERPRISE · B2B
+                </span>
+              </div>
+
+              <h1 className="mt-8 max-w-3xl text-4xl font-bold leading-[1.04] tracking-[-0.04em] sm:text-5xl lg:text-[64px]">
+                Một mạng lưới.
+                <span className="block text-emerald-300">
+                  Nhiều địa điểm.
+                </span>
+                Một trung tâm vận hành.
+              </h1>
+
+              <p className="mt-7 max-w-2xl text-base leading-8 text-slate-300 md:text-lg">
+                MosGuardX Enterprise giúp doanh nghiệp
+                quản lý nhiều site, thiết bị, cảnh báo và
+                hoạt động bảo trì trong một nền tảng duy nhất.
               </p>
 
-              <h2 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight md:text-4xl">
-                Multi-site mosquito
-                monitoring operations.
+              <div className="mt-9 flex flex-wrap gap-3">
+                <Link
+                  href="/enterprise/app"
+                  className="group inline-flex items-center gap-2 rounded-xl bg-emerald-400 px-5 py-3.5 text-sm font-bold text-[#10251f] transition hover:bg-emerald-300"
+                >
+                  Mở Enterprise Preview
+
+                  <ArrowRight
+                    size={17}
+                    className="transition group-hover:translate-x-0.5"
+                  />
+                </Link>
+
+                <Link
+                  href="#capabilities"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.03] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-white/[0.08]"
+                >
+                  Khám phá nền tảng
+                </Link>
+              </div>
+
+              <div className="mt-10 grid max-w-2xl gap-3 sm:grid-cols-2">
+                {[
+                  "Quản lý nhiều site",
+                  "Theo dõi device fleet",
+                  "Alert & maintenance workflow",
+                  "Báo cáo vận hành tập trung",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-center gap-3 text-sm text-slate-300"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/10">
+                      <CheckCircle2
+                        size={14}
+                        className="text-emerald-300"
+                      />
+                    </span>
+
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* RIGHT / PRODUCT PREVIEW */}
+
+            <div className="relative">
+              <div className="absolute -inset-8 rounded-full bg-emerald-400/[0.05] blur-3xl" />
+
+              <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#102a22]/90 shadow-2xl shadow-black/30 backdrop-blur-xl">
+                {/* Top */}
+
+                <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400 text-[#10251f]">
+                      <Network size={20} />
+                    </span>
+
+                    <div>
+                      <p className="text-sm font-bold">
+                        Enterprise Network
+                      </p>
+
+                      <p className="mt-0.5 text-[10px] text-slate-400">
+                        Operations overview
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="flex items-center gap-2 rounded-full bg-emerald-300/10 px-3 py-1.5 text-[9px] font-bold text-emerald-300">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
+                    LIVE PREVIEW
+                  </span>
+                </div>
+
+                {/* KPI */}
+
+                <div className="grid grid-cols-3 gap-px bg-white/10">
+                  <PreviewMetric
+                    value="03"
+                    label="Sites"
+                  />
+
+                  <PreviewMetric
+                    value="12"
+                    label="Devices"
+                  />
+
+                  <PreviewMetric
+                    value="03"
+                    label="Alerts"
+                  />
+                </div>
+
+                {/* Sites */}
+
+                <div className="p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-[9px] font-bold tracking-[0.15em] text-emerald-300">
+                        SITE NETWORK
+                      </p>
+
+                      <p className="mt-1 text-sm font-semibold">
+                        Managed locations
+                      </p>
+                    </div>
+
+                    <Radio
+                      size={18}
+                      className="text-emerald-300"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <SitePreview
+                      name="Office Building A"
+                      devices="4 / 4"
+                      risk="LOW"
+                      progress={28}
+                    />
+
+                    <SitePreview
+                      name="Hotel Site B"
+                      devices="4 / 5"
+                      risk="MEDIUM"
+                      progress={63}
+                    />
+
+                    <SitePreview
+                      name="Facility C"
+                      devices="2 / 3"
+                      risk="HIGH"
+                      progress={81}
+                    />
+                  </div>
+                </div>
+
+                {/* Alert */}
+
+                <div className="mx-5 mb-5 flex items-start gap-3 rounded-2xl border border-amber-300/15 bg-amber-300/[0.07] p-4">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-300/10 text-amber-300">
+                    <BellRing size={17} />
+                  </span>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold text-amber-300">
+                        ATTENTION
+                      </span>
+
+                      <span className="text-[9px] text-slate-500">
+                        12 min ago
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-xs font-semibold text-slate-200">
+                      Mosquito activity increased
+                    </p>
+
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      Facility C
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating cards */}
+
+              <div className="absolute -bottom-6 -left-6 hidden rounded-2xl border border-white/10 bg-[#173a2f] p-4 shadow-xl lg:block">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300">
+                    <Gauge size={18} />
+                  </span>
+
+                  <div>
+                    <p className="text-[9px] text-slate-400">
+                      Fleet availability
+                    </p>
+
+                    <strong className="text-lg text-white">
+                      83%
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================================
+            VALUE STRIP
+        ===================================================== */}
+
+        <section className="border-b border-[#dce8e2] bg-white">
+          <div className="mx-auto grid max-w-7xl md:grid-cols-4">
+            {[
+              {
+                icon: Building2,
+                title: "Multi-site",
+                text: "Một workspace cho nhiều địa điểm",
+              },
+              {
+                icon: Cpu,
+                title: "Fleet visibility",
+                text: "Theo dõi toàn bộ thiết bị",
+              },
+              {
+                icon: BellRing,
+                title: "Operational alerts",
+                text: "Tập trung sự kiện cần xử lý",
+              },
+              {
+                icon: BarChart3,
+                title: "Reports",
+                text: "Dữ liệu phục vụ quyết định",
+              },
+            ].map(
+              ({
+                icon: Icon,
+                title,
+                text,
+              }) => (
+                <div
+                  key={title}
+                  className="flex gap-4 border-b border-[#e6eeea] px-6 py-7 md:border-b-0 md:border-r last:md:border-r-0"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                    <Icon size={18} />
+                  </span>
+
+                  <div>
+                    <p className="text-sm font-bold text-[#16352a]">
+                      {title}
+                    </p>
+
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {text}
+                    </p>
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
+        </section>
+
+        {/* =====================================================
+            CAPABILITIES
+        ===================================================== */}
+
+        <section
+          id="capabilities"
+          className="mx-auto max-w-7xl px-5 py-24 md:px-8"
+        >
+          <div className="grid gap-12 lg:grid-cols-[0.72fr_1.28fr]">
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-emerald-700">
+                ENTERPRISE OPERATIONS
+              </p>
+
+              <h2 className="mt-4 max-w-xl text-3xl font-bold tracking-[-0.03em] text-[#16352a] md:text-5xl">
+                Không chỉ là một
+                dashboard theo dõi.
               </h2>
 
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
-                Theo dõi toàn bộ site,
-                thiết bị, cảnh báo và
-                hoạt động bảo trì từ một
-                workspace chung.
+              <p className="mt-5 max-w-lg text-sm leading-7 text-slate-600">
+                Enterprise được thiết kế như một
+                workspace vận hành: từ địa điểm,
+                thiết bị và cảnh báo cho đến công việc
+                bảo trì và báo cáo.
+              </p>
+
+              <Link
+                href="/enterprise/app"
+                className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-emerald-700"
+              >
+                Xem workspace
+
+                <ArrowRight size={16} />
+              </Link>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {capabilities.map(
+                ({
+                  icon: Icon,
+                  title,
+                  description,
+                }) => (
+                  <article
+                    key={title}
+                    className="group rounded-[26px] border border-[#dce8e2] bg-white p-6 transition duration-300 hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-950/[0.05]"
+                  >
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef8f3] text-emerald-700 transition group-hover:bg-emerald-600 group-hover:text-white">
+                      <Icon size={20} />
+                    </span>
+
+                    <h3 className="mt-6 text-base font-bold text-[#16352a]">
+                      {title}
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      {description}
+                    </p>
+                  </article>
+                ),
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================================
+            WORKFLOW
+        ===================================================== */}
+
+        <section className="bg-[#eaf3ee]">
+          <div className="mx-auto max-w-7xl px-5 py-24 md:px-8">
+            <div className="max-w-3xl">
+              <p className="text-[10px] font-bold tracking-[0.2em] text-emerald-700">
+                FROM SIGNAL TO ACTION
+              </p>
+
+              <h2 className="mt-4 text-3xl font-bold tracking-[-0.03em] text-[#16352a] md:text-5xl">
+                Một luồng vận hành
+                xuyên suốt.
+              </h2>
+
+              <p className="mt-5 text-sm leading-7 text-slate-600">
+                Dữ liệu không dừng lại ở việc hiển thị.
+                Enterprise kết nối dữ liệu hiện trường
+                với hành động của đội vận hành.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="relative mt-12 grid gap-4 md:grid-cols-4">
+              <div className="absolute left-[12%] right-[12%] top-9 hidden h-px bg-emerald-200 md:block" />
+
+              {workflow.map(
+                ({
+                  number,
+                  title,
+                  description,
+                }) => (
+                  <article
+                    key={number}
+                    className="relative rounded-[24px] border border-white/70 bg-white/80 p-6 backdrop-blur"
+                  >
+                    <span className="relative z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[#16352a] text-xs font-black text-emerald-300">
+                      {number}
+                    </span>
+
+                    <h3 className="mt-6 text-lg font-bold text-[#16352a]">
+                      {title}
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      {description}
+                    </p>
+                  </article>
+                ),
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================================
+            DEPLOYMENTS
+        ===================================================== */}
+
+        <section className="mx-auto max-w-7xl px-5 py-24 md:px-8">
+          <div className="grid gap-10 rounded-[34px] bg-[#10251f] p-7 text-white md:p-10 lg:grid-cols-[0.85fr_1.15fr] lg:p-12">
+            <div>
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400 text-[#10251f]">
+                <MapPinned size={22} />
+              </span>
+
+              <p className="mt-7 text-[10px] font-bold tracking-[0.18em] text-emerald-300">
+                BUILT FOR DISTRIBUTED OPERATIONS
+              </p>
+
+              <h2 className="mt-4 text-3xl font-bold tracking-tight md:text-4xl">
+                Phù hợp với mô hình
+                nhiều cơ sở.
+              </h2>
+
+              <p className="mt-4 max-w-lg text-sm leading-7 text-slate-300">
+                Khi số site và thiết bị tăng lên,
+                dữ liệu và công việc vận hành vẫn
+                được tổ chức trong cùng một hệ thống.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {audiences.map((item) => (
+                <div
+                  key={item}
+                  className="flex min-h-24 items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.05] p-5"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-300/10">
+                    <CheckCircle2
+                      size={17}
+                      className="text-emerald-300"
+                    />
+                  </span>
+
+                  <p className="text-sm font-semibold text-slate-200">
+                    {item}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================================
+            ARCHITECTURE
+        ===================================================== */}
+
+        <section className="border-y border-[#dce8e2] bg-white">
+          <div className="mx-auto grid max-w-7xl gap-12 px-5 py-20 md:px-8 lg:grid-cols-2 lg:items-center">
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.18em] text-emerald-700">
+                ONE MOSGUARDX CORE
+              </p>
+
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#16352a] md:text-4xl">
+                Enterprise dùng chung
+                một lõi dữ liệu MosGuardX.
+              </h2>
+
+              <p className="mt-5 max-w-xl text-sm leading-7 text-slate-600">
+                Thiết bị, AI, events và cảnh báo được
+                xử lý trên cùng nền tảng lõi; Enterprise
+                chỉ cung cấp trải nghiệm và workflow
+                phù hợp cho tổ chức B2B.
+              </p>
+            </div>
+
+            <div className="rounded-[28px] border border-[#dce8e2] bg-[#f7faf8] p-6">
+              <div className="rounded-2xl bg-[#16352a] p-5 text-white">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck
+                    size={20}
+                    className="text-emerald-300"
+                  />
+
+                  <strong>
+                    MosGuardX Core
+                  </strong>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[
+                    "Devices",
+                    "AI",
+                    "Events",
+                    "Alerts",
+                  ].map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-xl bg-white/[0.06] px-3 py-3 text-center text-[10px] font-bold text-slate-300"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mx-auto h-8 w-px bg-emerald-200" />
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <PlatformBlock
+                  title="Home"
+                  segment="B2C"
+                />
+
+                <PlatformBlock
+                  title="Enterprise"
+                  segment="B2B"
+                  active
+                />
+
+                <PlatformBlock
+                  title="Command Center"
+                  segment="B2G"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================================
+            CTA
+        ===================================================== */}
+
+        <section className="px-5 py-24 md:px-8">
+          <div className="mx-auto max-w-5xl rounded-[36px] bg-gradient-to-br from-emerald-600 to-[#12372c] px-6 py-14 text-center text-white shadow-2xl shadow-emerald-900/10 md:px-12">
+            <p className="text-[10px] font-bold tracking-[0.2em] text-emerald-200">
+              MOSGUARDX ENTERPRISE
+            </p>
+
+            <h2 className="mx-auto mt-4 max-w-3xl text-3xl font-bold tracking-tight md:text-5xl">
+              Từ nhiều điểm triển khai
+              đến một trung tâm vận hành.
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-emerald-50/80">
+              Trải nghiệm workspace Enterprise hiện tại
+              với dữ liệu preview trước khi tích hợp
+              backend và dữ liệu hiện trường.
+            </p>
+
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
-                href="/enterprise/app/sites"
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-bold text-[#10251f] transition hover:bg-emerald-300"
+                href="/enterprise/app"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50"
               >
-                View sites
+                Open Enterprise
 
                 <ArrowRight size={16} />
               </Link>
 
               <Link
-                href="/enterprise/app/alerts"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+                href="/"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"
               >
-                Alert queue
+                MosGuardX ecosystem
               </Link>
             </div>
           </div>
+        </section>
+      </main>
+    </PublicShell>
+  );
+}
 
-          <div className="mt-8 flex flex-wrap gap-2">
-            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-bold text-slate-300">
-              PREVIEW DATA
-            </span>
+/* ============================================================
+   SMALL COMPONENTS
+============================================================ */
 
-            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-bold text-slate-300">
-              3 SITES
-            </span>
+function PreviewMetric({
+  value,
+  label,
+}: {
+  value: string;
+  label: string;
+}) {
+  return (
+    <div className="bg-[#102a22] px-4 py-5 text-center">
+      <strong className="block text-xl font-black text-white">
+        {value}
+      </strong>
 
-            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-bold text-slate-300">
-              12 DEVICES
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* KPI */}
-
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          icon={Building2}
-          label="Managed sites"
-          value={String(
-            enterpriseSites.length,
-          ).padStart(2, "0")}
-          note="Enterprise locations"
-        />
-
-        <MetricCard
-          icon={Cpu}
-          label="Devices online"
-          value={`${onlineDevices}/${totalDevices}`}
-          note={`${fleetAvailability}% fleet availability`}
-        />
-
-        <MetricCard
-          icon={BellRing}
-          label="Active alerts"
-          value={String(
-            openAlerts,
-          ).padStart(2, "0")}
-          note="Need review"
-          attention
-        />
-
-        <MetricCard
-          icon={Wrench}
-          label="Maintenance"
-          value={String(
-            pendingMaintenance,
-          ).padStart(2, "0")}
-          note="Scheduled jobs"
-        />
-      </section>
-
-      {/* SITES + FLEET */}
-
-      <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-        <article className="overflow-hidden rounded-[28px] border border-slate-200 bg-white">
-          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.15em] text-emerald-700">
-                SITE OVERVIEW
-              </p>
-
-              <h3 className="mt-1 text-xl font-bold text-[#16352a]">
-                Managed locations
-              </h3>
-            </div>
-
-            <Link
-              href="/enterprise/app/sites"
-              className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700"
-            >
-              All sites
-              <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          <div className="divide-y divide-slate-100">
-            {enterpriseSites.map(
-              (site) => (
-                <div
-                  key={site.id}
-                  className="grid gap-5 px-6 py-5 transition hover:bg-slate-50/70 lg:grid-cols-[1fr_120px_170px_90px] lg:items-center"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Building2
-                        size={17}
-                        className="text-emerald-700"
-                      />
-
-                      <strong className="text-sm text-[#16352a]">
-                        {site.name}
-                      </strong>
-                    </div>
-
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
-                      <MapPin size={13} />
-                      {site.location}
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                      Devices
-                    </p>
-
-                    <p className="mt-1 text-sm font-bold text-[#16352a]">
-                      {site.onlineDevices}/
-                      {site.devices} online
-                    </p>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="font-semibold text-slate-400">
-                        Activity index
-                      </span>
-
-                      <strong className="text-[#16352a]">
-                        {site.activityIndex}%
-                      </strong>
-                    </div>
-
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-emerald-500"
-                        style={{
-                          width: `${site.activityIndex}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="lg:text-right">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                        riskClass[
-                          site.risk
-                        ]
-                      }`}
-                    >
-                      {site.risk}
-                    </span>
-                  </div>
-                </div>
-              ),
-            )}
-          </div>
-        </article>
-
-        {/* FLEET HEALTH */}
-
-        <article className="rounded-[28px] bg-[#10251f] p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.15em] text-emerald-300">
-                FLEET HEALTH
-              </p>
-
-              <h3 className="mt-1 text-xl font-bold">
-                Device network
-              </h3>
-            </div>
-
-            <Radio
-              size={21}
-              className="text-emerald-300"
-            />
-          </div>
-
-          <div className="mt-8 text-center">
-            <strong className="text-5xl font-black text-emerald-300">
-              {fleetAvailability}%
-            </strong>
-
-            <p className="mt-2 text-xs text-slate-400">
-              Fleet availability
-            </p>
-          </div>
-
-          <div className="mt-8 space-y-3">
-            {[
-              {
-                label: "Online",
-                value:
-                  enterpriseDevices.filter(
-                    (device) =>
-                      device.status ===
-                      "Online",
-                  ).length,
-                status: "Online" as const,
-              },
-              {
-                label: "Maintenance",
-                value:
-                  enterpriseDevices.filter(
-                    (device) =>
-                      device.status ===
-                      "Maintenance",
-                  ).length,
-                status:
-                  "Maintenance" as const,
-              },
-              {
-                label: "Offline",
-                value:
-                  enterpriseDevices.filter(
-                    (device) =>
-                      device.status ===
-                      "Offline",
-                  ).length,
-                status:
-                  "Offline" as const,
-              },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3"
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      deviceStatusClass[
-                        item.status
-                      ]
-                    }`}
-                  />
-
-                  <span className="text-sm text-slate-300">
-                    {item.label}
-                  </span>
-                </div>
-
-                <strong>
-                  {item.value}
-                </strong>
-              </div>
-            ))}
-          </div>
-
-          <Link
-            href="/enterprise/app/devices"
-            className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-white/[0.07] px-4 py-3 text-sm font-bold text-emerald-300 transition hover:bg-white/10"
-          >
-            Device fleet
-            <ArrowRight size={15} />
-          </Link>
-        </article>
-      </section>
-
-      {/* ALERTS + MAINTENANCE */}
-
-      <section className="grid gap-6 xl:grid-cols-2">
-        {/* ALERT QUEUE */}
-
-        <article className="rounded-[28px] border border-slate-200 bg-white">
-          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.15em] text-emerald-700">
-                ALERT QUEUE
-              </p>
-
-              <h3 className="mt-1 text-xl font-bold text-[#16352a]">
-                Needs attention
-              </h3>
-            </div>
-
-            <AlertTriangle
-              size={20}
-              className="text-amber-500"
-            />
-          </div>
-
-          <div className="divide-y divide-slate-100">
-            {enterpriseAlerts
-              .filter(
-                (alert) =>
-                  alert.status !==
-                  "Resolved",
-              )
-              .slice(0, 3)
-              .map((alert) => (
-                <div
-                  key={alert.id}
-                  className="px-6 py-5"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`rounded-full px-2 py-1 text-[9px] font-bold ${
-                            severityClass[
-                              alert.severity
-                            ]
-                          }`}
-                        >
-                          {alert.severity}
-                        </span>
-
-                        <span className="text-[10px] font-semibold text-slate-400">
-                          {alert.id}
-                        </span>
-                      </div>
-
-                      <p className="mt-3 text-sm font-bold text-[#16352a]">
-                        {alert.title}
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        {alert.site} ·{" "}
-                        {alert.time}
-                      </p>
-                    </div>
-
-                    <span className="shrink-0 text-[10px] font-bold text-emerald-700">
-                      {alert.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-          </div>
-
-          <div className="border-t border-slate-100 p-4">
-            <Link
-              href="/enterprise/app/alerts"
-              className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm font-bold text-[#16352a] transition hover:bg-emerald-50 hover:text-emerald-700"
-            >
-              View all alerts
-              <ArrowRight size={15} />
-            </Link>
-          </div>
-        </article>
-
-        {/* MAINTENANCE */}
-
-        <article className="rounded-[28px] border border-slate-200 bg-white">
-          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.15em] text-emerald-700">
-                MAINTENANCE
-              </p>
-
-              <h3 className="mt-1 text-xl font-bold text-[#16352a]">
-                Upcoming work
-              </h3>
-            </div>
-
-            <Wrench
-              size={20}
-              className="text-emerald-700"
-            />
-          </div>
-
-          <div className="divide-y divide-slate-100">
-            {enterpriseMaintenance.map(
-              (job) => (
-                <div
-                  key={job.id}
-                  className="px-6 py-5"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-bold text-[#16352a]">
-                        {job.task}
-                      </p>
-
-                      <p className="mt-1 text-xs text-slate-400">
-                        {job.device} ·{" "}
-                        {job.site}
-                      </p>
-
-                      <p className="mt-2 text-[10px] font-semibold text-slate-500">
-                        Due: {job.due}
-                      </p>
-                    </div>
-
-                    <span
-                      className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-bold ${
-                        job.status ===
-                        "Due soon"
-                          ? "bg-amber-50 text-amber-700"
-                          : "bg-sky-50 text-sky-700"
-                      }`}
-                    >
-                      {job.status}
-                    </span>
-                  </div>
-                </div>
-              ),
-            )}
-          </div>
-
-          <div className="border-t border-slate-100 p-4">
-            <Link
-              href="/enterprise/app/maintenance"
-              className="flex items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm font-bold text-[#16352a] transition hover:bg-emerald-50 hover:text-emerald-700"
-            >
-              Maintenance queue
-              <ArrowRight size={15} />
-            </Link>
-          </div>
-        </article>
-      </section>
-
-      {/* OPERATIONS FLOW */}
-
-      <section className="rounded-[28px] border border-emerald-100 bg-emerald-50/60 p-6 md:p-7">
-        <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-          <div>
-            <div className="flex items-center gap-2 text-emerald-700">
-              <Activity size={20} />
-
-              <p className="text-[10px] font-bold tracking-[0.16em]">
-                ENTERPRISE OPERATIONS
-              </p>
-            </div>
-
-            <h3 className="mt-3 text-xl font-bold text-[#16352a]">
-              One operational workflow
-            </h3>
-
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Từ site đến thiết bị,
-              cảnh báo, bảo trì và báo
-              cáo.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-4">
-            {[
-              "Site",
-              "Device",
-              "Alert",
-              "Maintenance",
-            ].map((item, index) => (
-              <div
-                key={item}
-                className="rounded-2xl border border-emerald-100 bg-white p-4"
-              >
-                <span className="text-[10px] font-black text-emerald-600">
-                  0{index + 1}
-                </span>
-
-                <p className="mt-2 text-sm font-bold text-[#16352a]">
-                  {item}
-                </p>
-
-                {index === 3 && (
-                  <CheckCircle2
-                    size={15}
-                    className="mt-3 text-emerald-600"
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <p className="text-center text-[10px] font-semibold text-slate-400">
-        Enterprise dashboard currently
-        uses illustrative preview data.
-      </p>
+      <span className="mt-1 block text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+        {label}
+      </span>
     </div>
   );
 }
 
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  note,
-  attention = false,
+function SitePreview({
+  name,
+  devices,
+  risk,
+  progress,
 }: {
-  icon: ComponentType<{
-    size?: number;
-    className?: string;
-  }>;
-  label: string;
-  value: string;
-  note: string;
-  attention?: boolean;
+  name: string;
+  devices: string;
+  risk:
+    | "LOW"
+    | "MEDIUM"
+    | "HIGH";
+  progress: number;
 }) {
-  return (
-    <article className="rounded-[24px] border border-slate-200 bg-white p-5">
-      <div className="flex items-start justify-between">
-        <span
-          className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-            attention
-              ? "bg-amber-50 text-amber-700"
-              : "bg-emerald-50 text-emerald-700"
-          }`}
-        >
-          <Icon size={20} />
-        </span>
+  const riskStyle =
+    risk === "HIGH"
+      ? "text-red-300 bg-red-300/10"
+      : risk === "MEDIUM"
+        ? "text-amber-300 bg-amber-300/10"
+        : "text-emerald-300 bg-emerald-300/10";
 
-        {attention && (
-          <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-        )}
+  const progressStyle =
+    risk === "HIGH"
+      ? "bg-red-400"
+      : risk === "MEDIUM"
+        ? "bg-amber-400"
+        : "bg-emerald-400";
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-bold text-white">
+            {name}
+          </p>
+
+          <p className="mt-1 text-[9px] text-slate-500">
+            {devices} devices online
+          </p>
+        </div>
+
+        <span
+          className={`shrink-0 rounded-full px-2 py-1 text-[8px] font-bold ${riskStyle}`}
+        >
+          {risk}
+        </span>
       </div>
 
-      <p className="mt-5 text-xs font-semibold text-slate-500">
-        {label}
-      </p>
+      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div
+          className={`h-full rounded-full ${progressStyle}`}
+          style={{
+            width: `${progress}%`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
 
-      <strong className="mt-1 block text-3xl font-black text-[#16352a]">
-        {value}
-      </strong>
+function PlatformBlock({
+  title,
+  segment,
+  active = false,
+}: {
+  title: string;
+  segment: string;
+  active?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl border p-4 text-center ${
+        active
+          ? "border-emerald-300 bg-emerald-50"
+          : "border-slate-200 bg-white"
+      }`}
+    >
+      <span
+        className={`text-[9px] font-bold ${
+          active
+            ? "text-emerald-700"
+            : "text-slate-400"
+        }`}
+      >
+        {segment}
+      </span>
 
-      <p className="mt-2 text-[11px] text-slate-400">
-        {note}
+      <p className="mt-1 text-xs font-bold text-[#16352a]">
+        {title}
       </p>
-    </article>
+    </div>
   );
 }
