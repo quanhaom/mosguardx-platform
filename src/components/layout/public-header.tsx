@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import {
-  usePathname,
-} from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import {
+  ArrowRight,
+  Home,
   Languages,
   Menu,
   ShieldCheck,
@@ -20,8 +20,6 @@ import {
 import {
   useLanguage,
 } from "@/components/i18n/language-context";
-
-import PlatformSwitcher from "@/components/layout/platform-switcher";
 
 const navigation = [
   {
@@ -93,9 +91,9 @@ const navigation = [
 ] as const;
 
 export default function PublicHeader() {
-  const pathname =
-    usePathname();
-
+  const pathname = usePathname();
+  const isDashboardPage =
+  pathname.startsWith("/dashboard");
   const [
     mobileOpen,
     setMobileOpen,
@@ -118,7 +116,27 @@ export default function PublicHeader() {
   const isLandingPage =
     pathname === "/";
 
+  const isHomePage =
+    pathname === "/household";
+
+  /* =========================
+     LANDING SCROLL SPY
+  ========================= */
+
   useEffect(() => {
+    /*
+     * Chỉ highlight các section:
+     *
+     * Tổng quan
+     * Bài toán
+     * Sản phẩm
+     * ...
+     *
+     * khi đang ở landing chính "/".
+     *
+     * Nếu sang /household thì tất cả
+     * section landing sẽ mất active.
+     */
     if (!isLandingPage) {
       setActiveSection("");
       return;
@@ -126,8 +144,7 @@ export default function PublicHeader() {
 
     const updateActiveSection =
       () => {
-        const headerOffset =
-          120;
+        const headerOffset = 120;
 
         let currentSection =
           "hero";
@@ -144,10 +161,11 @@ export default function PublicHeader() {
             continue;
           }
 
+          const rect =
+            section.getBoundingClientRect();
+
           if (
-            section
-              .getBoundingClientRect()
-              .top <=
+            rect.top <=
             headerOffset
           ) {
             currentSection =
@@ -158,16 +176,14 @@ export default function PublicHeader() {
         const atBottom =
           window.innerHeight +
             window.scrollY >=
-          document
-            .documentElement
+          document.documentElement
             .scrollHeight -
             10;
 
         if (atBottom) {
           currentSection =
             navigation[
-              navigation.length -
-                1
+              navigation.length - 1
             ].id;
         }
 
@@ -204,6 +220,11 @@ export default function PublicHeader() {
     };
   }, [isLandingPage]);
 
+  /* =========================
+     CLOSE MOBILE MENU
+     WHEN ROUTE CHANGES
+  ========================= */
+
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
@@ -211,14 +232,36 @@ export default function PublicHeader() {
   const handleNavigationClick = (
     id: string,
   ) => {
+    /*
+     * Nếu đang ở landing thì có thể
+     * cập nhật active ngay.
+     *
+     * Nếu đang ở /household thì
+     * active vẫn không render vì
+     * isLandingPage = false.
+     */
     setActiveSection(id);
+
+    setMobileOpen(false);
+  };
+
+  const handleHomeClick = () => {
+    /*
+     * Tắt trạng thái active của
+     * navigation landing ngay khi
+     * click MosGuardX Home.
+     */
+    setActiveSection("");
+
     setMobileOpen(false);
   };
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0b211b]/95 text-white backdrop-blur-xl">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-3 px-5 md:px-8">
-        {/* LOGO */}
+        {/* =====================
+            LOGO
+        ===================== */}
 
         <Link
           href="/#hero"
@@ -246,7 +289,9 @@ export default function PublicHeader() {
           </span>
         </Link>
 
-        {/* DESKTOP NAV */}
+        {/* =====================
+            DESKTOP NAVIGATION
+        ===================== */}
 
         <nav
           aria-label={
@@ -258,6 +303,16 @@ export default function PublicHeader() {
         >
           {navigation.map(
             (item) => {
+              /*
+               * Đây là phần quan trọng:
+               *
+               * active chỉ có thể true
+               * khi pathname === "/".
+               *
+               * Vì vậy /household sẽ
+               * không bao giờ làm
+               * "Tổng quan" sáng.
+               */
               const active =
                 isLandingPage &&
                 activeSection ===
@@ -278,11 +333,7 @@ export default function PublicHeader() {
                       : "text-slate-300 hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  {
-                    item[
-                      language
-                    ]
-                  }
+                  {item[language]}
 
                   <span
                     className={`absolute bottom-0 left-1/2 h-[2px] -translate-x-1/2 rounded-full bg-emerald-400 transition-all duration-300 ${
@@ -297,10 +348,12 @@ export default function PublicHeader() {
           )}
         </nav>
 
-        {/* ACTIONS */}
+        {/* =====================
+            RIGHT ACTIONS
+        ===================== */}
 
         <div className="flex shrink-0 items-center gap-2">
-          {/* LANGUAGE */}
+          {/* Language */}
 
           <div className="hidden items-center rounded-xl border border-white/10 bg-white/[0.05] p-1 md:flex">
             <Languages
@@ -337,11 +390,47 @@ export default function PublicHeader() {
             </button>
           </div>
 
-          {/* THREE PLATFORMS */}
+          {/* =====================
+              MOSGUARDX HOME
+          ===================== */}
 
-          <PlatformSwitcher />
+          <Link
+            href="/household"
+            onClick={
+              handleHomeClick
+            }
+            className={`hidden items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-[#10251f] shadow-sm transition lg:inline-flex ${
+              isHomePage
+                ? "bg-emerald-300 ring-2 ring-emerald-300/25"
+                : "bg-emerald-400 hover:bg-emerald-300"
+            }`}
+          >
+            <Home size={15} />
 
-          {/* MOBILE MENU */}
+            MosGuardX Home
+          </Link>
+
+          {/* =====================
+              DASHBOARD
+          ===================== */}
+
+          <Link
+            href="/dashboard"
+            onClick={() => {
+              setActiveSection("");
+              setMobileOpen(false);
+            }}
+            className={`hidden items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-[#10251f] shadow-sm transition sm:inline-flex ${
+              isDashboardPage
+                ? "bg-emerald-300 ring-2 ring-emerald-300/25"
+                : "bg-emerald-400 hover:bg-emerald-300"
+            }`}
+          >
+            Dashboard
+            <ArrowRight size={15} />
+          </Link>
+
+          {/* Mobile button */}
 
           <button
             type="button"
@@ -370,11 +459,13 @@ export default function PublicHeader() {
         </div>
       </div>
 
-      {/* MOBILE MENU */}
+      {/* =========================
+          MOBILE DRAWER
+      ========================= */}
 
       {mobileOpen && (
         <div className="border-t border-white/10 bg-[#0b211b] px-5 py-4 xl:hidden">
-          {/* LANGUAGE */}
+          {/* Language mobile */}
 
           <div className="mx-auto mb-4 flex max-w-7xl items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] p-2">
             <span className="flex items-center gap-2 px-2 text-xs font-semibold text-slate-300">
@@ -417,7 +508,7 @@ export default function PublicHeader() {
             </div>
           </div>
 
-          {/* LANDING NAV */}
+          {/* Mobile navigation */}
 
           <nav className="mx-auto grid max-w-7xl grid-cols-2 gap-2 sm:grid-cols-4">
             {navigation.map(
@@ -439,7 +530,7 @@ export default function PublicHeader() {
                         item.id,
                       )
                     }
-                    className={`rounded-xl border px-3 py-3 text-sm transition ${
+                    className={`rounded-xl border px-3 py-3 text-sm transition-all duration-300 ${
                       active
                         ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-300"
                         : "border-white/10 text-slate-200 hover:bg-white/10 hover:text-white"
@@ -466,18 +557,41 @@ export default function PublicHeader() {
             )}
           </nav>
 
-          {/* MOBILE PLATFORM INFO */}
+          {/* Mobile CTA */}
 
-          <div className="mx-auto mt-4 max-w-7xl rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3">
-            <p className="text-xs font-bold text-emerald-300">
-              MosGuardX Platform
-            </p>
+          <div className="mx-auto mt-4 grid max-w-7xl gap-2 sm:grid-cols-2 xl:hidden">
+            <Link
+              href="/household"
+              onClick={
+                handleHomeClick
+              }
+              className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-[#10251f] transition ${
+                isHomePage
+                  ? "bg-emerald-300 ring-2 ring-emerald-300/25"
+                  : "bg-emerald-400 hover:bg-emerald-300"
+              }`}
+            >
+              <Home size={16} />
 
-            <p className="mt-1 text-[11px] leading-5 text-slate-400">
-              Chọn Home, Enterprise hoặc
-              Command Center bằng nút
-              Platforms phía trên.
-            </p>
+              MosGuardX Home
+            </Link>
+
+            <Link
+              href="/dashboard"
+              onClick={() => {
+                setActiveSection("");
+                setMobileOpen(false);
+              }}
+              className={`hidden items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-[#10251f] shadow-sm transition sm:inline-flex ${
+                pathname.startsWith("/dashboard")
+                  ? "bg-emerald-300 ring-2 ring-emerald-300/25"
+                  : "bg-emerald-400 hover:bg-emerald-300"
+              }`}
+            >
+              Dashboard
+
+              <ArrowRight size={15} />
+            </Link>
           </div>
         </div>
       )}

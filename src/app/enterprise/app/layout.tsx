@@ -1,20 +1,26 @@
-import type { Metadata } from "next";
+import type {
+  Metadata,
+} from "next";
 
 import EnterpriseShell from "@/components/enterprise/enterprise-shell";
 
 export const metadata: Metadata = {
-  title:
-    "MosGuardX Enterprise",
+  title: {
+    default:
+      "MosGuardX Enterprise",
+    template:
+      "%s | MosGuardX Enterprise",
+  },
 
   description:
-    "MosGuardX Enterprise B2B workspace.",
+    "MosGuardX Enterprise multi-site mosquito monitoring platform.",
 };
 
 export default function EnterpriseAppLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <EnterpriseShell>
       {children}
