@@ -265,51 +265,74 @@ const experimentStages: Card[] = [
 
 const segments = [
   {
-    icon: Building2,
-    label: "B2G",
+    icon: Home,
+    label: "B2C",
+
     title: {
-      vi: "Cơ quan y tế và chính quyền",
-      en: "Health authorities and government",
+      vi: "MosGuardX Home",
+      en: "MosGuardX Home",
     },
+
     description: {
-      vi: "Bản đồ điểm nóng, giám sát mạng lưới và hỗ trợ ưu tiên nguồn lực.",
-      en: "Hotspot mapping, network monitoring, and support for resource prioritization.",
+      vi:
+        "Theo dõi hoạt động muỗi tại nhà, nhận cảnh báo và quản lý thiết bị của gia đình.",
+      en:
+        "Monitor mosquito activity, alerts, and household devices.",
     },
-    href: "/dashboard",
+
+    href: "/household",
+
     action: {
-      vi: "Mở trung tâm điều hành",
-      en: "Open command center",
+      vi: "Khám phá Home",
+      en: "Explore Home",
     },
   },
+
   {
     icon: Factory,
     label: "B2B",
+
     title: {
-      vi: "Doanh nghiệp và đơn vị vận hành",
-      en: "Businesses and operators",
+      vi: "MosGuardX Enterprise",
+      en: "MosGuardX Enterprise",
     },
+
     description: {
-      vi: "Theo dõi rủi ro tại trường học, khu công nghiệp, khách sạn và khu dân cư.",
-      en: "Monitor risk at schools, industrial parks, hotels, and residential areas.",
+      vi:
+        "Quản lý nhiều cơ sở, thiết bị, cảnh báo, bảo trì và hoạt động vận hành.",
+      en:
+        "Manage sites, devices, alerts, maintenance, and operations.",
     },
-    href: "/risk-api",
+
+    href: "/enterprise",
+
     action: {
-      vi: "Xem API risk-score",
-      en: "View risk-score API",
+      vi: "Khám phá Enterprise",
+      en: "Explore Enterprise",
     },
   },
+
   {
-    icon: Home,
-    label: "B2C",
-    title: { vi: "Hộ gia đình", en: "Households" },
-    description: {
-      vi: "Cảnh báo theo khu vực và khuyến nghị hành động ngắn, dễ thực hiện.",
-      en: "Area-based alerts and short, practical action recommendations.",
+    icon: Building2,
+    label: "B2G",
+
+    title: {
+      vi: "MosGuardX Command Center",
+      en: "MosGuardX Command Center",
     },
-    href: "/household",
+
+    description: {
+      vi:
+        "Giám sát mạng lưới trạm, hotspot, xu hướng khu vực và cảnh báo.",
+      en:
+        "Monitor station networks, hotspots, regional trends, and alerts.",
+    },
+
+    href: "/dashboard",
+
     action: {
-      vi: "Xem trải nghiệm di động",
-      en: "View mobile experience",
+      vi: "Mở Command Center",
+      en: "Open Command Center",
     },
   },
 ];
@@ -699,9 +722,8 @@ function LandingContent() {
             <div className="mt-10 grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="relative flex min-h-[520px] items-center justify-center overflow-hidden rounded-[32px] border border-dashed border-emerald-700/30 bg-[#eaf3ee] p-8 text-center">
                 <div className="absolute left-8 top-8 flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[10px] font-bold tracking-[0.14em] text-emerald-800 shadow-sm">
-                  <Camera size={14} />
-                  PLACEHOLDER · PRODUCT PHOTO
-                </div>
+                  <Camera size={14} />                
+                  </div>
 
                 <div className="max-w-md">
                   <span className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] border border-emerald-700/15 bg-white text-emerald-700 shadow-xl">
@@ -1538,10 +1560,6 @@ function LandingContent() {
               "Một nhóm liên ngành kết nối sản phẩm, kỹ thuật và thị trường.",
               "A multidisciplinary team connecting product, technology, and market.",
             )}
-            description={t(
-              "Thông tin thành viên chưa cung cấp được giữ dưới dạng placeholder để nhóm bổ sung trước ngày thuyết trình.",
-              "Missing member information is kept as a placeholder for the team to complete before the presentation.",
-            )}
           />
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -1651,112 +1669,6 @@ function LandingContent() {
           </div>
         </section>
       </main>
-
-      {/* PRESENTATION MODE */}
-      {!presentationMode && (
-        <button
-          type="button"
-          onClick={() => {
-            setPresentationMode(true);
-            goToSection(0);
-          }}
-          className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-[#10251f] px-4 py-3 text-xs font-bold text-white shadow-2xl ring-1 ring-white/10 transition hover:-translate-y-0.5"
-        >
-          <Play size={15} fill="currentColor" />
-          {t(
-            "Bắt đầu thuyết trình",
-            "Start presentation",
-          )}
-        </button>
-      )}
-
-      {presentationMode && (
-        <div className="fixed inset-x-0 bottom-5 z-[70] mx-auto flex w-[calc(100%-2rem)] max-w-3xl items-center gap-3 rounded-2xl border border-white/10 bg-[#071813]/95 p-3 text-white shadow-2xl backdrop-blur-xl">
-          <button
-            type="button"
-            aria-label={t(
-              "Phần trước",
-              "Previous section",
-            )}
-            disabled={activeSection === 0}
-            onClick={() =>
-              goToSection(activeSection - 1)
-            }
-            className="rounded-xl border border-white/10 p-2.5 text-slate-200 disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            <ChevronLeft size={18} />
-          </button>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-3 text-[10px] font-bold tracking-[0.1em] text-emerald-300">
-              <span className="truncate">
-                {
-                  presentationSections[
-                    activeSection
-                  ][language]
-                }
-              </span>
-
-              <span>
-                {activeSection + 1}/
-                {presentationSections.length}
-              </span>
-            </div>
-
-            <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-emerald-400 transition-all"
-                style={{
-                  width: `${
-                    ((activeSection + 1) /
-                      presentationSections.length) *
-                    100
-                  }%`,
-                }}
-              />
-            </div>
-
-            <p className="mt-1.5 hidden text-[9px] text-slate-500 sm:block">
-              {t(
-                "Dùng ← → để chuyển phần · Esc để thoát",
-                "Use ← → to navigate · Esc to exit",
-              )}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            aria-label={t(
-              "Phần sau",
-              "Next section",
-            )}
-            disabled={
-              activeSection ===
-              presentationSections.length - 1
-            }
-            onClick={() =>
-              goToSection(activeSection + 1)
-            }
-            className="rounded-xl border border-white/10 p-2.5 text-slate-200 disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            <ChevronRight size={18} />
-          </button>
-
-          <button
-            type="button"
-            aria-label={t(
-              "Thoát chế độ thuyết trình",
-              "Exit presentation mode",
-            )}
-            onClick={() =>
-              setPresentationMode(false)
-            }
-            className="rounded-xl bg-white/10 p-2.5 text-white"
-          >
-            <X size={18} />
-          </button>
-        </div>
-      )}
     </>
   );
 }

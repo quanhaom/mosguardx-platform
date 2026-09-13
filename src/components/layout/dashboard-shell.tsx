@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   usePathname,
 } from "next/navigation";
+
 import {
   BarChart3,
   Bell,
@@ -12,6 +13,7 @@ import {
   Cpu,
   House,
   Languages,
+  Landmark,
   LayoutDashboard,
   Map,
   Menu,
@@ -20,6 +22,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
+
 import {
   useState,
 } from "react";
@@ -32,10 +35,11 @@ const publicRoutes = [
   "/",
   "/risk-api",
   "/household",
+  "/enterprise",
   "/expansion",
   "/product-3d",
 
-  // MosGuardX Home B2C
+  // MosGuardX Home
   "/home",
   "/activity",
   "/my-device",
@@ -50,7 +54,8 @@ export default function DashboardShell({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname =
+    usePathname();
 
   const [
     mobileOpen,
@@ -78,8 +83,8 @@ export default function DashboardShell({
       href: "/map",
 
       label: tr(
-        "Bản đồ dịch tễ",
-        "Risk map",
+        "Bản đồ giám sát",
+        "Monitoring map",
       ),
 
       icon: Map,
@@ -100,8 +105,8 @@ export default function DashboardShell({
       href: "/devices",
 
       label: tr(
-        "Thiết bị",
-        "Devices",
+        "Mạng lưới trạm",
+        "Station network",
       ),
 
       icon: Cpu,
@@ -143,28 +148,28 @@ export default function DashboardShell({
     string
   > = {
     "/dashboard": tr(
-      "Tổng quan hệ thống",
-      "System overview",
+      "Tổng quan Command Center",
+      "Command Center overview",
     ),
 
     "/map": tr(
-      "Bản đồ dịch tễ",
-      "Epidemiological risk map",
+      "Bản đồ giám sát vector",
+      "Vector monitoring map",
     ),
 
     "/alerts": tr(
-      "Quản lý cảnh báo",
-      "Alert management",
+      "Cảnh báo mạng lưới",
+      "Network alerts",
     ),
 
     "/devices": tr(
-      "Quản lý thiết bị",
-      "Device management",
+      "Mạng lưới thiết bị",
+      "Device network",
     ),
 
     "/ai-api": tr(
-      "AI và API nhận diện",
-      "AI recognition and API",
+      "AI và API",
+      "AI and API",
     ),
 
     "/reports": tr(
@@ -173,24 +178,28 @@ export default function DashboardShell({
     ),
 
     "/settings": tr(
-      "Cấu hình hệ thống",
-      "System settings",
+      "Cấu hình Command Center",
+      "Command Center settings",
     ),
   };
 
   const isPublicRoute =
-    publicRoutes.some((route) => {
-      if (route === "/") {
-        return pathname === "/";
-      }
+    publicRoutes.some(
+      (route) => {
+        if (route === "/") {
+          return (
+            pathname === "/"
+          );
+        }
 
-      return (
-        pathname === route ||
-        pathname.startsWith(
-          `${route}/`,
-        )
-      );
-    });
+        return (
+          pathname === route ||
+          pathname.startsWith(
+            `${route}/`,
+          )
+        );
+      },
+    );
 
   if (isPublicRoute) {
     return <>{children}</>;
@@ -198,7 +207,7 @@ export default function DashboardShell({
 
   const currentPageName =
     pageNames[pathname] ??
-    "MosguardX Operations";
+    "MosGuardX Command Center";
 
   const currentPageSlug =
     pathname === "/dashboard"
@@ -211,7 +220,8 @@ export default function DashboardShell({
 
   const sidebar = (
     <>
-      {/* Logo */}
+      {/* BRAND */}
+
       <div className="flex h-20 shrink-0 items-center gap-3 border-b border-white/10 px-6">
         <Link
           href="/dashboard"
@@ -221,7 +231,9 @@ export default function DashboardShell({
           }
         >
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400 text-[#10251f]">
-            <ShieldCheck size={24} />
+            <ShieldCheck
+              size={24}
+            />
           </span>
 
           <span>
@@ -229,8 +241,8 @@ export default function DashboardShell({
               MosguardX
             </strong>
 
-            <small className="mt-1 block text-[10px] font-semibold tracking-[0.2em] text-emerald-300">
-              OPERATIONS
+            <small className="mt-1 block text-[9px] font-semibold tracking-[0.16em] text-emerald-300">
+              COMMAND CENTER
             </small>
           </span>
         </Link>
@@ -250,7 +262,8 @@ export default function DashboardShell({
         </button>
       </div>
 
-      {/* Navigation */}
+      {/* NAVIGATION */}
+
       <nav className="mgx-scrollbar flex-1 space-y-1 overflow-y-auto px-3 py-6">
         <Link
           href="/"
@@ -263,17 +276,14 @@ export default function DashboardShell({
 
           <span>
             {tr(
-              "Website giới thiệu",
-              "Public website",
+              "Website MosGuardX",
+              "MosGuardX website",
             )}
           </span>
         </Link>
 
-        <p className="mb-2 px-4 text-[9px] font-bold tracking-[0.18em] text-slate-500">
-          {tr(
-            "TRUNG TÂM ĐIỀU HÀNH",
-            "OPERATIONS CENTRE",
-          )}
+        <p className="mb-2 px-4 text-[9px] font-bold tracking-[0.18em] text-emerald-300">
+          B2G · PUBLIC HEALTH
         </p>
 
         {navigation.map(
@@ -294,7 +304,9 @@ export default function DashboardShell({
                 key={href}
                 href={href}
                 onClick={() =>
-                  setMobileOpen(false)
+                  setMobileOpen(
+                    false,
+                  )
                 }
                 aria-current={
                   active
@@ -307,13 +319,16 @@ export default function DashboardShell({
                     : "text-slate-300 hover:bg-white/5 hover:text-white"
                 }`}
               >
-                <Icon size={19} />
+                <Icon
+                  size={19}
+                />
 
                 <span className="flex-1">
                   {label}
                 </span>
 
-                {badge !== undefined &&
+                {badge !==
+                  undefined &&
                   badge > 0 && (
                     <span className="rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
                       {badge}
@@ -331,26 +346,25 @@ export default function DashboardShell({
         )}
       </nav>
 
-      {/* MVP status */}
+      {/* STATUS */}
+
       <div className="mx-4 mb-4 shrink-0 rounded-xl border border-emerald-300/15 bg-emerald-300/5 p-4">
         <div className="flex items-center gap-2 text-sm font-semibold">
           <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
 
-          {tr(
-            "MVP đang phát triển",
-            "MVP in development",
-          )}
+          Command Center MVP
         </div>
 
         <p className="mt-1 text-xs leading-5 text-slate-400">
           {tr(
-            "Dashboard đang sử dụng dữ liệu minh họa",
-            "Dashboard currently uses illustrative data",
+            "Dữ liệu hiện tại chủ yếu phục vụ trình diễn MVP.",
+            "Current data is primarily used for MVP demonstration.",
           )}
         </p>
       </div>
 
-      {/* User */}
+      {/* PROFILE */}
+
       <div className="flex shrink-0 items-center gap-3 border-t border-white/10 p-5">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 font-bold text-emerald-800">
           HQ
@@ -358,13 +372,13 @@ export default function DashboardShell({
 
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold">
-            Hòn Quôn
+            Command Center
           </div>
 
           <div className="text-xs text-slate-400">
             {tr(
-              "Quản trị viên",
-              "Administrator",
+              "Quản trị hệ thống",
+              "System administrator",
             )}
           </div>
         </div>
@@ -374,12 +388,14 @@ export default function DashboardShell({
 
   return (
     <div className="min-h-screen bg-[#f3f7f5]">
-      {/* Desktop sidebar */}
+      {/* DESKTOP */}
+
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-[#10251f] text-white lg:flex">
         {sidebar}
       </aside>
 
-      {/* Mobile sidebar */}
+      {/* MOBILE */}
+
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
@@ -400,10 +416,12 @@ export default function DashboardShell({
         </div>
       )}
 
-      {/* Main */}
+      {/* CONTENT */}
+
       <div className="lg:ml-64">
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#dce8e2] bg-white/90 px-5 backdrop-blur-xl md:px-8">
-          {/* Left */}
+          {/* LEFT */}
+
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
@@ -416,7 +434,9 @@ export default function DashboardShell({
                 setMobileOpen(true)
               }
             >
-              <Menu size={20} />
+              <Menu
+                size={20}
+              />
             </button>
 
             <div className="min-w-0">
@@ -433,31 +453,36 @@ export default function DashboardShell({
                   className="shrink-0"
                 />
 
-                <span className="truncate text-emerald-700">
-                  {tr(
-                    "TRUNG TÂM ĐIỀU HÀNH",
-                    "OPERATIONS CENTRE",
-                  )}
+                <span className="flex items-center gap-1.5 truncate text-emerald-700">
+                  <Landmark
+                    size={12}
+                  />
+
+                  B2G COMMAND CENTER
                 </span>
               </div>
 
               <div className="mt-1 flex min-w-0 items-center gap-2">
                 <h1 className="truncate text-lg font-bold text-[#16352a] sm:text-xl">
-                  {currentPageName}
+                  {
+                    currentPageName
+                  }
                 </h1>
 
                 {currentPageSlug && (
                   <span className="hidden shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-bold text-emerald-700 sm:inline">
-                    {currentPageSlug}
+                    {
+                      currentPageSlug
+                    }
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Right */}
+          {/* RIGHT */}
+
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {/* Dashboard language toggle */}
             <div className="flex items-center rounded-full border border-slate-200 bg-white p-1 text-[10px] shadow-sm">
               <Languages
                 size={14}
@@ -469,22 +494,27 @@ export default function DashboardShell({
                   "vi",
                   "en",
                 ] as const
-              ).map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() =>
-                    setLanguage(item)
-                  }
-                  className={`rounded-full px-2.5 py-1.5 font-bold transition ${
-                    language === item
-                      ? "bg-[#10251f] text-white"
-                      : "text-slate-500 hover:text-emerald-700"
-                  }`}
-                >
-                  {item.toUpperCase()}
-                </button>
-              ))}
+              ).map(
+                (item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() =>
+                      setLanguage(
+                        item,
+                      )
+                    }
+                    className={`rounded-full px-2.5 py-1.5 font-bold transition ${
+                      language ===
+                      item
+                        ? "bg-[#10251f] text-white"
+                        : "text-slate-500 hover:text-emerald-700"
+                    }`}
+                  >
+                    {item.toUpperCase()}
+                  </button>
+                ),
+              )}
             </div>
 
             <span className="hidden items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 md:flex">
@@ -502,12 +532,14 @@ export default function DashboardShell({
             <Link
               href="/alerts"
               aria-label={tr(
-                "Mở thông báo",
-                "Open notifications",
+                "Mở cảnh báo",
+                "Open alerts",
               )}
               className="relative rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700"
             >
-              <Bell size={18} />
+              <Bell
+                size={18}
+              />
 
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
             </Link>
