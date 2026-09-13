@@ -34,6 +34,15 @@ const publicRoutes = [
   "/household",
   "/expansion",
   "/product-3d",
+
+  // MosGuardX Home B2C
+  "/home",
+  "/activity",
+  "/my-device",
+  "/home-alerts",
+  "/home-settings",
+  "/login",
+  "/onboarding",
 ];
 
 export default function DashboardShell({
