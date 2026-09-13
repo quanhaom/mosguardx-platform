@@ -3,6 +3,11 @@ export type RiskLevel =
   | "medium"
   | "high";
 
+export type DeviceHealthStatus =
+  | "normal"
+  | "warning"
+  | "offline";
+
 export type MosquitoEvent = {
   id: string;
   time: string;
@@ -10,6 +15,10 @@ export type MosquitoEvent = {
   species: string;
   confidence: number;
 };
+
+/* =========================
+   HOUSEHOLD SUMMARY
+========================= */
 
 export const homeSummary = {
   householdName: "Nhà Hà Nội",
@@ -29,9 +38,14 @@ export const homeSummary = {
   riskLevel: "medium" as RiskLevel,
 };
 
+/* =========================
+   WEATHER
+========================= */
+
 export const weatherSnapshot = {
   temperature: 29,
   humidity: 81,
+
   rainfall24h: 12,
   rainfall3d: 28,
   rainfall7d: 43,
@@ -45,6 +59,10 @@ export const weatherSnapshot = {
   suitability: "high" as RiskLevel,
 };
 
+/* =========================
+   BASIC DEVICE STATUS
+========================= */
+
 export const deviceStatus = {
   camera: true,
   fan: true,
@@ -53,12 +71,91 @@ export const deviceStatus = {
   lastSeen: "Vừa xong",
 };
 
+/* =========================
+   HOME DEVICE
+========================= */
+
+export const homeDevice = {
+  id: "MGX-HOME-001",
+
+  name: homeSummary.deviceName,
+  model: "MosGuardX Home",
+  household: homeSummary.householdName,
+
+  online: true,
+
+  lastSeen: deviceStatus.lastSeen,
+
+  uptime: "3 ngày 8 giờ",
+
+  camera: {
+    status: "normal" as DeviceHealthStatus,
+    label: "Bình thường",
+    fps: 20,
+  },
+
+  motionEngine: {
+    status: "normal" as DeviceHealthStatus,
+    label: "Đang theo dõi",
+    mode: "Frame Difference",
+
+    processingFps: 12,
+
+    roi: "320 × 240",
+  },
+
+  aiConnection: {
+    status: "normal" as DeviceHealthStatus,
+    label: "Đã kết nối",
+
+    latencyMs: 842,
+  },
+
+  fan: {
+    status: "normal" as DeviceHealthStatus,
+    label: "Bình thường",
+  },
+
+  wifi: {
+    status: "normal" as DeviceHealthStatus,
+    label: "Tốt",
+
+    signalDbm: -54,
+  },
+
+  eventQueue: {
+    pending: 0,
+    synced: 184,
+  },
+
+  cartridge: {
+    percent:
+      deviceStatus.cartridgePercent,
+
+    estimatedDays: 23,
+
+    installedAt: "21/08/2026",
+  },
+
+  firmware: "0.1.0-beta",
+
+  ip: "192.168.1.84",
+};
+
+/* =========================
+   HOURLY ACTIVITY
+========================= */
+
 export const hourlyActivity = [
   1, 0, 0, 0, 0, 1,
   2, 3, 1, 0, 0, 1,
   1, 1, 2, 2, 3, 5,
   7, 6, 4, 2, 1, 1,
 ];
+
+/* =========================
+   WEEKLY ACTIVITY
+========================= */
 
 export const weeklyActivity = [
   {
@@ -98,6 +195,10 @@ export const weeklyActivity = [
   },
 ];
 
+/* =========================
+   SPECIES
+========================= */
+
 export const speciesBreakdown = [
   {
     species: "Aedes albopictus",
@@ -115,39 +216,152 @@ export const speciesBreakdown = [
     count: 4,
   },
   {
-    species: "Khác / chưa xác định",
+    species:
+      "Khác / chưa xác định",
     percentage: 5,
     count: 2,
   },
 ];
 
-export const recentEvents: MosquitoEvent[] = [
+/* =========================
+   RECENT EVENTS
+========================= */
+
+export const recentEvents:
+  MosquitoEvent[] = [
+    {
+      id: "evt-001",
+      time: "22:14",
+      location:
+        "Ban công tầng 3",
+      species:
+        "Aedes albopictus",
+      confidence: 0.94,
+    },
+
+    {
+      id: "evt-002",
+      time: "20:48",
+      location:
+        "Ban công tầng 3",
+      species: "Culex",
+      confidence: 0.88,
+    },
+
+    {
+      id: "evt-003",
+      time: "19:32",
+      location:
+        "Ban công tầng 3",
+      species:
+        "Aedes albopictus",
+      confidence: 0.91,
+    },
+
+    {
+      id: "evt-004",
+      time: "18:17",
+      location:
+        "Ban công tầng 3",
+      species:
+        "Aedes albopictus",
+      confidence: 0.89,
+    },
+  ];
+
+  export type HomeAlertSeverity =
+  | "info"
+  | "warning"
+  | "critical";
+
+export type HomeAlertCategory =
+  | "weather"
+  | "mosquito"
+  | "device"
+  | "cartridge";
+
+export type HomeAlert = {
+  id: string;
+  category: HomeAlertCategory;
+  severity: HomeAlertSeverity;
+  title: string;
+  description: string;
+  createdAt: string;
+  read: boolean;
+};
+
+export const homeAlerts: HomeAlert[] = [
   {
-    id: "evt-001",
-    time: "22:14",
-    location: "Ban công tầng 3",
-    species: "Aedes albopictus",
-    confidence: 0.94,
+    id: "alert-001",
+    category: "weather",
+    severity: "warning",
+    title:
+      "Điều kiện môi trường thuận lợi cho muỗi",
+    description:
+      "Độ ẩm cao và lượng mưa trong 24 giờ qua đang tạo điều kiện thuận lợi cho hoạt động của muỗi.",
+    createdAt: "35 phút trước",
+    read: false,
   },
   {
-    id: "evt-002",
-    time: "20:48",
-    location: "Ban công tầng 3",
-    species: "Culex",
-    confidence: 0.88,
+    id: "alert-002",
+    category: "mosquito",
+    severity: "warning",
+    title:
+      "Hoạt động muỗi tăng vào buổi tối",
+    description:
+      "MosGuardX ghi nhận hoạt động tập trung nhiều nhất trong khoảng 18:00–20:00.",
+    createdAt: "2 giờ trước",
+    read: false,
   },
   {
-    id: "evt-003",
-    time: "19:32",
-    location: "Ban công tầng 3",
-    species: "Aedes albopictus",
-    confidence: 0.91,
+    id: "alert-003",
+    category: "device",
+    severity: "info",
+    title: "Thiết bị hoạt động ổn định",
+    description:
+      "Camera, quạt và kết nối cloud đều đang hoạt động bình thường.",
+    createdAt: "5 giờ trước",
+    read: true,
   },
   {
-    id: "evt-004",
-    time: "18:17",
-    location: "Ban công tầng 3",
-    species: "Aedes albopictus",
-    confidence: 0.89,
+    id: "alert-004",
+    category: "cartridge",
+    severity: "info",
+    title: "Cartridge còn 78%",
+    description:
+      "Ước tính cartridge hiện tại còn khoảng 23 ngày sử dụng.",
+    createdAt: "Hôm qua",
+    read: true,
+  },
+];
+
+export const mosquitoWeatherForecast = [
+  {
+    day: "Hôm nay",
+    temperature: 29,
+    humidity: 81,
+    rainProbability: 72,
+    suitability: "high" as RiskLevel,
+  },
+  {
+    day: "Ngày mai",
+    temperature: 30,
+    humidity: 78,
+    rainProbability: 65,
+    suitability: "high" as RiskLevel,
+  },
+  {
+    day: "T3",
+    temperature: 31,
+    humidity: 71,
+    rainProbability: 42,
+    suitability: "medium" as RiskLevel,
+  },
+  {
+    day: "T4",
+    temperature: 30,
+    humidity: 68,
+    rainProbability: 25,
+    suitability: "medium" as RiskLevel,
   },
 ];
