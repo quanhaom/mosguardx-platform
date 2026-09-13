@@ -1,5 +1,5 @@
 "use client";
-
+import PlatformSwitcher from "@/components/layout/platform-switcher";
 import Link from "next/link";
 import {
   usePathname,
@@ -483,30 +483,31 @@ export default function DashboardShell({
           {/* RIGHT */}
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <div className="flex items-center rounded-full border border-slate-200 bg-white p-1 text-[10px] shadow-sm">
+            {/* Platform switcher */}
+
+            <PlatformSwitcher
+              variant="light"
+              compact
+            />
+
+            {/* Language */}
+
+            <div className="hidden items-center rounded-full border border-slate-200 bg-white p-1 text-[10px] shadow-sm sm:flex">
               <Languages
                 size={14}
-                className="ml-2 hidden text-slate-400 sm:block"
+                className="ml-2 hidden text-slate-400 md:block"
               />
 
-              {(
-                [
-                  "vi",
-                  "en",
-                ] as const
-              ).map(
+              {(["vi", "en"] as const).map(
                 (item) => (
                   <button
                     key={item}
                     type="button"
                     onClick={() =>
-                      setLanguage(
-                        item,
-                      )
+                      setLanguage(item)
                     }
                     className={`rounded-full px-2.5 py-1.5 font-bold transition ${
-                      language ===
-                      item
+                      language === item
                         ? "bg-[#10251f] text-white"
                         : "text-slate-500 hover:text-emerald-700"
                     }`}
@@ -517,7 +518,9 @@ export default function DashboardShell({
               )}
             </div>
 
-            <span className="hidden items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 md:flex">
+            {/* Data status */}
+
+            <span className="hidden items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 lg:flex">
               <Radio
                 size={14}
                 className="animate-pulse"
@@ -529,17 +532,17 @@ export default function DashboardShell({
               )}
             </span>
 
+            {/* Alerts */}
+
             <Link
               href="/alerts"
               aria-label={tr(
                 "Mở cảnh báo",
                 "Open alerts",
               )}
-              className="relative rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700"
+              className="relative hidden rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700 sm:block"
             >
-              <Bell
-                size={18}
-              />
+              <Bell size={18} />
 
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
             </Link>

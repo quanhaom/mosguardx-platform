@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import {
   ArrowLeft,
+  ArrowRight,
   BellRing,
   Building2,
   CheckCircle2,
@@ -205,13 +206,14 @@ export default function EnterprisePage() {
               Website MosGuardX
             </Link>
 
-            <span className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-5 py-3 text-sm font-semibold text-slate-500">
-              <Settings
-                size={16}
-              />
+            <Link
+            href="/enterprise/app"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+            >
+            Xem Enterprise Preview
 
-              Enterprise app chưa mở
-            </span>
+            <ArrowRight size={16} />
+            </Link>
           </div>
         </section>
       </main>

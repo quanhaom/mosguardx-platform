@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import {
   Activity,
   Bell,
@@ -13,7 +14,10 @@ import {
   Smartphone,
   X,
 } from "lucide-react";
+
 import { useState } from "react";
+
+import PlatformSwitcher from "@/components/layout/platform-switcher";
 
 const navigation = [
   {
@@ -49,33 +53,41 @@ export default function HomeShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+
   const [mobileOpen, setMobileOpen] =
     useState(false);
 
   return (
     <div className="min-h-screen bg-[#f6f8f6] text-[#17352b]">
-      {/* Desktop header */}
+      {/* =========================
+          HEADER
+      ========================= */}
+
       <header className="sticky top-0 z-40 border-b border-[#e0e9e4] bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-8">
+        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+          {/* LEFT */}
+
+          <div className="flex min-w-0 items-center gap-6">
             <Link
               href="/home"
-              className="flex items-center gap-3"
+              className="flex shrink-0 items-center gap-3"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#16352a] text-emerald-300">
                 <ShieldCheck size={22} />
               </span>
 
-              <div>
+              <div className="hidden sm:block">
                 <strong className="block text-lg leading-none">
                   MosGuardX
                 </strong>
 
-                <span className="mt-1 block text-[9px] font-bold tracking-[0.24em] text-emerald-700">
-                  HOME
+                <span className="mt-1 block text-[9px] font-bold tracking-[0.2em] text-emerald-700">
+                  HOME · B2C
                 </span>
               </div>
             </Link>
+
+            {/* Desktop nav */}
 
             <nav className="hidden items-center gap-1 lg:flex">
               {navigation.map(
@@ -91,13 +103,14 @@ export default function HomeShell({
                     <Link
                       key={href}
                       href={href}
-                      className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                      className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition ${
                         active
                           ? "bg-emerald-50 text-emerald-800"
                           : "text-slate-500 hover:bg-slate-50 hover:text-[#16352a]"
                       }`}
                     >
                       <Icon size={17} />
+
                       {label}
                     </Link>
                   );
@@ -106,20 +119,33 @@ export default function HomeShell({
             </nav>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* RIGHT */}
+
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Platform switcher */}
+
+            <PlatformSwitcher
+              variant="light"
+              compact
+            />
+
+            {/* Alert */}
+
             <Link
               href="/home-alerts"
-              className="relative rounded-xl border border-slate-200 p-2.5 text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700"
               aria-label="Cảnh báo"
+              className="relative hidden rounded-xl border border-slate-200 p-2.5 text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700 sm:block"
             >
               <Bell size={19} />
 
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white" />
             </Link>
 
+            {/* Household */}
+
             <button
               type="button"
-              className="hidden items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-slate-50 sm:flex"
+              className="hidden items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-slate-50 xl:flex"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-800">
                 HQ
@@ -141,6 +167,8 @@ export default function HomeShell({
               />
             </button>
 
+            {/* Mobile menu */}
+
             <button
               type="button"
               aria-label="Mở menu"
@@ -155,7 +183,10 @@ export default function HomeShell({
         </div>
       </header>
 
-      {/* Mobile drawer */}
+      {/* =========================
+          MOBILE DRAWER
+      ========================= */}
+
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
@@ -168,6 +199,8 @@ export default function HomeShell({
           />
 
           <aside className="relative ml-auto flex h-full w-[82%] max-w-sm flex-col bg-white p-5 shadow-2xl">
+            {/* Drawer header */}
+
             <div className="flex items-center justify-between">
               <Link
                 href="/home"
@@ -181,16 +214,19 @@ export default function HomeShell({
                 </span>
 
                 <div>
-                  <strong>MosGuardX</strong>
+                  <strong>
+                    MosGuardX
+                  </strong>
 
                   <p className="text-[9px] font-bold tracking-[0.2em] text-emerald-700">
-                    HOME
+                    HOME · B2C
                   </p>
                 </div>
               </Link>
 
               <button
                 type="button"
+                aria-label="Đóng menu"
                 onClick={() =>
                   setMobileOpen(false)
                 }
@@ -200,7 +236,27 @@ export default function HomeShell({
               </button>
             </div>
 
-            <nav className="mt-8 space-y-2">
+            {/* Mobile household */}
+
+            <div className="mt-6 flex items-center gap-3 rounded-2xl bg-emerald-50 p-4">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-800">
+                HQ
+              </span>
+
+              <div>
+                <p className="text-xs text-slate-400">
+                  Household
+                </p>
+
+                <strong className="text-sm text-[#16352a]">
+                  Nhà của Quân
+                </strong>
+              </div>
+            </div>
+
+            {/* Navigation */}
+
+            <nav className="mt-5 space-y-2">
               {navigation.map(
                 ({
                   href,
@@ -224,6 +280,7 @@ export default function HomeShell({
                       }`}
                     >
                       <Icon size={19} />
+
                       {label}
                     </Link>
                   );
@@ -231,25 +288,51 @@ export default function HomeShell({
               )}
             </nav>
 
-            <div className="mt-auto rounded-2xl bg-emerald-50 p-4">
+            {/* Product landing */}
+
+            <Link
+              href="/household"
+              onClick={() =>
+                setMobileOpen(false)
+              }
+              className="mt-5 flex items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800"
+            >
+              Xem MosGuardX Home
+            </Link>
+
+            {/* Device state */}
+
+            <div className="mt-auto rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
               <p className="text-xs text-slate-500">
                 Thiết bị đang kết nối
               </p>
 
               <div className="mt-2 flex items-center gap-2 font-semibold text-emerald-800">
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+
                 MosGuardX Home
               </div>
+
+              <p className="mt-1 text-[10px] text-slate-400">
+                Online
+              </p>
             </div>
           </aside>
         </div>
       )}
 
+      {/* =========================
+          CONTENT
+      ========================= */}
+
       <main className="mx-auto max-w-7xl px-4 py-6 pb-28 sm:px-6 md:py-8 lg:px-8 lg:pb-10">
         {children}
       </main>
 
-      {/* Mobile bottom navigation */}
+      {/* =========================
+          MOBILE BOTTOM NAV
+      ========================= */}
+
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-xl justify-around">
           {navigation.map(
@@ -273,7 +356,9 @@ export default function HomeShell({
                 >
                   <Icon size={19} />
 
-                  <span>{label}</span>
+                  <span>
+                    {label}
+                  </span>
                 </Link>
               );
             },

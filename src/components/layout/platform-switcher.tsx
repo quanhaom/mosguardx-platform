@@ -2,86 +2,203 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import {
   Building2,
+  Check,
   ChevronDown,
   Home,
   Landmark,
   Layers3,
 } from "lucide-react";
+
 import { useState } from "react";
+
+type PlatformId =
+  | "home"
+  | "enterprise"
+  | "command-center";
+
+type PlatformSwitcherProps = {
+  variant?: "dark" | "light";
+  compact?: boolean;
+  align?: "left" | "right";
+  className?: string;
+};
 
 const platforms = [
   {
-    name: "MosGuardX Home",
-    segment: "B2C · Household",
+    id: "home" as const,
+
+    name:
+      "MosGuardX Home",
+
+    shortName:
+      "Home",
+
+    segment:
+      "B2C · HOUSEHOLD",
+
     description:
-      "Theo dõi hoạt động muỗi và thiết bị tại gia đình.",
-    href: "/household",
-    icon: Home,
-    status: "LIVE",
+      "Theo dõi hoạt động muỗi, cảnh báo và thiết bị trong gia đình.",
+
+    href:
+      "/household",
+
+    appHref:
+      "/home",
+
+    icon:
+      Home,
+
+    status:
+      "LIVE",
   },
+
   {
-    name: "MosGuardX Enterprise",
-    segment: "B2B · Business & Operators",
+    id: "enterprise" as const,
+
+    name:
+      "MosGuardX Enterprise",
+
+    shortName:
+      "Enterprise",
+
+    segment:
+      "B2B · BUSINESS & OPERATORS",
+
     description:
-      "Quản lý nhiều cơ sở, thiết bị và hoạt động vận hành.",
-    href: "/enterprise",
-    icon: Building2,
-    status: "COMING SOON",
+      "Quản lý nhiều site, thiết bị, bảo trì và hoạt động vận hành.",
+
+    href:
+      "/enterprise",
+
+    appHref:
+      "/enterprise/app",
+
+    icon:
+      Building2,
+
+    status:
+      "PREVIEW",
   },
+
   {
-    name: "MosGuardX Command Center",
-    segment: "B2G · Public Health",
+    id: "command-center" as const,
+
+    name:
+      "MosGuardX Command Center",
+
+    shortName:
+      "Command Center",
+
+    segment:
+      "B2G · PUBLIC HEALTH",
+
     description:
-      "Giám sát mạng lưới, khu vực, hotspot và cảnh báo.",
-    href: "/dashboard",
-    icon: Landmark,
-    status: "MVP",
+      "Giám sát mạng lưới trạm, khu vực, hotspot và cảnh báo.",
+
+    href:
+      "/dashboard",
+
+    appHref:
+      "/dashboard",
+
+    icon:
+      Landmark,
+
+    status:
+      "MVP",
   },
 ];
 
-export default function PlatformSwitcher() {
-  const pathname = usePathname();
+export default function PlatformSwitcher({
+  variant = "dark",
+  compact = false,
+  align = "right",
+  className = "",
+}: PlatformSwitcherProps) {
+  const pathname =
+    usePathname();
 
-  const [open, setOpen] =
-    useState(false);
+  const [
+    open,
+    setOpen,
+  ] = useState(false);
 
   const current =
-    pathname.startsWith("/household") ||
-    pathname.startsWith("/home") ||
-    pathname.startsWith("/activity") ||
-    pathname.startsWith("/my-device") ||
-    pathname.startsWith("/home-alerts") ||
-    pathname.startsWith("/home-settings")
-      ? "MosGuardX Home"
-      : pathname.startsWith("/enterprise")
-        ? "MosGuardX Enterprise"
-        : pathname.startsWith("/dashboard") ||
-            pathname.startsWith("/map") ||
-            pathname.startsWith("/alerts") ||
-            pathname.startsWith("/devices") ||
-            pathname.startsWith("/reports") ||
-            pathname.startsWith("/ai-api")
-          ? "MosGuardX Command Center"
-          : null;
+    getCurrentPlatform(
+      pathname,
+    );
+
+  const CurrentIcon =
+    current?.icon ??
+    Layers3;
+
+  const buttonClass =
+    variant === "dark"
+      ? [
+          "bg-emerald-400",
+          "text-[#10251f]",
+          "hover:bg-emerald-300",
+          "shadow-sm",
+        ].join(" ")
+      : [
+          "border",
+          "border-emerald-200",
+          "bg-emerald-50",
+          "text-emerald-900",
+          "hover:border-emerald-300",
+          "hover:bg-emerald-100",
+        ].join(" ");
 
   return (
-    <div className="relative">
+    <div
+      className={`relative ${className}`}
+    >
       <button
         type="button"
-        onClick={() =>
-          setOpen((value) => !value)
+        aria-haspopup="menu"
+        aria-expanded={
+          open
         }
-        className="inline-flex items-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-bold text-[#10251f] shadow-sm transition hover:bg-emerald-300"
+        onClick={() =>
+          setOpen(
+            (value) =>
+              !value,
+          )
+        }
+        className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl px-3.5 text-xs font-bold transition ${buttonClass}`}
       >
-        <Layers3 size={15} />
+        <CurrentIcon
+          size={15}
+          className="shrink-0"
+        />
 
-        {current ?? "Platforms"}
+        <span className="hidden whitespace-nowrap sm:inline">
+          {compact
+            ? current?.shortName ??
+              "Platforms"
+            : current
+              ? current.shortName
+              : "Platforms"}
+        </span>
+
+        <span className="sm:hidden">
+          {current
+            ? current.id ===
+              "command-center"
+              ? "B2G"
+              : current.id ===
+                  "enterprise"
+                ? "B2B"
+                : "B2C"
+            : "Apps"}
+        </span>
 
         <ChevronDown
-          size={15}
-          className={`transition ${
+          size={14}
+          className={`shrink-0 transition-transform duration-200 ${
             open
               ? "rotate-180"
               : ""
@@ -91,6 +208,8 @@ export default function PlatformSwitcher() {
 
       {open && (
         <>
+          {/* Outside click */}
+
           <button
             type="button"
             aria-label="Close platform menu"
@@ -100,79 +219,140 @@ export default function PlatformSwitcher() {
             }
           />
 
-          <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[360px] overflow-hidden rounded-[24px] border border-white/10 bg-[#10251f] p-2 shadow-2xl">
-            <div className="px-3 py-3">
-              <p className="text-[10px] font-bold tracking-[0.18em] text-emerald-300">
-                MOSGUARDX PLATFORM
-              </p>
+          {/* Dropdown */}
 
-              <p className="mt-1 text-xs text-slate-400">
-                Chọn nền tảng phù hợp với
-                nhu cầu sử dụng.
+          <div
+            role="menu"
+            className={`absolute top-[calc(100%+12px)] z-50 w-[min(390px,calc(100vw-2rem))] overflow-hidden rounded-[26px] border border-white/10 bg-[#10251f] p-2 text-white shadow-2xl ${
+              align ===
+              "left"
+                ? "left-0"
+                : "right-0"
+            }`}
+          >
+            {/* Header */}
+
+            <div className="px-3 pb-3 pt-2">
+              <div className="flex items-center gap-2">
+                <Layers3
+                  size={15}
+                  className="text-emerald-300"
+                />
+
+                <p className="text-[10px] font-bold tracking-[0.18em] text-emerald-300">
+                  MOSGUARDX
+                  PLATFORM
+                </p>
+              </div>
+
+              <p className="mt-2 text-xs leading-5 text-slate-400">
+                Một hệ sinh
+                thái, ba trải
+                nghiệm dành cho
+                ba nhóm người
+                dùng.
               </p>
             </div>
 
+            {/* Platform cards */}
+
             <div className="space-y-1">
               {platforms.map(
-                (platform) => {
+                (
+                  platform,
+                ) => {
                   const Icon =
                     platform.icon;
 
                   const active =
-                    current ===
-                    platform.name;
+                    current?.id ===
+                    platform.id;
 
                   return (
                     <Link
                       key={
-                        platform.name
+                        platform.id
                       }
+                      role="menuitem"
                       href={
                         platform.href
                       }
                       onClick={() =>
-                        setOpen(false)
+                        setOpen(
+                          false,
+                        )
                       }
-                      className={`block rounded-[18px] p-4 transition ${
+                      className={`group block rounded-[20px] border p-4 transition ${
                         active
-                          ? "bg-emerald-400/15"
-                          : "hover:bg-white/[0.06]"
+                          ? "border-emerald-400/30 bg-emerald-400/15"
+                          : "border-transparent hover:border-white/10 hover:bg-white/[0.06]"
                       }`}
                     >
                       <div className="flex items-start gap-3">
+                        {/* Icon */}
+
                         <span
-                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition ${
                             active
                               ? "bg-emerald-400 text-[#10251f]"
-                              : "bg-white/[0.06] text-emerald-300"
+                              : "bg-white/[0.07] text-emerald-300 group-hover:bg-white/[0.1]"
                           }`}
                         >
                           <Icon
-                            size={20}
+                            size={
+                              20
+                            }
                           />
                         </span>
 
+                        {/* Content */}
+
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="font-bold text-white">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate font-bold text-white">
                                 {
                                   platform.name
                                 }
                               </p>
 
-                              <p className="mt-0.5 text-[10px] font-bold tracking-wide text-emerald-300">
+                              <p className="mt-1 text-[9px] font-bold tracking-[0.12em] text-emerald-300">
                                 {
                                   platform.segment
                                 }
                               </p>
                             </div>
 
-                            <span className="shrink-0 rounded-full bg-white/[0.07] px-2 py-1 text-[8px] font-bold tracking-wide text-slate-300">
-                              {
-                                platform.status
-                              }
-                            </span>
+                            <div className="flex shrink-0 items-center gap-1.5">
+                              {active && (
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-[#10251f]">
+                                  <Check
+                                    size={
+                                      12
+                                    }
+                                    strokeWidth={
+                                      3
+                                    }
+                                  />
+                                </span>
+                              )}
+
+                              <span
+                                className={`rounded-full px-2 py-1 text-[8px] font-bold tracking-wide ${
+                                  platform.status ===
+                                  "LIVE"
+                                    ? "bg-emerald-400 text-[#10251f]"
+                                    : platform.status ===
+                                        "MVP"
+                                      ? "bg-sky-300/10 text-sky-200"
+                                      : "bg-amber-300/10 text-amber-200"
+                                }`}
+                              >
+                                {
+                                  platform.status
+                                }
+                              </span>
+                            </div>
                           </div>
 
                           <p className="mt-2 text-xs leading-5 text-slate-400">
@@ -187,9 +367,115 @@ export default function PlatformSwitcher() {
                 },
               )}
             </div>
+
+            {/* Core */}
+
+            <div className="mx-2 mt-2 rounded-2xl border border-white/10 bg-black/10 px-4 py-3">
+              <p className="text-[9px] font-bold tracking-[0.14em] text-slate-500">
+                SHARED CORE
+              </p>
+
+              <p className="mt-1 text-[11px] leading-5 text-slate-400">
+                Device · AI ·
+                Events · Weather ·
+                Alerts · Data
+              </p>
+            </div>
           </div>
         </>
       )}
     </div>
+  );
+}
+
+function getCurrentPlatform(
+  pathname: string,
+) {
+  const homeRoutes = [
+    "/household",
+    "/home",
+    "/activity",
+    "/my-device",
+    "/home-alerts",
+    "/home-settings",
+    "/onboarding",
+  ];
+
+  const commandCenterRoutes =
+    [
+      "/dashboard",
+      "/map",
+      "/alerts",
+      "/devices",
+      "/reports",
+      "/ai-api",
+      "/settings",
+      "/detection",
+    ];
+
+  if (
+    matchesAnyRoute(
+      pathname,
+      homeRoutes,
+    )
+  ) {
+    return platforms.find(
+      (platform) =>
+        platform.id ===
+        "home",
+    );
+  }
+
+  if (
+    routeMatches(
+      pathname,
+      "/enterprise",
+    )
+  ) {
+    return platforms.find(
+      (platform) =>
+        platform.id ===
+        "enterprise",
+    );
+  }
+
+  if (
+    matchesAnyRoute(
+      pathname,
+      commandCenterRoutes,
+    )
+  ) {
+    return platforms.find(
+      (platform) =>
+        platform.id ===
+        "command-center",
+    );
+  }
+
+  return null;
+}
+
+function matchesAnyRoute(
+  pathname: string,
+  routes: string[],
+) {
+  return routes.some(
+    (route) =>
+      routeMatches(
+        pathname,
+        route,
+      ),
+  );
+}
+
+function routeMatches(
+  pathname: string,
+  route: string,
+) {
+  return (
+    pathname === route ||
+    pathname.startsWith(
+      `${route}/`,
+    )
   );
 }
