@@ -1,972 +1,521 @@
-create extension if not exists pgcrypto;
-
-
--- ============================================================
--- UPDATED_AT FUNCTION
--- ============================================================
-
-create or replace function public.set_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-    new.updated_at = now();
-    return new;
-end;
-$$;
-
-
--- ============================================================
--- ACCOUNTS
---
--- One common tenant model for:
--- - household   -> MosGuardX Home / B2C
--- - organization -> MosGuardX Enterprise / B2B
--- - authority   -> Command Center / B2G
--- ============================================================
-
-create table if not exists public.accounts (
-    id uuid primary key default gen_random_uuid(),
-
-    type text not null
-        check (
-            type in (
-                'household',
-                'organization',
-                'authority'
-            )
-        ),
-
-    name text not null,
-
-    slug text unique,
-
-    status text not null default 'active'
-        check (
-            status in (
-                'active',
-                'inactive',
-                'suspended'
-            )
-        ),
-
-    metadata jsonb not null default '{}'::jsonb,
-
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now()
-);
-
-create index if not exists
-    accounts_type_idx
-on public.accounts (
-    type
-);
-
-create index if not exists
-    accounts_status_idx
-on public.accounts (
-    status
-);
-
-
--- ============================================================
--- SITES
---
--- Household:
---   usually one home site
---
--- Enterprise:
---   many business sites
---
--- Authority:
---   may own / manage operational locations
--- ============================================================
-
-create table if not exists public.sites (
-    id uuid primary key default gen_random_uuid(),
-
-    account_id uuid not null
-        references public.accounts(id)
-        on delete cascade,
-
-    code text,
-
-    name text not null,
-
-    site_type text,
-
-    address text,
-
-    latitude double precision,
-    longitude double precision,
-
-    timezone text not null
-        default 'Asia/Ho_Chi_Minh',
-
-    status text not null default 'active'
-        check (
-            status in (
-                'active',
-                'inactive'
-            )
-        ),
-
-    metadata jsonb not null default '{}'::jsonb,
-
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now(),
-
-    constraint sites_latitude_check
-        check (
-            latitude is null
-            or latitude between -90 and 90
-        ),
-
-    constraint sites_longitude_check
-        check (
-            longitude is null
-            or longitude between -180 and 180
-        ),
-
-    constraint sites_account_code_unique
-        unique (
-            account_id,
-            code
-        )
-);
-
-create index if not exists
-    sites_account_idx
-on public.sites (
-    account_id
-);
-
-create index if not exists
-    sites_status_idx
-on public.sites (
-    status
-);
-
-
--- ============================================================
--- STATIONS
--- Physical MosGuardX devices
--- ============================================================
-
-create table if not exists public.stations (
-    id text primary key,
-
-    name text not null,
-
-    device_key_hash text not null,
-
-    site_id uuid
-        references public.sites(id)
-        on delete set null,
-
-    serial_number text,
+from datetime import datetime
+from typing import Any, Literal
 
-    hardware_version text,
-    firmware_version text,
+from pydantic import BaseModel, Field
 
-    latitude double precision,
-    longitude double precision,
 
-    address text,
+# =========================================================
+# AI / DETECTION
+# =========================================================
 
-    status text not null default 'offline'
-        check (
-            status in (
-                'online',
-                'offline',
-                'maintenance'
-            )
-        ),
 
-    installed_at timestamptz,
-    last_seen_at timestamptz,
+class BoundingBox(BaseModel):
+    x1: float
+    y1: float
+    x2: float
+    y2: float
 
-    metadata jsonb not null default '{}'::jsonb,
 
-    created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now(),
+class NormalizedBoundingBox(BaseModel):
+    x1: float = Field(ge=0, le=1)
+    y1: float = Field(ge=0, le=1)
+    x2: float = Field(ge=0, le=1)
+    y2: float = Field(ge=0, le=1)
 
-    constraint stations_latitude_check
-        check (
-            latitude is null
-            or latitude between -90 and 90
-        ),
 
-    constraint stations_longitude_check
-        check (
-            longitude is null
-            or longitude between -180 and 180
-        )
-);
+class Detection(BaseModel):
+    object: str = "mosquito"
+    class_id: int = Field(ge=0)
 
+    species: str
+    species_vi: str | None = None
 
--- ============================================================
--- SAFE STATION MIGRATION
---
--- Required for databases created using the old MosGuardX
--- schema where stations already exists.
--- ============================================================
+    confidence: float = Field(ge=0, le=1)
 
-alter table public.stations
-    add column if not exists site_id uuid
-        references public.sites(id)
-        on delete set null;
+    detector_confidence: float | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+    )
 
-alter table public.stations
-    add column if not exists serial_number text;
+    classification_confidence: float | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+    )
 
-alter table public.stations
-    add column if not exists hardware_version text;
+    classification_model_version: str | None = None
 
-alter table public.stations
-    add column if not exists installed_at timestamptz;
+    review_required: bool = False
 
-alter table public.stations
-    add column if not exists metadata jsonb
-        not null
-        default '{}'::jsonb;
+    bounding_box: BoundingBox
+    normalized_bounding_box: NormalizedBoundingBox
 
-create index if not exists
-    stations_site_idx
-on public.stations (
-    site_id
-);
 
-create unique index if not exists
-    stations_serial_number_unique
-on public.stations (
-    serial_number
-)
-where serial_number is not null;
+class ImageInfo(BaseModel):
+    filename: str
+    width: int
+    height: int
 
+    path: str | None = None
+    url: str | None = None
 
--- ============================================================
--- OBSERVATIONS
--- ============================================================
 
-create table if not exists public.observations (
-    id uuid primary key default gen_random_uuid(),
+class PredictionResponse(BaseModel):
+    prediction_id: str
+    model_version: str
 
-    station_id text not null
-        references public.stations(id)
-        on update cascade
-        on delete restrict,
+    image: ImageInfo
 
-    idempotency_key text,
+    mosquito_count: int
+    detections: list[Detection]
 
-    captured_at timestamptz not null,
+    inference_ms: float
 
-    received_at timestamptz not null
-        default now(),
 
-    image_path text not null,
+# =========================================================
+# HEALTH
+# =========================================================
 
-    image_content_type text not null,
 
-    image_width integer not null
-        check (
-            image_width > 0
-        ),
+class HealthResponse(BaseModel):
+    status: str
+    service: str
+    version: str
 
-    image_height integer not null
-        check (
-            image_height > 0
-        ),
+    model_loaded: bool
+    backend_connected: bool = False
 
-    temperature double precision,
+    classifier_loaded: bool = False
+    classifier_model_version: str | None = None
 
-    humidity double precision,
 
-    firmware_version text,
+# =========================================================
+# ACCOUNT
+# =========================================================
 
-    processing_status text not null
-        default 'processing'
-        check (
-            processing_status in (
-                'processing',
-                'completed',
-                'failed'
-            )
-        ),
 
-    total_detected integer not null
-        default 0
-        check (
-            total_detected >= 0
-        ),
+AccountType = Literal[
+    "household",
+    "organization",
+    "authority",
+]
 
-    model_version text,
+AccountStatus = Literal[
+    "active",
+    "inactive",
+    "suspended",
+]
 
-    inference_ms double precision,
 
-    error_message text,
+class AccountCreate(BaseModel):
+    type: AccountType
 
-    created_at timestamptz not null
-        default now()
-);
+    name: str = Field(
+        min_length=2,
+        max_length=160,
+    )
 
+    slug: str = Field(
+        min_length=2,
+        max_length=120,
+        pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
+    )
 
-create unique index if not exists
-    observations_station_idempotency_unique
-on public.observations (
-    station_id,
-    idempotency_key
-)
-where idempotency_key is not null;
+    status: AccountStatus = "active"
 
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+    )
 
-create index if not exists
-    observations_station_captured_idx
-on public.observations (
-    station_id,
-    captured_at desc
-);
 
+class AccountResponse(BaseModel):
+    id: str
 
-create index if not exists
-    observations_received_idx
-on public.observations (
-    received_at desc
-);
+    type: AccountType
+    name: str
+    slug: str
 
+    status: AccountStatus
 
-create index if not exists
-    observations_status_idx
-on public.observations (
-    processing_status
-);
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+    )
 
+    created_at: datetime
+    updated_at: datetime
 
--- ============================================================
--- DETECTIONS
--- ============================================================
 
-create table if not exists public.detections (
-    id bigint
-        generated by default as identity
-        primary key,
+# =========================================================
+# SITE
+# =========================================================
 
-    observation_id uuid not null
-        references public.observations(id)
-        on delete cascade,
 
-    object_type text not null
-        default 'mosquito',
+SiteStatus = Literal[
+    "active",
+    "inactive",
+]
 
-    class_id integer not null
-        check (
-            class_id >= 0
-        ),
 
-    species text not null,
+class SiteCreate(BaseModel):
+    account_id: str
 
-    species_vi text,
+    code: str = Field(
+        min_length=1,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]*$",
+    )
 
-    confidence double precision not null
-        check (
-            confidence between 0 and 1
-        ),
+    name: str = Field(
+        min_length=2,
+        max_length=160,
+    )
 
-    detector_confidence double precision
-        check (
-            detector_confidence between 0 and 1
-        ),
+    site_type: str | None = Field(
+        default=None,
+        max_length=80,
+    )
 
-    classification_confidence double precision
-        check (
-            classification_confidence between 0 and 1
-        ),
+    address: str | None = Field(
+        default=None,
+        max_length=300,
+    )
 
-    classification_model_version text,
+    latitude: float | None = Field(
+        default=None,
+        ge=-90,
+        le=90,
+    )
 
-    review_required boolean not null
-        default false,
+    longitude: float | None = Field(
+        default=None,
+        ge=-180,
+        le=180,
+    )
 
-    x1 double precision not null,
-    y1 double precision not null,
-    x2 double precision not null,
-    y2 double precision not null,
+    timezone: str = Field(
+        default="Asia/Ho_Chi_Minh",
+        max_length=100,
+    )
 
-    normalized_x1 double precision not null
-        check (
-            normalized_x1 between 0 and 1
-        ),
+    status: SiteStatus = "active"
 
-    normalized_y1 double precision not null
-        check (
-            normalized_y1 between 0 and 1
-        ),
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+    )
 
-    normalized_x2 double precision not null
-        check (
-            normalized_x2 between 0 and 1
-        ),
 
-    normalized_y2 double precision not null
-        check (
-            normalized_y2 between 0 and 1
-        ),
+class SiteResponse(BaseModel):
+    id: str
+    account_id: str
 
-    created_at timestamptz not null
-        default now(),
+    code: str
+    name: str
 
-    constraint detections_box_x_check
-        check (
-            x2 >= x1
-        ),
+    site_type: str | None = None
+    address: str | None = None
 
-    constraint detections_box_y_check
-        check (
-            y2 >= y1
-        )
-);
+    latitude: float | None = None
+    longitude: float | None = None
 
+    timezone: str
 
-create index if not exists
-    detections_observation_idx
-on public.detections (
-    observation_id
-);
+    status: SiteStatus
 
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+    )
 
-create index if not exists
-    detections_species_idx
-on public.detections (
-    species
-);
+    created_at: datetime
+    updated_at: datetime
 
 
--- ============================================================
--- SAFE DETECTIONS MIGRATION
--- ============================================================
+# =========================================================
+# STATION
+# =========================================================
 
-alter table public.detections
-    add column if not exists
-        detector_confidence double precision
-        check (
-            detector_confidence between 0 and 1
-        ),
 
-    add column if not exists
-        classification_confidence double precision
-        check (
-            classification_confidence between 0 and 1
-        ),
+class StationCreate(BaseModel):
+    id: str = Field(
+        min_length=3,
+        max_length=64,
+        pattern=r"^[A-Z0-9][A-Z0-9_-]+$",
+    )
 
-    add column if not exists
-        classification_model_version text,
+    name: str = Field(
+        min_length=2,
+        max_length=120,
+    )
 
-    add column if not exists
-        review_required boolean not null
-        default false;
+    device_key: str = Field(
+        min_length=16,
+        max_length=256,
+    )
 
+    site_id: str | None = None
 
-create index if not exists
-    detections_review_required_idx
-on public.detections (
-    review_required,
-    created_at desc
-);
+    serial_number: str | None = Field(
+        default=None,
+        max_length=120,
+    )
 
+    hardware_version: str | None = Field(
+        default=None,
+        max_length=80,
+    )
 
--- ============================================================
--- ALERTS
--- ============================================================
+    latitude: float | None = Field(
+        default=None,
+        ge=-90,
+        le=90,
+    )
 
-create table if not exists public.alerts (
-    id uuid primary key
-        default gen_random_uuid(),
+    longitude: float | None = Field(
+        default=None,
+        ge=-180,
+        le=180,
+    )
 
-    station_id text not null
-        references public.stations(id)
-        on update cascade
-        on delete restrict,
+    address: str | None = Field(
+        default=None,
+        max_length=300,
+    )
 
-    observation_id uuid
-        references public.observations(id)
-        on delete set null,
+    firmware_version: str | None = Field(
+        default=None,
+        max_length=50,
+    )
 
-    level text not null
-        check (
-            level in (
-                'low',
-                'medium',
-                'high',
-                'critical'
-            )
-        ),
-
-    title text not null,
-
-    message text not null,
-
-    status text not null
-        default 'new'
-        check (
-            status in (
-                'new',
-                'acknowledged',
-                'resolved'
-            )
-        ),
-
-    created_at timestamptz not null
-        default now(),
-
-    acknowledged_at timestamptz,
-
-    resolved_at timestamptz
-);
+    installed_at: datetime | None = None
 
-
-create index if not exists
-    alerts_station_created_idx
-on public.alerts (
-    station_id,
-    created_at desc
-);
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+    )
 
 
-create index if not exists
-    alerts_status_idx
-on public.alerts (
-    status
-);
+class StationResponse(BaseModel):
+    id: str
+    name: str
 
+    site_id: str | None = None
 
-create index if not exists
-    alerts_observation_idx
-on public.alerts (
-    observation_id
-);
+    serial_number: str | None = None
+    hardware_version: str | None = None
 
+    latitude: float | None = None
+    longitude: float | None = None
 
--- ============================================================
--- MAINTENANCE JOBS
--- ============================================================
+    address: str | None = None
 
-create table if not exists public.maintenance_jobs (
-    id uuid primary key
-        default gen_random_uuid(),
+    status: str
 
-    account_id uuid not null
-        references public.accounts(id)
-        on delete cascade,
+    firmware_version: str | None = None
 
-    site_id uuid
-        references public.sites(id)
-        on delete set null,
+    installed_at: datetime | None = None
+    last_seen_at: datetime | None = None
 
-    station_id text
-        references public.stations(id)
-        on update cascade
-        on delete set null,
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+    )
 
-    source_alert_id uuid
-        references public.alerts(id)
-        on delete set null,
+    created_at: datetime
+    updated_at: datetime
 
-    title text not null,
 
-    description text,
+# =========================================================
+# OBSERVATION
+# =========================================================
 
-    job_type text not null
-        default 'inspection'
-        check (
-            job_type in (
-                'inspection',
-                'repair',
-                'replacement',
-                'cleaning',
-                'connectivity',
-                'routine',
-                'other'
-            )
-        ),
 
-    priority text not null
-        default 'medium'
-        check (
-            priority in (
-                'low',
-                'medium',
-                'high',
-                'critical'
-            )
-        ),
-
-    status text not null
-        default 'scheduled'
-        check (
-            status in (
-                'scheduled',
-                'in_progress',
-                'completed',
-                'cancelled'
-            )
-        ),
-
-    assigned_to uuid,
-
-    scheduled_at timestamptz,
-
-    started_at timestamptz,
-
-    completed_at timestamptz,
-
-    notes text,
-
-    created_at timestamptz not null
-        default now(),
-
-    updated_at timestamptz not null
-        default now()
-);
-
-
-create index if not exists
-    maintenance_jobs_account_idx
-on public.maintenance_jobs (
-    account_id
-);
+class ObservationResponse(BaseModel):
+    id: str
+    station_id: str
 
-
-create index if not exists
-    maintenance_jobs_site_idx
-on public.maintenance_jobs (
-    site_id
-);
-
-
-create index if not exists
-    maintenance_jobs_station_idx
-on public.maintenance_jobs (
-    station_id
-);
-
-
-create index if not exists
-    maintenance_jobs_alert_idx
-on public.maintenance_jobs (
-    source_alert_id
-);
-
-
-create index if not exists
-    maintenance_jobs_status_idx
-on public.maintenance_jobs (
-    status,
-    scheduled_at
-);
-
-
--- ============================================================
--- ACCOUNT MEMBERS
---
--- user_id is intended to map to Supabase Auth user IDs.
--- FK to auth.users is intentionally not required yet.
--- ============================================================
-
-create table if not exists public.account_members (
-    id uuid primary key
-        default gen_random_uuid(),
-
-    account_id uuid not null
-        references public.accounts(id)
-        on delete cascade,
-
-    user_id uuid not null,
-
-    role text not null
-        check (
-            role in (
-                'owner',
-                'manager',
-                'technician',
-                'viewer'
-            )
-        ),
-
-    status text not null
-        default 'active'
-        check (
-            status in (
-                'active',
-                'invited',
-                'disabled'
-            )
-        ),
-
-    created_at timestamptz not null
-        default now(),
-
-    updated_at timestamptz not null
-        default now(),
-
-    constraint account_members_unique
-        unique (
-            account_id,
-            user_id
-        )
-);
-
-
-create index if not exists
-    account_members_user_idx
-on public.account_members (
-    user_id
-);
-
-
-create index if not exists
-    account_members_account_idx
-on public.account_members (
-    account_id
-);
-
-
--- ============================================================
--- UPDATED_AT TRIGGERS
--- ============================================================
-
-drop trigger if exists
-    accounts_set_updated_at
-on public.accounts;
-
-create trigger
-    accounts_set_updated_at
-before update
-on public.accounts
-for each row
-execute function public.set_updated_at();
-
-
-drop trigger if exists
-    sites_set_updated_at
-on public.sites;
-
-create trigger
-    sites_set_updated_at
-before update
-on public.sites
-for each row
-execute function public.set_updated_at();
-
-
-drop trigger if exists
-    stations_set_updated_at
-on public.stations;
-
-create trigger
-    stations_set_updated_at
-before update
-on public.stations
-for each row
-execute function public.set_updated_at();
-
-
-drop trigger if exists
-    maintenance_jobs_set_updated_at
-on public.maintenance_jobs;
-
-create trigger
-    maintenance_jobs_set_updated_at
-before update
-on public.maintenance_jobs
-for each row
-execute function public.set_updated_at();
-
-
-drop trigger if exists
-    account_members_set_updated_at
-on public.account_members;
-
-create trigger
-    account_members_set_updated_at
-before update
-on public.account_members
-for each row
-execute function public.set_updated_at();
-
-
--- ============================================================
--- STORAGE BUCKET: OBSERVATION IMAGES
--- ============================================================
-
-insert into storage.buckets (
-    id,
-    name,
-    public,
-    file_size_limit,
-    allowed_mime_types
-)
-values (
-    'mosguardx-observations',
-    'mosguardx-observations',
-    false,
-    10485760,
-    array[
-        'image/jpeg',
-        'image/png',
-        'image/webp'
+    idempotency_key: str | None = None
+
+    captured_at: datetime
+    received_at: datetime
+
+    temperature: float | None = None
+    humidity: float | None = None
+
+    firmware_version: str | None = None
+
+    processing_status: str
+
+    total_detected: int
+
+    model_version: str | None = None
+    inference_ms: float | None = None
+
+    error_message: str | None = None
+
+    image: ImageInfo
+    detections: list[Detection]
+
+
+# =========================================================
+# DASHBOARD
+# =========================================================
+
+
+class DashboardSummary(BaseModel):
+    station_count: int
+    online_station_count: int
+
+    observation_count: int
+    mosquito_count: int
+
+    new_alert_count: int
+
+
+# =========================================================
+# ALERTS
+# =========================================================
+
+
+AlertLevel = Literal[
+    "low",
+    "medium",
+    "high",
+    "critical",
+]
+
+AlertStatus = Literal[
+    "new",
+    "acknowledged",
+    "resolved",
+]
+
+
+class AlertResponse(BaseModel):
+    id: str
+
+    station_id: str
+    observation_id: str | None = None
+
+    level: AlertLevel
+
+    title: str
+    message: str
+
+    status: AlertStatus
+
+    created_at: datetime
+
+    acknowledged_at: datetime | None = None
+    resolved_at: datetime | None = None
+
+
+class AlertStatusUpdate(BaseModel):
+    status: Literal[
+        "acknowledged",
+        "resolved",
     ]
-)
-on conflict (id)
-do update
-set
-    public = excluded.public,
-    file_size_limit = excluded.file_size_limit,
-    allowed_mime_types = excluded.allowed_mime_types;
 
 
--- ============================================================
--- STORAGE BUCKET: AI MODELS
--- ============================================================
-
-insert into storage.buckets (
-    id,
-    name,
-    public,
-    file_size_limit,
-    allowed_mime_types
-)
-values (
-    'mosguardx-models',
-    'mosguardx-models',
-    false,
-    104857600,
-    array[
-        'application/octet-stream',
-        'application/x-pytorch'
-    ]
-)
-on conflict (id)
-do update
-set
-    public = excluded.public,
-    file_size_limit = excluded.file_size_limit,
-    allowed_mime_types = excluded.allowed_mime_types;
+# =========================================================
+# MAINTENANCE
+# =========================================================
 
 
--- ============================================================
--- ROW LEVEL SECURITY
---
--- Backend currently uses the Supabase service-role key.
--- Service role bypasses RLS.
--- Frontend should NOT access these tables directly.
--- ============================================================
+MaintenanceJobType = Literal[
+    "inspection",
+    "repair",
+    "replacement",
+    "cleaning",
+    "connectivity",
+    "routine",
+    "other",
+]
 
-alter table public.accounts
-    enable row level security;
+MaintenancePriority = Literal[
+    "low",
+    "medium",
+    "high",
+    "critical",
+]
 
-alter table public.sites
-    enable row level security;
-
-alter table public.stations
-    enable row level security;
-
-alter table public.observations
-    enable row level security;
-
-alter table public.detections
-    enable row level security;
-
-alter table public.alerts
-    enable row level security;
-
-alter table public.maintenance_jobs
-    enable row level security;
-
-alter table public.account_members
-    enable row level security;
+MaintenanceStatus = Literal[
+    "scheduled",
+    "in_progress",
+    "completed",
+    "cancelled",
+]
 
 
--- ============================================================
--- OPTIONAL DEVELOPMENT SEED
---
--- Uncomment only when you want initial B2B demo records.
--- ============================================================
+class MaintenanceJobCreate(BaseModel):
+    account_id: str
 
--- insert into public.accounts (
---     type,
---     name,
---     slug
--- )
--- values (
---     'organization',
---     'MosGuardX Demo Enterprise',
---     'demo-enterprise'
--- )
--- on conflict (slug)
--- do nothing;
+    site_id: str | None = None
+    station_id: str | None = None
 
+    source_alert_id: str | None = None
 
--- insert into public.sites (
---     account_id,
---     code,
---     name,
---     site_type,
---     address
--- )
--- select
---     account.id,
---     'SITE-01',
---     'Office Building A',
---     'office',
---     'Hà Nội'
--- from public.accounts account
--- where account.slug = 'demo-enterprise'
--- on conflict (
---     account_id,
---     code
--- )
--- do nothing;
+    title: str = Field(
+        min_length=2,
+        max_length=200,
+    )
+
+    description: str | None = Field(
+        default=None,
+        max_length=2000,
+    )
+
+    job_type: MaintenanceJobType = "inspection"
+
+    priority: MaintenancePriority = "medium"
+
+    status: MaintenanceStatus = "scheduled"
+
+    assigned_to: str | None = None
+
+    scheduled_at: datetime | None = None
+
+    notes: str | None = Field(
+        default=None,
+        max_length=3000,
+    )
 
 
--- insert into public.sites (
---     account_id,
---     code,
---     name,
---     site_type,
---     address
--- )
--- select
---     account.id,
---     'SITE-02',
---     'Hotel Site B',
---     'hotel',
---     'Hà Nội'
--- from public.accounts account
--- where account.slug = 'demo-enterprise'
--- on conflict (
---     account_id,
---     code
--- )
--- do nothing;
+class MaintenanceJobResponse(BaseModel):
+    id: str
+
+    account_id: str
+
+    site_id: str | None = None
+    station_id: str | None = None
+
+    source_alert_id: str | None = None
+
+    title: str
+    description: str | None = None
+
+    job_type: MaintenanceJobType
+
+    priority: MaintenancePriority
+    status: MaintenanceStatus
+
+    assigned_to: str | None = None
+
+    scheduled_at: datetime | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+
+    notes: str | None = None
+
+    created_at: datetime
+    updated_at: datetime
 
 
--- insert into public.sites (
---     account_id,
---     code,
---     name,
---     site_type,
---     address
--- )
--- select
---     account.id,
---     'SITE-03',
---     'Facility C',
---     'facility',
---     'Hà Nội'
--- from public.accounts account
--- where account.slug = 'demo-enterprise'
--- on conflict (
---     account_id,
---     code
--- )
--- do nothing;x x   
+class MaintenanceStatusUpdate(BaseModel):
+    status: MaintenanceStatus
+
+    assigned_to: str | None = None
+
+    scheduled_at: datetime | None = None
+
+    notes: str | None = Field(
+        default=None,
+        max_length=3000,
+    )
