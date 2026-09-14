@@ -1,7 +1,16 @@
 import asyncio
 import logging
-from contextlib import asynccontextmanager, suppress
-from datetime import datetime, timezone
+
+from contextlib import (
+    asynccontextmanager,
+    suppress,
+)
+
+from datetime import (
+    datetime,
+    timezone,
+)
+
 from hashlib import sha256
 from hmac import compare_digest
 from io import BytesIO
@@ -15,17 +24,38 @@ from fastapi import (
     Header,
     HTTPException,
     Query,
-    Response,
     Request,
+    Response,
     UploadFile,
     status,
 )
-from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image, ImageOps, UnidentifiedImageError
+
+from fastapi.middleware.cors import (
+    CORSMiddleware,
+)
+
+from PIL import (
+    Image,
+    ImageOps,
+    UnidentifiedImageError,
+)
+
+from .api.accounts import (
+    router as accounts_router,
+)
+
+from .api.maintenance import (
+    router as maintenance_router,
+)
+
+from .api.sites import (
+    router as sites_router,
+)
 
 from .backend import BackendStore
 from .config import get_settings
 from .detector import MosquitoDetector
+
 from .schemas import (
     AlertResponse,
     AlertStatusUpdate,
@@ -40,10 +70,24 @@ from .schemas import (
 )
 
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("mosguardx")
+# ============================================================
+# LOGGING / SETTINGS
+# ============================================================
+
+logging.basicConfig(
+    level=logging.INFO
+)
+
+logger = logging.getLogger(
+    "mosguardx"
+)
 
 settings = get_settings()
+
+
+# ============================================================
+# IMAGE CONFIG
+# ============================================================
 
 allowed_content_types = {
     "image/jpeg",
@@ -57,34 +101,73 @@ content_type_extensions = {
     "image/webp": ".webp",
 }
 
+
+# ============================================================
+# SPECIES LOCALIZATION
+# ============================================================
+
 species_vi_names = {
-    "aegypti": "Muỗi vằn Aedes aegypti",
-    "aedes_aegypti": "Muỗi vằn Aedes aegypti",
-    "albopictus": "Muỗi vằn châu Á",
-    "aedes_albopictus": "Muỗi vằn châu Á",
-    "culex": "Muỗi Culex",
-    "anopheles": "Muỗi Anopheles",
-    "culiseta": "Muỗi Culiseta",
-    "japonicus_koreicus": "Nhóm Aedes japonicus/koreicus",
-    "japonicus-koreicus": "Nhóm Aedes japonicus/koreicus",
+    "aegypti":
+        "Muỗi vằn Aedes aegypti",
+
+    "aedes_aegypti":
+        "Muỗi vằn Aedes aegypti",
+
+    "albopictus":
+        "Muỗi vằn châu Á",
+
+    "aedes_albopictus":
+        "Muỗi vằn châu Á",
+
+    "culex":
+        "Muỗi Culex",
+
+    "anopheles":
+        "Muỗi Anopheles",
+
+    "culiseta":
+        "Muỗi Culiseta",
+
+    "japonicus_koreicus":
+        "Nhóm Aedes japonicus/koreicus",
+
+    "japonicus-koreicus":
+        "Nhóm Aedes japonicus/koreicus",
 }
 
 
-def hash_secret(value: str) -> str:
-    return sha256(value.encode("utf-8")).hexdigest()
+# ============================================================
+# HELPERS
+# ============================================================
+
+def hash_secret(
+    value: str,
+) -> str:
+    return sha256(
+        value.encode("utf-8")
+    ).hexdigest()
 
 
-def normalize_species_name(species: str) -> str:
+def normalize_species_name(
+    species: str,
+) -> str:
     return (
-        species.strip()
+        species
+        .strip()
         .lower()
         .replace(" ", "_")
         .replace("/", "_")
     )
 
 
-def get_species_vi(species: str) -> str:
-    normalized = normalize_species_name(species)
+def get_species_vi(
+    species: str,
+) -> str:
+    normalized = (
+        normalize_species_name(
+            species
+        )
+    )
 
     return species_vi_names.get(
         normalized,
@@ -92,14 +175,27 @@ def get_species_vi(species: str) -> str:
     )
 
 
-def initialize_services(app: FastAPI) -> None:
+# ============================================================
+# SERVICE INITIALIZATION
+# ============================================================
+
+def initialize_services(
+    app: FastAPI,
+) -> None:
+    # --------------------------------------------------------
+    # BACKEND
+    # --------------------------------------------------------
+
     try:
         if not settings.supabase_configured:
             raise RuntimeError(
                 "Supabase chưa được cấu hình"
             )
 
-        store = BackendStore(settings)
+        store = BackendStore(
+            settings
+        )
+
         store.ping()
 
         app.state.store = store
@@ -117,108 +213,169 @@ def initialize_services(app: FastAPI) -> None:
                 settings.classifier_storage_path,
             )
 
-        logger.info("Supabase backend is ready")
-    except Exception as exc:
-        app.state.backend_error = str(exc)
-
-        logger.exception(
-            "Could not initialize Supabase backend"
+        logger.info(
+            "Supabase backend is ready"
         )
 
+    except Exception as exc:
+        app.state.backend_error = (
+            str(exc)
+        )
+
+        logger.exception(
+            "Could not initialize "
+            "Supabase backend"
+        )
+
+    # --------------------------------------------------------
+    # AI
+    # --------------------------------------------------------
+
     try:
-        app.state.detector = MosquitoDetector(
-            model_path=settings.resolved_model_path,
-            image_size=settings.image_size,
-            model_version=settings.model_version,
-            classifier_path=(
-                settings.resolved_classifier_path
-                if settings.classifier_enabled
-                else None
-            ),
-            classifier_image_size=(
-                settings.classifier_image_size
-            ),
-            classifier_batch_size=(
-                settings.classifier_batch_size
-            ),
-            classifier_model_version=(
-                settings.classifier_model_version
-                if settings.classifier_enabled
-                else None
-            ),
-            classifier_review_threshold=(
-                settings.classifier_review_threshold
-            ),
-            classifier_review_species=(
-                settings.classifier_review_species
-            ),
+        app.state.detector = (
+            MosquitoDetector(
+                model_path=(
+                    settings.resolved_model_path
+                ),
+                image_size=(
+                    settings.image_size
+                ),
+                model_version=(
+                    settings.model_version
+                ),
+                classifier_path=(
+                    settings.resolved_classifier_path
+                    if settings.classifier_enabled
+                    else None
+                ),
+                classifier_image_size=(
+                    settings.classifier_image_size
+                ),
+                classifier_batch_size=(
+                    settings.classifier_batch_size
+                ),
+                classifier_model_version=(
+                    settings.classifier_model_version
+                    if settings.classifier_enabled
+                    else None
+                ),
+                classifier_review_threshold=(
+                    settings.classifier_review_threshold
+                ),
+                classifier_review_species=(
+                    settings.classifier_review_species
+                ),
+            )
         )
 
         if (
             settings.classifier_enabled
             and settings.classifier_required
-            and not app.state.detector.classifier_loaded
+            and not (
+                app.state
+                .detector
+                .classifier_loaded
+            )
         ):
             raise RuntimeError(
-                "Worker C classifier is required but not loaded"
+                "Worker C classifier is "
+                "required but not loaded"
             )
 
         logger.info(
             "AI model loaded: %s",
             settings.model_version,
         )
+
     except Exception as exc:
-        app.state.model_error = str(exc)
+        app.state.model_error = (
+            str(exc)
+        )
 
         logger.exception(
-            "Could not initialize AI model"
+            "Could not initialize "
+            "AI model"
         )
 
 
+# ============================================================
+# FASTAPI LIFESPAN
+# ============================================================
+
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(
+    app: FastAPI,
+):
     app.state.detector = None
     app.state.model_error = None
 
     app.state.store = None
     app.state.backend_error = None
 
-    initialization_task = asyncio.create_task(
-        asyncio.to_thread(
-            initialize_services,
-            app,
+    initialization_task = (
+        asyncio.create_task(
+            asyncio.to_thread(
+                initialize_services,
+                app,
+            )
         )
     )
 
-    app.state.initialization_task = initialization_task
+    app.state.initialization_task = (
+        initialization_task
+    )
 
     yield
 
     if not initialization_task.done():
         initialization_task.cancel()
 
-        with suppress(asyncio.CancelledError):
+        with suppress(
+            asyncio.CancelledError
+        ):
             await initialization_task
 
     app.state.detector = None
     app.state.store = None
 
 
+# ============================================================
+# APPLICATION
+# ============================================================
+
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     description=(
-        "Mosquito detection and station ingestion API "
-        "for the MosGuardX monitoring platform."
+        "Mosquito detection, "
+        "station ingestion and "
+        "operations API for the "
+        "MosGuardX platform."
     ),
     lifespan=lifespan,
 )
 
+
+# ============================================================
+# CORS
+# ============================================================
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins,
+
+    allow_origins=(
+        settings.allowed_origins
+    ),
+
     allow_credentials=False,
-    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+
+    allow_methods=[
+        "GET",
+        "POST",
+        "PATCH",
+        "OPTIONS",
+    ],
+
     allow_headers=[
         "Content-Type",
         "Authorization",
@@ -229,25 +386,68 @@ app.add_middleware(
 )
 
 
-def require_store(request: Request) -> BackendStore:
-    store = request.app.state.store
+# ============================================================
+# MULTI-PLATFORM ROUTERS
+# ============================================================
+
+app.include_router(
+    accounts_router
+)
+
+app.include_router(
+    sites_router
+)
+
+app.include_router(
+    maintenance_router
+)
+
+
+# ============================================================
+# DEPENDENCIES
+#
+# Existing endpoints continue using these local helpers.
+# New modular routers use app/api/deps.py.
+# ============================================================
+
+def require_store(
+    request: Request,
+) -> BackendStore:
+    store = (
+        request.app.state.store
+    )
 
     if store is None:
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Storage backend is not ready",
+            status_code=(
+                status
+                .HTTP_503_SERVICE_UNAVAILABLE
+            ),
+            detail=(
+                "Storage backend "
+                "is not ready"
+            ),
         )
 
     return store
 
 
-def require_detector(request: Request) -> MosquitoDetector:
-    detector = request.app.state.detector
+def require_detector(
+    request: Request,
+) -> MosquitoDetector:
+    detector = (
+        request.app.state.detector
+    )
 
     if detector is None:
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI model is not ready",
+            status_code=(
+                status
+                .HTTP_503_SERVICE_UNAVAILABLE
+            ),
+            detail=(
+                "AI model is not ready"
+            ),
         )
 
     return detector
@@ -258,88 +458,153 @@ def verify_admin_key(
 ) -> None:
     if not settings.admin_api_key:
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="ADMIN_API_KEY is not configured",
+            status_code=(
+                status
+                .HTTP_503_SERVICE_UNAVAILABLE
+            ),
+            detail=(
+                "ADMIN_API_KEY "
+                "is not configured"
+            ),
         )
 
-    if not provided_key or not compare_digest(
-        provided_key,
-        settings.admin_api_key,
+    if (
+        not provided_key
+        or not compare_digest(
+            provided_key,
+            settings.admin_api_key,
+        )
     ):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid admin key",
+            status_code=(
+                status
+                .HTTP_401_UNAUTHORIZED
+            ),
+            detail=(
+                "Invalid admin key"
+            ),
         )
 
+
+# ============================================================
+# STATION AUTHENTICATION
+# ============================================================
 
 def authenticate_station(
     store: BackendStore,
     station_id: str,
     device_key: str | None,
 ) -> dict:
-    station = store.get_station(station_id)
+    station = store.get_station(
+        station_id
+    )
 
     if station is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=(
+                status
+                .HTTP_404_NOT_FOUND
+            ),
             detail="Station not found",
         )
 
     stored_hash = str(
-        station.get("device_key_hash") or ""
+        station.get(
+            "device_key_hash"
+        )
+        or ""
     )
 
-    supplied_hash = hash_secret(device_key or "")
+    supplied_hash = hash_secret(
+        device_key or ""
+    )
 
     if not compare_digest(
         stored_hash,
         supplied_hash,
     ):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid device key",
+            status_code=(
+                status
+                .HTTP_401_UNAUTHORIZED
+            ),
+            detail=(
+                "Invalid device key"
+            ),
         )
 
     return station
 
 
+# ============================================================
+# IMAGE VALIDATION
+# ============================================================
+
 async def read_and_validate_image(
     file: UploadFile,
-) -> tuple[bytes, Image.Image, str]:
+) -> tuple[
+    bytes,
+    Image.Image,
+    str,
+]:
     content_type = (
         file.content_type or ""
     ).lower()
 
-    if content_type not in allowed_content_types:
+    if (
+        content_type
+        not in allowed_content_types
+    ):
         raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            status_code=(
+                status
+                .HTTP_415_UNSUPPORTED_MEDIA_TYPE
+            ),
             detail=(
-                "Only JPEG, PNG and WEBP "
-                "images are accepted"
+                "Only JPEG, PNG and "
+                "WEBP images are accepted"
             ),
         )
 
-    limit = settings.max_upload_mb * 1024 * 1024
-    content = await file.read(limit + 1)
+    limit = (
+        settings.max_upload_mb
+        * 1024
+        * 1024
+    )
+
+    content = await file.read(
+        limit + 1
+    )
 
     if not content:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Image file is empty",
+            status_code=(
+                status
+                .HTTP_400_BAD_REQUEST
+            ),
+            detail=(
+                "Image file is empty"
+            ),
         )
 
     if len(content) > limit:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=(
+                status
+                .HTTP_413_REQUEST_ENTITY_TOO_LARGE
+            ),
             detail=(
                 f"Image exceeds the "
-                f"{settings.max_upload_mb} MB limit"
+                f"{settings.max_upload_mb} "
+                "MB limit"
             ),
         )
 
     try:
-        verification_image = Image.open(
-            BytesIO(content)
+        verification_image = (
+            Image.open(
+                BytesIO(content)
+            )
         )
 
         verification_image.verify()
@@ -348,32 +613,58 @@ async def read_and_validate_image(
             BytesIO(content)
         )
 
-        image = ImageOps.exif_transpose(
-            image
-        ).convert("RGB")
+        image = (
+            ImageOps
+            .exif_transpose(
+                image
+            )
+            .convert("RGB")
+        )
+
     except (
         UnidentifiedImageError,
         OSError,
         ValueError,
     ) as exc:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or corrupted image",
+            status_code=(
+                status
+                .HTTP_400_BAD_REQUEST
+            ),
+            detail=(
+                "Invalid or "
+                "corrupted image"
+            ),
         ) from exc
 
-    return content, image, content_type
+    return (
+        content,
+        image,
+        content_type,
+    )
 
+
+# ============================================================
+# DETECTION HELPERS
+# ============================================================
 
 def enrich_detection(
     detection: dict,
 ) -> dict:
     species = str(
-        detection.get("species") or "unknown"
+        detection.get(
+            "species"
+        )
+        or "unknown"
     )
 
     return {
         **detection,
-        "species_vi": get_species_vi(species),
+
+        "species_vi":
+            get_species_vi(
+                species
+            ),
     }
 
 
@@ -381,137 +672,322 @@ def database_detection_to_api(
     row: dict,
 ) -> dict:
     return {
-        "object": row.get(
-            "object_type",
-            "mosquito",
-        ),
-        "class_id": int(row["class_id"]),
-        "species": str(row["species"]),
-        "species_vi": row.get("species_vi"),
-        "confidence": float(row["confidence"]),
+        "object":
+            row.get(
+                "object_type",
+                "mosquito",
+            ),
+
+        "class_id":
+            int(
+                row["class_id"]
+            ),
+
+        "species":
+            str(
+                row["species"]
+            ),
+
+        "species_vi":
+            row.get(
+                "species_vi"
+            ),
+
+        "confidence":
+            float(
+                row["confidence"]
+            ),
+
         "detector_confidence": (
-            float(row["detector_confidence"])
-            if row.get("detector_confidence") is not None
+            float(
+                row[
+                    "detector_confidence"
+                ]
+            )
+            if row.get(
+                "detector_confidence"
+            )
+            is not None
             else None
         ),
+
         "classification_confidence": (
-            float(row["classification_confidence"])
-            if row.get("classification_confidence") is not None
+            float(
+                row[
+                    "classification_confidence"
+                ]
+            )
+            if row.get(
+                "classification_confidence"
+            )
+            is not None
             else None
         ),
-        "classification_model_version": row.get(
-            "classification_model_version"
-        ),
-        "review_required": bool(
-            row.get("review_required", False)
-        ),
+
+        "classification_model_version":
+            row.get(
+                "classification_model_version"
+            ),
+
+        "review_required":
+            bool(
+                row.get(
+                    "review_required",
+                    False,
+                )
+            ),
+
         "bounding_box": {
-            "x1": float(row["x1"]),
-            "y1": float(row["y1"]),
-            "x2": float(row["x2"]),
-            "y2": float(row["y2"]),
+            "x1":
+                float(
+                    row["x1"]
+                ),
+
+            "y1":
+                float(
+                    row["y1"]
+                ),
+
+            "x2":
+                float(
+                    row["x2"]
+                ),
+
+            "y2":
+                float(
+                    row["y2"]
+                ),
         },
+
         "normalized_bounding_box": {
-            "x1": float(row["normalized_x1"]),
-            "y1": float(row["normalized_y1"]),
-            "x2": float(row["normalized_x2"]),
-            "y2": float(row["normalized_y2"]),
+            "x1":
+                float(
+                    row[
+                        "normalized_x1"
+                    ]
+                ),
+
+            "y1":
+                float(
+                    row[
+                        "normalized_y1"
+                    ]
+                ),
+
+            "x2":
+                float(
+                    row[
+                        "normalized_x2"
+                    ]
+                ),
+
+            "y2":
+                float(
+                    row[
+                        "normalized_y2"
+                    ]
+                ),
         },
     }
 
+
+# ============================================================
+# OBSERVATION RESPONSE BUILDER
+# ============================================================
 
 def build_observation_response(
     store: BackendStore,
     observation: dict,
 ) -> ObservationResponse:
-    observation_id = str(observation["id"])
+    observation_id = str(
+        observation["id"]
+    )
 
-    detection_rows = store.get_detections(
-        observation_id
+    detection_rows = (
+        store.get_detections(
+            observation_id
+        )
     )
 
     image_path = str(
-        observation["image_path"]
+        observation[
+            "image_path"
+        ]
     )
 
-    image_url: str | None = None
+    image_url: (
+        str | None
+    ) = None
 
     try:
-        image_url = store.create_image_signed_url(
-            image_path
+        image_url = (
+            store
+            .create_image_signed_url(
+                image_path
+            )
         )
+
     except Exception:
         logger.exception(
-            "Could not create signed image URL"
+            "Could not create "
+            "signed image URL"
         )
 
     return ObservationResponse(
         id=observation_id,
+
         station_id=str(
-            observation["station_id"]
+            observation[
+                "station_id"
+            ]
         ),
-        idempotency_key=observation.get(
-            "idempotency_key"
+
+        idempotency_key=(
+            observation.get(
+                "idempotency_key"
+            )
         ),
-        captured_at=observation["captured_at"],
-        received_at=observation["received_at"],
-        temperature=observation.get(
-            "temperature"
+
+        captured_at=(
+            observation[
+                "captured_at"
+            ]
         ),
-        humidity=observation.get("humidity"),
-        firmware_version=observation.get(
-            "firmware_version"
+
+        received_at=(
+            observation[
+                "received_at"
+            ]
         ),
+
+        temperature=(
+            observation.get(
+                "temperature"
+            )
+        ),
+
+        humidity=(
+            observation.get(
+                "humidity"
+            )
+        ),
+
+        firmware_version=(
+            observation.get(
+                "firmware_version"
+            )
+        ),
+
         processing_status=str(
-            observation["processing_status"]
+            observation[
+                "processing_status"
+            ]
         ),
+
         total_detected=int(
-            observation.get("total_detected")
+            observation.get(
+                "total_detected"
+            )
             or 0
         ),
-        model_version=observation.get(
-            "model_version"
+
+        model_version=(
+            observation.get(
+                "model_version"
+            )
         ),
-        inference_ms=observation.get(
-            "inference_ms"
+
+        inference_ms=(
+            observation.get(
+                "inference_ms"
+            )
         ),
-        error_message=observation.get(
-            "error_message"
+
+        error_message=(
+            observation.get(
+                "error_message"
+            )
         ),
+
         image=ImageInfo(
-            filename=Path(image_path).name,
+            filename=(
+                Path(
+                    image_path
+                ).name
+            ),
+
             width=int(
-                observation["image_width"]
+                observation[
+                    "image_width"
+                ]
             ),
+
             height=int(
-                observation["image_height"]
+                observation[
+                    "image_height"
+                ]
             ),
+
             path=image_path,
+
             url=image_url,
         ),
+
         detections=[
             Detection(
-                **database_detection_to_api(row)
+                **database_detection_to_api(
+                    row
+                )
             )
-            for row in detection_rows
+            for row
+            in detection_rows
         ],
     )
 
 
-@app.get("/", include_in_schema=False)
-def root() -> dict[str, str]:
+# ============================================================
+# ROOT
+# ============================================================
+
+@app.get(
+    "/",
+    include_in_schema=False,
+)
+def root() -> dict[
+    str,
+    str,
+]:
     return {
-        "service": settings.app_name,
-        "version": settings.app_version,
-        "docs": "/docs",
-        "liveness": "/health/live",
-        "readiness": "/health/ready",
+        "service":
+            settings.app_name,
+
+        "version":
+            settings.app_version,
+
+        "docs":
+            "/docs",
+
+        "liveness":
+            "/health/live",
+
+        "readiness":
+            "/health/ready",
     }
 
 
-@app.head("/", include_in_schema=False)
+@app.head(
+    "/",
+    include_in_schema=False,
+)
 def root_head() -> Response:
-    return Response(status_code=200)
+    return Response(
+        status_code=200
+    )
+
+
+# ============================================================
+# HEALTH
+# ============================================================
 
 @app.get(
     "/health/live",
@@ -522,25 +998,48 @@ def liveness(
 ) -> HealthResponse:
     return HealthResponse(
         status="ok",
-        service=settings.app_name,
-        version=settings.app_version,
+
+        service=(
+            settings.app_name
+        ),
+
+        version=(
+            settings.app_version
+        ),
+
         model_loaded=(
-            request.app.state.detector is not None
+            request
+            .app
+            .state
+            .detector
+            is not None
         ),
+
         backend_connected=(
-            request.app.state.store is not None
+            request
+            .app
+            .state
+            .store
+            is not None
         ),
+
         classifier_loaded=bool(
             request.app.state.detector
             and getattr(
-                request.app.state.detector,
+                request
+                .app
+                .state
+                .detector,
                 "classifier_loaded",
                 False,
             )
         ),
+
         classifier_model_version=(
-            settings.classifier_model_version
-            if settings.classifier_enabled
+            settings
+            .classifier_model_version
+            if settings
+            .classifier_enabled
             else None
         ),
     )
@@ -553,106 +1052,211 @@ def liveness(
 def readiness(
     request: Request,
 ) -> HealthResponse:
-    errors: dict[str, str | None] = {}
+    errors: dict[
+        str,
+        str | None,
+    ] = {}
 
-    if request.app.state.store is None:
-        errors["backend"] = (
-            request.app.state.backend_error
+    if (
+        request
+        .app
+        .state
+        .store
+        is None
+    ):
+        errors[
+            "backend"
+        ] = (
+            request
+            .app
+            .state
+            .backend_error
         )
+
     else:
         try:
             request.app.state.store.ping()
-        except Exception as exc:
-            errors["database"] = str(exc)
 
-    if request.app.state.detector is None:
-        errors["model"] = (
-            request.app.state.model_error
+        except Exception as exc:
+            errors[
+                "database"
+            ] = str(exc)
+
+    if (
+        request
+        .app
+        .state
+        .detector
+        is None
+    ):
+        errors[
+            "model"
+        ] = (
+            request
+            .app
+            .state
+            .model_error
         )
+
     elif (
         settings.classifier_enabled
         and settings.classifier_required
-        and not request.app.state.detector.classifier_loaded
+        and not (
+            request
+            .app
+            .state
+            .detector
+            .classifier_loaded
+        )
     ):
-        errors["classifier"] = (
-            "Worker C classifier is not loaded"
+        errors[
+            "classifier"
+        ] = (
+            "Worker C classifier "
+            "is not loaded"
         )
 
     if errors:
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            status_code=(
+                status
+                .HTTP_503_SERVICE_UNAVAILABLE
+            ),
+
             detail={
-                "message": "Service is not ready",
-                "errors": errors,
+                "message":
+                    "Service is not ready",
+
+                "errors":
+                    errors,
             },
         )
 
     return HealthResponse(
         status="ready",
-        service=settings.app_name,
-        version=settings.app_version,
-        model_loaded=True,
-        backend_connected=True,
-        classifier_loaded=bool(
-            request.app.state.detector.classifier_loaded
+
+        service=(
+            settings.app_name
         ),
+
+        version=(
+            settings.app_version
+        ),
+
+        model_loaded=True,
+
+        backend_connected=True,
+
+        classifier_loaded=bool(
+            request
+            .app
+            .state
+            .detector
+            .classifier_loaded
+        ),
+
         classifier_model_version=(
-            settings.classifier_model_version
-            if settings.classifier_enabled
+            settings
+            .classifier_model_version
+            if settings
+            .classifier_enabled
             else None
         ),
     )
 
 
+# ============================================================
+# DIRECT AI PREDICTION
+# ============================================================
+
 @app.post(
     "/v1/predict",
-    response_model=PredictionResponse,
+    response_model=(
+        PredictionResponse
+    ),
 )
 async def predict(
     request: Request,
-    file: UploadFile = File(...),
+
+    file: UploadFile = File(
+        ...
+    ),
+
     confidence: float = Query(
-        default=settings.confidence_threshold,
+        default=(
+            settings
+            .confidence_threshold
+        ),
         ge=0.05,
         le=0.95,
     ),
+
     iou: float = Query(
-        default=settings.iou_threshold,
+        default=(
+            settings
+            .iou_threshold
+        ),
         ge=0.1,
         le=0.9,
     ),
-) -> PredictionResponse:
-    detector = require_detector(request)
 
-    _, image, _ = await read_and_validate_image(
-        file
+) -> PredictionResponse:
+    detector = require_detector(
+        request
     )
 
-    raw_detections, inference_ms = (
-        detector.predict(
-            image,
-            confidence,
-            iou,
+    _, image, _ = (
+        await read_and_validate_image(
+            file
         )
     )
 
+    (
+        raw_detections,
+        inference_ms,
+    ) = detector.predict(
+        image,
+        confidence,
+        iou,
+    )
+
     detections = [
-        enrich_detection(detection)
-        for detection in raw_detections
+        enrich_detection(
+            detection
+        )
+        for detection
+        in raw_detections
     ]
 
     return PredictionResponse(
-        prediction_id=str(uuid4()),
-        model_version=detector.model_version,
+        prediction_id=(
+            str(uuid4())
+        ),
+
+        model_version=(
+            detector
+            .model_version
+        ),
+
         image=ImageInfo(
             filename=(
-                file.filename or "upload"
+                file.filename
+                or "upload"
             ),
+
             width=image.width,
+
             height=image.height,
         ),
-        mosquito_count=len(detections),
-        detections=detections,
+
+        mosquito_count=(
+            len(detections)
+        ),
+
+        detections=(
+            detections
+        ),
+
         inference_ms=round(
             inference_ms,
             2,
@@ -660,135 +1264,261 @@ async def predict(
     )
 
 
+# ============================================================
+# STATIONS
+# ============================================================
+
 @app.post(
     "/v1/stations",
-    response_model=StationResponse,
-    status_code=status.HTTP_201_CREATED,
+
+    response_model=(
+        StationResponse
+    ),
+
+    status_code=(
+        status.HTTP_201_CREATED
+    ),
 )
 def create_station(
     payload: StationCreate,
+
     request: Request,
-    x_admin_key: str | None = Header(
+
+    x_admin_key: (
+        str | None
+    ) = Header(
         default=None,
         alias="X-Admin-Key",
     ),
+
 ) -> StationResponse:
-    verify_admin_key(x_admin_key)
+    verify_admin_key(
+        x_admin_key
+    )
 
-    store = require_store(request)
+    store = require_store(
+        request
+    )
 
-    if store.get_station(payload.id):
+    if store.get_station(
+        payload.id
+    ):
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Station already exists",
+            status_code=(
+                status
+                .HTTP_409_CONFLICT
+            ),
+
+            detail=(
+                "Station already exists"
+            ),
         )
 
     station = store.create_station(
         {
-            "id": payload.id,
-            "name": payload.name,
-            "device_key_hash": hash_secret(
-                payload.device_key
-            ),
-            "latitude": payload.latitude,
-            "longitude": payload.longitude,
-            "address": payload.address,
-            "firmware_version": (
-                payload.firmware_version
-            ),
-            "status": "offline",
+            "id":
+                payload.id,
+
+            "name":
+                payload.name,
+
+            "device_key_hash":
+                hash_secret(
+                    payload
+                    .device_key
+                ),
+
+            "latitude":
+                payload.latitude,
+
+            "longitude":
+                payload.longitude,
+
+            "address":
+                payload.address,
+
+            "firmware_version":
+                payload
+                .firmware_version,
+
+            "status":
+                "offline",
         }
     )
 
-    station.pop("device_key_hash", None)
+    station.pop(
+        "device_key_hash",
+        None,
+    )
 
-    return StationResponse(**station)
+    return StationResponse(
+        **station
+    )
 
 
 @app.get(
     "/v1/stations",
-    response_model=list[StationResponse],
+
+    response_model=list[
+        StationResponse
+    ],
 )
 def list_stations(
     request: Request,
-) -> list[StationResponse]:
-    store = require_store(request)
+) -> list[
+    StationResponse
+]:
+    store = require_store(
+        request
+    )
 
     return [
-        StationResponse(**station)
-        for station in store.list_stations()
+        StationResponse(
+            **station
+        )
+        for station
+        in store.list_stations()
     ]
 
 
 @app.get(
     "/v1/stations/{station_id}",
-    response_model=StationResponse,
+
+    response_model=(
+        StationResponse
+    ),
 )
 def get_station(
     station_id: str,
+
     request: Request,
+
 ) -> StationResponse:
-    store = require_store(request)
-    station = store.get_station(station_id)
+    store = require_store(
+        request
+    )
+
+    station = store.get_station(
+        station_id
+    )
 
     if station is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Station not found",
+            status_code=(
+                status
+                .HTTP_404_NOT_FOUND
+            ),
+
+            detail=(
+                "Station not found"
+            ),
         )
 
-    station.pop("device_key_hash", None)
+    station.pop(
+        "device_key_hash",
+        None,
+    )
 
-    return StationResponse(**station)
+    return StationResponse(
+        **station
+    )
 
+
+# ============================================================
+# STATION OBSERVATION INGESTION
+# ============================================================
 
 @app.post(
     "/v1/stations/{station_id}/observations",
-    response_model=ObservationResponse,
-    status_code=status.HTTP_201_CREATED,
+
+    response_model=(
+        ObservationResponse
+    ),
+
+    status_code=(
+        status.HTTP_201_CREATED
+    ),
 )
 async def create_station_observation(
     station_id: str,
+
     request: Request,
-    file: UploadFile = File(...),
-    captured_at: datetime | None = Form(
+
+    file: UploadFile = File(
+        ...
+    ),
+
+    captured_at: (
+        datetime | None
+    ) = Form(
         default=None
     ),
-    temperature: float | None = Form(
+
+    temperature: (
+        float | None
+    ) = Form(
         default=None,
         ge=-50,
         le=80,
     ),
-    humidity: float | None = Form(
+
+    humidity: (
+        float | None
+    ) = Form(
         default=None,
         ge=0,
         le=100,
     ),
-    firmware_version: str | None = Form(
+
+    firmware_version: (
+        str | None
+    ) = Form(
         default=None,
         max_length=50,
     ),
+
     confidence: float = Query(
-        default=settings.confidence_threshold,
+        default=(
+            settings
+            .confidence_threshold
+        ),
         ge=0.05,
         le=0.95,
     ),
+
     iou: float = Query(
-        default=settings.iou_threshold,
+        default=(
+            settings
+            .iou_threshold
+        ),
         ge=0.1,
         le=0.9,
     ),
-    x_device_key: str | None = Header(
+
+    x_device_key: (
+        str | None
+    ) = Header(
         default=None,
         alias="X-Device-Key",
     ),
-    x_idempotency_key: str | None = Header(
+
+    x_idempotency_key: (
+        str | None
+    ) = Header(
         default=None,
-        alias="X-Idempotency-Key",
+        alias=(
+            "X-Idempotency-Key"
+        ),
     ),
+
 ) -> ObservationResponse:
-    store = require_store(request)
-    detector = require_detector(request)
+    store = require_store(
+        request
+    )
+
+    detector = require_detector(
+        request
+    )
 
     authenticate_station(
         store,
@@ -796,198 +1526,341 @@ async def create_station_observation(
         x_device_key,
     )
 
+    # --------------------------------------------------------
+    # IDEMPOTENCY
+    # --------------------------------------------------------
+
     if x_idempotency_key:
         x_idempotency_key = (
-            x_idempotency_key.strip()
+            x_idempotency_key
+            .strip()
         )
 
-        if not 8 <= len(x_idempotency_key) <= 128:
+        if not (
+            8
+            <= len(
+                x_idempotency_key
+            )
+            <= 128
+        ):
             raise HTTPException(
                 status_code=400,
+
                 detail=(
-                    "X-Idempotency-Key must contain "
-                    "between 8 and 128 characters"
+                    "X-Idempotency-Key "
+                    "must contain between "
+                    "8 and 128 characters"
                 ),
             )
 
         existing = (
-            store.find_observation_by_idempotency(
+            store
+            .find_observation_by_idempotency(
                 station_id,
                 x_idempotency_key,
             )
         )
 
         if existing is not None:
-            return build_observation_response(
-                store,
-                existing,
+            return (
+                build_observation_response(
+                    store,
+                    existing,
+                )
             )
 
-    content, image, content_type = (
-        await read_and_validate_image(file)
+    # --------------------------------------------------------
+    # IMAGE
+    # --------------------------------------------------------
+
+    (
+        content,
+        image,
+        content_type,
+    ) = (
+        await read_and_validate_image(
+            file
+        )
     )
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(
+        timezone.utc
+    )
 
-    capture_time = captured_at or now
+    capture_time = (
+        captured_at
+        or now
+    )
 
-    if capture_time.tzinfo is None:
-        capture_time = capture_time.replace(
-            tzinfo=timezone.utc
+    if (
+        capture_time.tzinfo
+        is None
+    ):
+        capture_time = (
+            capture_time.replace(
+                tzinfo=timezone.utc
+            )
         )
 
-    observation_id = str(uuid4())
+    observation_id = str(
+        uuid4()
+    )
 
-    extension = content_type_extensions[
-        content_type
-    ]
+    extension = (
+        content_type_extensions[
+            content_type
+        ]
+    )
 
     image_path = (
         f"{station_id}/"
         f"{capture_time:%Y/%m/%d}/"
-        f"{observation_id}{extension}"
+        f"{observation_id}"
+        f"{extension}"
     )
+
+    # --------------------------------------------------------
+    # STORAGE
+    # --------------------------------------------------------
 
     try:
         store.upload_observation_image(
             path=image_path,
             content=content,
-            content_type=content_type,
+            content_type=(
+                content_type
+            ),
         )
+
     except Exception as exc:
         logger.exception(
-            "Could not upload observation image"
+            "Could not upload "
+            "observation image"
         )
 
         raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Could not store observation image",
+            status_code=(
+                status
+                .HTTP_502_BAD_GATEWAY
+            ),
+
+            detail=(
+                "Could not store "
+                "observation image"
+            ),
         ) from exc
 
+    # --------------------------------------------------------
+    # CREATE OBSERVATION
+    # --------------------------------------------------------
+
     try:
-        observation = store.create_observation(
-            {
-                "id": observation_id,
-                "station_id": station_id,
-                "idempotency_key": (
-                    x_idempotency_key
-                ),
-                "captured_at": (
-                    capture_time.isoformat()
-                ),
-                "received_at": now.isoformat(),
-                "image_path": image_path,
-                "image_content_type": (
-                    content_type
-                ),
-                "image_width": image.width,
-                "image_height": image.height,
-                "temperature": temperature,
-                "humidity": humidity,
-                "firmware_version": (
-                    firmware_version
-                ),
-                "processing_status": (
-                    "processing"
-                ),
-                "total_detected": 0,
-            }
+        observation = (
+            store
+            .create_observation(
+                {
+                    "id":
+                        observation_id,
+
+                    "station_id":
+                        station_id,
+
+                    "idempotency_key":
+                        x_idempotency_key,
+
+                    "captured_at":
+                        capture_time
+                        .isoformat(),
+
+                    "received_at":
+                        now.isoformat(),
+
+                    "image_path":
+                        image_path,
+
+                    "image_content_type":
+                        content_type,
+
+                    "image_width":
+                        image.width,
+
+                    "image_height":
+                        image.height,
+
+                    "temperature":
+                        temperature,
+
+                    "humidity":
+                        humidity,
+
+                    "firmware_version":
+                        firmware_version,
+
+                    "processing_status":
+                        "processing",
+
+                    "total_detected":
+                        0,
+                }
+            )
         )
+
     except Exception as exc:
         logger.exception(
-            "Could not create observation record"
+            "Could not create "
+            "observation record"
         )
 
         try:
             store.delete_observation_image(
                 image_path
             )
+
         except Exception:
             logger.exception(
-                "Could not remove orphan image"
+                "Could not remove "
+                "orphan image"
             )
 
         raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
+            status_code=(
+                status
+                .HTTP_502_BAD_GATEWAY
+            ),
+
             detail=(
-                "Could not create observation record"
+                "Could not create "
+                "observation record"
             ),
         ) from exc
 
+    # --------------------------------------------------------
+    # INFERENCE
+    # --------------------------------------------------------
+
     try:
-        raw_detections, inference_ms = (
-            detector.predict(
-                image,
-                confidence,
-                iou,
-            )
+        (
+            raw_detections,
+            inference_ms,
+        ) = detector.predict(
+            image,
+            confidence,
+            iou,
         )
 
         detections = [
-            enrich_detection(detection)
-            for detection in raw_detections
+            enrich_detection(
+                detection
+            )
+            for detection
+            in raw_detections
         ]
 
         database_detections = []
 
         for detection in detections:
-            bounding_box = detection[
-                "bounding_box"
-            ]
+            bounding_box = (
+                detection[
+                    "bounding_box"
+                ]
+            )
 
-            normalized_box = detection[
-                "normalized_bounding_box"
-            ]
+            normalized_box = (
+                detection[
+                    "normalized_bounding_box"
+                ]
+            )
 
             database_detections.append(
                 {
-                    "observation_id": (
-                        observation_id
-                    ),
-                    "object_type": detection[
-                        "object"
-                    ],
-                    "class_id": detection[
-                        "class_id"
-                    ],
-                    "species": detection[
-                        "species"
-                    ],
-                    "species_vi": detection[
-                        "species_vi"
-                    ],
-                    "confidence": detection[
-                        "confidence"
-                    ],
-                    "detector_confidence": detection.get(
-                        "detector_confidence"
-                    ),
-                    "classification_confidence": detection.get(
-                        "classification_confidence"
-                    ),
-                    "classification_model_version": detection.get(
-                        "classification_model_version"
-                    ),
-                    "review_required": detection.get(
-                        "review_required",
-                        False,
-                    ),
-                    "x1": bounding_box["x1"],
-                    "y1": bounding_box["y1"],
-                    "x2": bounding_box["x2"],
-                    "y2": bounding_box["y2"],
-                    "normalized_x1": (
-                        normalized_box["x1"]
-                    ),
-                    "normalized_y1": (
-                        normalized_box["y1"]
-                    ),
-                    "normalized_x2": (
-                        normalized_box["x2"]
-                    ),
-                    "normalized_y2": (
-                        normalized_box["y2"]
-                    ),
+                    "observation_id":
+                        observation_id,
+
+                    "object_type":
+                        detection[
+                            "object"
+                        ],
+
+                    "class_id":
+                        detection[
+                            "class_id"
+                        ],
+
+                    "species":
+                        detection[
+                            "species"
+                        ],
+
+                    "species_vi":
+                        detection[
+                            "species_vi"
+                        ],
+
+                    "confidence":
+                        detection[
+                            "confidence"
+                        ],
+
+                    "detector_confidence":
+                        detection.get(
+                            "detector_confidence"
+                        ),
+
+                    "classification_confidence":
+                        detection.get(
+                            "classification_confidence"
+                        ),
+
+                    "classification_model_version":
+                        detection.get(
+                            "classification_model_version"
+                        ),
+
+                    "review_required":
+                        detection.get(
+                            "review_required",
+                            False,
+                        ),
+
+                    "x1":
+                        bounding_box[
+                            "x1"
+                        ],
+
+                    "y1":
+                        bounding_box[
+                            "y1"
+                        ],
+
+                    "x2":
+                        bounding_box[
+                            "x2"
+                        ],
+
+                    "y2":
+                        bounding_box[
+                            "y2"
+                        ],
+
+                    "normalized_x1":
+                        normalized_box[
+                            "x1"
+                        ],
+
+                    "normalized_y1":
+                        normalized_box[
+                            "y1"
+                        ],
+
+                    "normalized_x2":
+                        normalized_box[
+                            "x2"
+                        ],
+
+                    "normalized_y2":
+                        normalized_box[
+                            "y2"
+                        ],
                 }
             )
 
@@ -995,70 +1868,117 @@ async def create_station_observation(
             database_detections
         )
 
-        observation = store.update_observation(
-            observation_id,
-            {
-                "processing_status": (
-                    "completed"
-                ),
-                "total_detected": len(
-                    detections
-                ),
-                "model_version": (
-                    detector.model_version
-                ),
-                "inference_ms": round(
-                    inference_ms,
-                    2,
-                ),
-                "error_message": None,
-            },
+        observation = (
+            store
+            .update_observation(
+                observation_id,
+                {
+                    "processing_status":
+                        "completed",
+
+                    "total_detected":
+                        len(
+                            detections
+                        ),
+
+                    "model_version":
+                        detector
+                        .model_version,
+
+                    "inference_ms":
+                        round(
+                            inference_ms,
+                            2,
+                        ),
+
+                    "error_message":
+                        None,
+                },
+            )
         )
 
         store.update_station_seen(
-            station_id=station_id,
-            last_seen_at=now.isoformat(),
+            station_id=(
+                station_id
+            ),
+
+            last_seen_at=(
+                now.isoformat()
+            ),
+
             firmware_version=(
                 firmware_version
             ),
         )
 
+        # ----------------------------------------------------
+        # AUTOMATIC ALERT
+        # ----------------------------------------------------
+
         if (
             len(detections)
-            >= settings.alert_count_threshold
+            >= settings
+            .alert_count_threshold
         ):
             threshold = (
-                settings.alert_count_threshold
+                settings
+                .alert_count_threshold
             )
 
-            if len(detections) >= threshold * 3:
-                alert_level = "critical"
-            elif len(detections) >= threshold * 2:
-                alert_level = "high"
+            if (
+                len(detections)
+                >= threshold * 3
+            ):
+                alert_level = (
+                    "critical"
+                )
+
+            elif (
+                len(detections)
+                >= threshold * 2
+            ):
+                alert_level = (
+                    "high"
+                )
+
             else:
-                alert_level = "medium"
+                alert_level = (
+                    "medium"
+                )
 
             try:
                 store.create_alert(
                     {
-                        "station_id": (
-                            station_id
-                        ),
-                        "observation_id": (
-                            observation_id
-                        ),
-                        "level": alert_level,
-                        "title": (
-                            "Mật độ muỗi vượt ngưỡng"
-                        ),
-                        "message": (
-                            f"Trạm {station_id} ghi "
-                            f"nhận {len(detections)} "
-                            "cá thể trong một lần chụp."
-                        ),
-                        "status": "new",
+                        "station_id":
+                            station_id,
+
+                        "observation_id":
+                            observation_id,
+
+                        "level":
+                            alert_level,
+
+                        "title":
+                            (
+                                "Mật độ muỗi "
+                                "vượt ngưỡng"
+                            ),
+
+                        "message":
+                            (
+                                f"Trạm "
+                                f"{station_id} "
+                                f"ghi nhận "
+                                f"{len(detections)} "
+                                "cá thể trong "
+                                "một lần chụp."
+                            ),
+
+                        "status":
+                            "new",
                     }
                 )
+
             except Exception:
                 logger.exception(
                     "Could not create alert"
@@ -1066,31 +1986,43 @@ async def create_station_observation(
 
     except HTTPException:
         raise
+
     except Exception as exc:
         logger.exception(
-            "Observation inference failed"
+            "Observation inference "
+            "failed"
         )
 
         try:
             store.update_observation(
                 observation_id,
                 {
-                    "processing_status": (
-                        "failed"
-                    ),
-                    "error_message": (
-                        str(exc)[:1000]
-                    ),
+                    "processing_status":
+                        "failed",
+
+                    "error_message":
+                        str(exc)[
+                            :1000
+                        ],
                 },
             )
+
         except Exception:
             logger.exception(
-                "Could not mark observation failed"
+                "Could not mark "
+                "observation failed"
             )
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Observation inference failed",
+            status_code=(
+                status
+                .HTTP_500_INTERNAL_SERVER_ERROR
+            ),
+
+            detail=(
+                "Observation "
+                "inference failed"
+            ),
         ) from exc
 
     return build_observation_response(
@@ -1099,26 +2031,46 @@ async def create_station_observation(
     )
 
 
+# ============================================================
+# OBSERVATIONS
+# ============================================================
+
 @app.get(
     "/v1/observations",
-    response_model=list[ObservationResponse],
+
+    response_model=list[
+        ObservationResponse
+    ],
 )
 def list_observations(
     request: Request,
-    station_id: str | None = Query(
+
+    station_id: (
+        str | None
+    ) = Query(
         default=None
     ),
+
     limit: int = Query(
         default=20,
         ge=1,
         le=100,
     ),
-) -> list[ObservationResponse]:
-    store = require_store(request)
 
-    observations = store.list_observations(
-        limit=limit,
-        station_id=station_id,
+) -> list[
+    ObservationResponse
+]:
+    store = require_store(
+        request
+    )
+
+    observations = (
+        store.list_observations(
+            limit=limit,
+            station_id=(
+                station_id
+            ),
+        )
     )
 
     return [
@@ -1126,28 +2078,44 @@ def list_observations(
             store,
             observation,
         )
-        for observation in observations
+        for observation
+        in observations
     ]
 
 
 @app.get(
     "/v1/observations/{observation_id}",
-    response_model=ObservationResponse,
+
+    response_model=(
+        ObservationResponse
+    ),
 )
 def get_observation(
     observation_id: str,
-    request: Request,
-) -> ObservationResponse:
-    store = require_store(request)
 
-    observation = store.get_observation(
-        observation_id
+    request: Request,
+
+) -> ObservationResponse:
+    store = require_store(
+        request
+    )
+
+    observation = (
+        store.get_observation(
+            observation_id
+        )
     )
 
     if observation is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Observation not found",
+            status_code=(
+                status
+                .HTTP_404_NOT_FOUND
+            ),
+
+            detail=(
+                "Observation not found"
+            ),
         )
 
     return build_observation_response(
@@ -1156,37 +2124,62 @@ def get_observation(
     )
 
 
+# ============================================================
+# DASHBOARD SUMMARY
+# ============================================================
+
 @app.get(
     "/v1/dashboard/summary",
-    response_model=DashboardSummary,
+
+    response_model=(
+        DashboardSummary
+    ),
 )
 def dashboard_summary(
     request: Request,
 ) -> DashboardSummary:
-    store = require_store(request)
+    store = require_store(
+        request
+    )
 
     return DashboardSummary(
         **store.dashboard_summary()
     )
 
 
+# ============================================================
+# ALERTS
+# ============================================================
+
 @app.get(
     "/v1/alerts",
-    response_model=list[AlertResponse],
+
+    response_model=list[
+        AlertResponse
+    ],
 )
 def list_alerts(
     request: Request,
-    status_filter: str | None = Query(
+
+    status_filter: (
+        str | None
+    ) = Query(
         default=None,
         alias="status",
     ),
+
     limit: int = Query(
         default=20,
         ge=1,
         le=100,
     ),
-) -> list[AlertResponse]:
-    store = require_store(request)
+
+) -> list[
+    AlertResponse
+]:
+    store = require_store(
+        request
+    )
 
     if status_filter not in {
         None,
@@ -1196,46 +2189,77 @@ def list_alerts(
     }:
         raise HTTPException(
             status_code=400,
-            detail="Invalid alert status",
+
+            detail=(
+                "Invalid alert status"
+            ),
         )
 
     return [
-        AlertResponse(**alert)
-        for alert in store.list_alerts(
+        AlertResponse(
+            **alert
+        )
+        for alert
+        in store.list_alerts(
             limit=limit,
-            status=status_filter,
+            status=(
+                status_filter
+            ),
         )
     ]
 
 
 @app.patch(
     "/v1/alerts/{alert_id}",
-    response_model=AlertResponse,
+
+    response_model=(
+        AlertResponse
+    ),
 )
 def update_alert(
     alert_id: str,
+
     payload: AlertStatusUpdate,
+
     request: Request,
-    x_admin_key: str | None = Header(
+
+    x_admin_key: (
+        str | None
+    ) = Header(
         default=None,
         alias="X-Admin-Key",
     ),
-) -> AlertResponse:
-    verify_admin_key(x_admin_key)
 
-    store = require_store(request)
-    now = datetime.now(timezone.utc)
+) -> AlertResponse:
+    verify_admin_key(
+        x_admin_key
+    )
+
+    store = require_store(
+        request
+    )
+
+    now = datetime.now(
+        timezone.utc
+    )
 
     update_payload: dict = {
-        "status": payload.status,
+        "status":
+            payload.status,
     }
 
-    if payload.status == "acknowledged":
+    if (
+        payload.status
+        == "acknowledged"
+    ):
         update_payload[
             "acknowledged_at"
         ] = now.isoformat()
 
-    if payload.status == "resolved":
+    if (
+        payload.status
+        == "resolved"
+    ):
         update_payload[
             "resolved_at"
         ] = now.isoformat()
@@ -1247,8 +2271,16 @@ def update_alert(
 
     if alert is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Alert not found",
+            status_code=(
+                status
+                .HTTP_404_NOT_FOUND
+            ),
+
+            detail=(
+                "Alert not found"
+            ),
         )
 
-    return AlertResponse(**alert)
+    return AlertResponse(
+        **alert
+    )
