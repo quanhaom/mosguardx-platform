@@ -9,6 +9,7 @@ import {
   Building2,
   ChevronRight,
   FileBarChart,
+  Globe2,
   Home,
   Layers3,
   Menu,
@@ -97,7 +98,8 @@ export default function EnterpriseShell({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const pathname =
+    usePathname();
 
   const [
     mobileOpen,
@@ -110,9 +112,11 @@ export default function EnterpriseShell({
 
   const sidebar = (
     <>
-      {/* Brand */}
+      {/* ================================================
+          BRAND
+      ================================================ */}
 
-      <div className="flex h-20 items-center gap-3 border-b border-white/10 px-6">
+      <div className="flex h-20 shrink-0 items-center gap-3 border-b border-white/10 px-6">
         <Link
           href="/enterprise/app"
           onClick={() =>
@@ -143,13 +147,15 @@ export default function EnterpriseShell({
           onClick={() =>
             setMobileOpen(false)
           }
-          className="ml-auto rounded-xl p-2 text-slate-300 hover:bg-white/10 lg:hidden"
+          className="ml-auto rounded-xl p-2 text-slate-300 transition hover:bg-white/10 hover:text-white lg:hidden"
         >
           <X size={19} />
         </button>
       </div>
 
-      {/* Segment */}
+      {/* ================================================
+          SEGMENT
+      ================================================ */}
 
       <div className="mx-4 mt-5 rounded-2xl border border-emerald-300/10 bg-emerald-300/[0.06] p-4">
         <p className="text-[9px] font-bold tracking-[0.16em] text-emerald-300">
@@ -162,7 +168,43 @@ export default function EnterpriseShell({
         </p>
       </div>
 
-      {/* Nav */}
+      {/* ================================================
+          QUICK LINKS
+      ================================================ */}
+
+      <div className="mx-3 mt-4 space-y-2">
+        <Link
+          href="/"
+          onClick={() =>
+            setMobileOpen(false)
+          }
+          className="flex items-center gap-3 rounded-xl border border-white/10 px-4 py-3 text-sm text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+        >
+          <Globe2 size={18} />
+
+          <span>
+            Website MosGuardX
+          </span>
+        </Link>
+
+        <Link
+          href="/enterprise"
+          onClick={() =>
+            setMobileOpen(false)
+          }
+          className="flex items-center gap-3 rounded-xl border border-white/10 px-4 py-3 text-sm text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+        >
+          <Home size={18} />
+
+          <span>
+            Enterprise landing
+          </span>
+        </Link>
+      </div>
+
+      {/* ================================================
+          NAV
+      ================================================ */}
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
         {navigation.map(
@@ -187,9 +229,7 @@ export default function EnterpriseShell({
                 key={href}
                 href={href}
                 onClick={() =>
-                  setMobileOpen(
-                    false,
-                  )
+                  setMobileOpen(false)
                 }
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition ${
                   active
@@ -213,39 +253,26 @@ export default function EnterpriseShell({
           },
         )}
       </nav>
-
-      {/* Status */}
-
-      <div className="mx-4 mb-4 rounded-2xl border border-amber-300/15 bg-amber-300/[0.06] p-4">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-amber-400" />
-
-          <p className="text-xs font-bold text-amber-200">
-            Enterprise Preview
-          </p>
-        </div>
-
-        <p className="mt-2 text-[11px] leading-5 text-slate-400">
-          Workspace hiện sử dụng dữ
-          liệu placeholder để hoàn
-          thiện kiến trúc B2B.
-        </p>
-      </div>
     </>
   );
 
   return (
     <div className="min-h-screen bg-[#f4f7f5]">
-      {/* Desktop sidebar */}
+
+      {/* ================================================
+          DESKTOP SIDEBAR
+      ================================================ */}
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-[#10251f] lg:flex">
         {sidebar}
       </aside>
 
-      {/* Mobile drawer */}
+      {/* ================================================
+          MOBILE DRAWER
+      ================================================ */}
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-[230] lg:hidden">
           <button
             type="button"
             aria-label="Close menu"
@@ -261,29 +288,42 @@ export default function EnterpriseShell({
         </div>
       )}
 
-      {/* App */}
+      {/* ================================================
+          APP
+      ================================================ */}
 
       <div className="lg:ml-64">
-        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#dde7e2] bg-white/90 px-5 backdrop-blur-xl md:px-8">
-          {/* Left */}
+
+        {/* ==============================================
+            HEADER
+        ============================================== */}
+
+        <header className="sticky top-0 z-[220] flex h-20 items-center justify-between border-b border-[#dde7e2] bg-white/95 px-5 shadow-[0_8px_24px_rgba(0,0,0,0.05)] backdrop-blur-xl md:px-8">
+
+          {/* LEFT */}
 
           <div className="flex min-w-0 items-center gap-3">
+
             <button
               type="button"
               aria-label="Open menu"
               onClick={() =>
                 setMobileOpen(true)
               }
-              className="rounded-xl border border-slate-200 p-2.5 text-slate-700 lg:hidden"
+              className="rounded-xl border border-slate-200 p-2.5 text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 lg:hidden"
             >
               <Menu size={19} />
             </button>
 
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-[9px] font-bold tracking-[0.14em] text-slate-400">
-                <span>
+
+                <Link
+                  href="/enterprise/app"
+                  className="transition hover:text-emerald-700"
+                >
                   MOSGUARDX
-                </span>
+                </Link>
 
                 <ChevronRight
                   size={11}
@@ -300,25 +340,45 @@ export default function EnterpriseShell({
             </div>
           </div>
 
-          {/* Right */}
+          {/* RIGHT */}
 
-          <div className="flex items-center gap-2">
-            <PlatformSwitcher />
+          <div className="flex shrink-0 items-center gap-2">
+
+            {/* Platform dropdown */}
+
+            <PlatformSwitcher
+              variant="light"
+              compact
+              align="right"
+            />
+
+            {/* Enterprise landing */}
 
             <Link
               href="/enterprise"
-              className="hidden items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700 md:flex"
+              className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700 md:flex"
             >
               <Home size={15} />
 
               Enterprise
             </Link>
 
-            <span className="hidden rounded-full bg-amber-50 px-3 py-2 text-[10px] font-bold text-amber-700 xl:inline">
-              PLACEHOLDER
-            </span>
+            {/* Website */}
+
+            <Link
+              href="/"
+              className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700 xl:flex"
+            >
+              <Globe2 size={15} />
+
+              Website
+            </Link>
           </div>
         </header>
+
+        {/* ==============================================
+            CONTENT
+        ============================================== */}
 
         <main className="mx-auto max-w-[1500px] p-5 md:p-8">
           {children}

@@ -19,6 +19,10 @@ type PlatformId =
   | "enterprise"
   | "command-center";
 
+type PlatformStatus =
+  | "LIVE"
+  | "MVP";
+
 type PlatformSwitcherProps = {
   variant?: "dark" | "light";
   compact?: boolean;
@@ -52,11 +56,12 @@ const platforms = [
       Home,
 
     status:
-      "LIVE",
+      "LIVE" as PlatformStatus,
   },
 
   {
-    id: "enterprise" as const,
+    id:
+      "enterprise" as const,
 
     name:
       "MosGuardX Enterprise",
@@ -80,11 +85,12 @@ const platforms = [
       Building2,
 
     status:
-      "PREVIEW",
+      "LIVE" as PlatformStatus,
   },
 
   {
-    id: "command-center" as const,
+    id:
+      "command-center" as const,
 
     name:
       "MosGuardX Command Center",
@@ -108,7 +114,7 @@ const platforms = [
       Landmark,
 
     status:
-      "MVP",
+      "MVP" as PlatformStatus,
   },
 ];
 
@@ -156,12 +162,14 @@ export default function PlatformSwitcher({
     <div
       className={`relative ${className}`}
     >
+      {/* =============================================
+          BUTTON
+      ============================================= */}
+
       <button
         type="button"
         aria-haspopup="menu"
-        aria-expanded={
-          open
-        }
+        aria-expanded={open}
         onClick={() =>
           setOpen(
             (value) =>
@@ -206,6 +214,10 @@ export default function PlatformSwitcher({
         />
       </button>
 
+      {/* =============================================
+          DROPDOWN
+      ============================================= */}
+
       {open && (
         <>
           {/* Outside click */}
@@ -219,18 +231,17 @@ export default function PlatformSwitcher({
             }
           />
 
-          {/* Dropdown */}
-
           <div
             role="menu"
             className={`absolute top-[calc(100%+12px)] z-50 w-[min(390px,calc(100vw-2rem))] overflow-hidden rounded-[26px] border border-white/10 bg-[#10251f] p-2 text-white shadow-2xl ${
-              align ===
-              "left"
+              align === "left"
                 ? "left-0"
                 : "right-0"
             }`}
           >
-            {/* Header */}
+            {/* =====================================
+                HEADER
+            ===================================== */}
 
             <div className="px-3 pb-3 pt-2">
               <div className="flex items-center gap-2">
@@ -240,27 +251,24 @@ export default function PlatformSwitcher({
                 />
 
                 <p className="text-[10px] font-bold tracking-[0.18em] text-emerald-300">
-                  MOSGUARDX
-                  PLATFORM
+                  MOSGUARDX PLATFORM
                 </p>
               </div>
 
               <p className="mt-2 text-xs leading-5 text-slate-400">
-                Một hệ sinh
-                thái, ba trải
-                nghiệm dành cho
-                ba nhóm người
-                dùng.
+                Một hệ sinh thái,
+                ba trải nghiệm dành
+                cho ba nhóm người dùng.
               </p>
             </div>
 
-            {/* Platform cards */}
+            {/* =====================================
+                PLATFORM CARDS
+            ===================================== */}
 
-            <div className="space-y-1">
+            <div className="space-y-2">
               {platforms.map(
-                (
-                  platform,
-                ) => {
+                (platform) => {
                   const Icon =
                     platform.icon;
 
@@ -278,84 +286,83 @@ export default function PlatformSwitcher({
                         platform.href
                       }
                       onClick={() =>
-                        setOpen(
-                          false,
-                        )
+                        setOpen(false)
                       }
-                      className={`group block rounded-[20px] border p-4 transition ${
+                      className={`group block rounded-[22px] border p-4 transition duration-200 ${
                         active
-                          ? "border-emerald-400/30 bg-emerald-400/15"
-                          : "border-transparent hover:border-white/10 hover:bg-white/[0.06]"
+                          ? "border-emerald-400/40 bg-emerald-400/[0.12]"
+                          : "border-transparent hover:border-white/10 hover:bg-white/[0.05]"
                       }`}
                     >
                       <div className="flex items-start gap-3">
+
                         {/* Icon */}
 
                         <span
-                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition ${
+                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition ${
                             active
                               ? "bg-emerald-400 text-[#10251f]"
                               : "bg-white/[0.07] text-emerald-300 group-hover:bg-white/[0.1]"
                           }`}
                         >
                           <Icon
-                            size={
-                              20
-                            }
+                            size={21}
                           />
                         </span>
 
                         {/* Content */}
 
                         <div className="min-w-0 flex-1">
+
+                          {/* Name + status */}
+
                           <div className="flex items-start justify-between gap-3">
+
                             <div className="min-w-0">
-                              <p className="truncate font-bold text-white">
+                              <p className="truncate text-[15px] font-bold text-white">
                                 {
                                   platform.name
                                 }
                               </p>
 
-                              <p className="mt-1 text-[9px] font-bold tracking-[0.12em] text-emerald-300">
+                              <p className="mt-1 text-[9px] font-bold tracking-[0.13em] text-emerald-300">
                                 {
                                   platform.segment
                                 }
                               </p>
                             </div>
 
-                            <div className="flex shrink-0 items-center gap-1.5">
+                            {/* Status area */}
+
+                            <div className="flex shrink-0 items-center gap-2">
+
+                              {/* Active indicator */}
+
                               {active && (
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-[#10251f]">
+                                <span
+                                  title="Current platform"
+                                  className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400 text-[#10251f]"
+                                >
                                   <Check
-                                    size={
-                                      12
-                                    }
-                                    strokeWidth={
-                                      3
-                                    }
+                                    size={13}
+                                    strokeWidth={3}
                                   />
                                 </span>
                               )}
 
-                              <span
-                                className={`rounded-full px-2 py-1 text-[8px] font-bold tracking-wide ${
-                                  platform.status ===
-                                  "LIVE"
-                                    ? "bg-emerald-400 text-[#10251f]"
-                                    : platform.status ===
-                                        "MVP"
-                                      ? "bg-sky-300/10 text-sky-200"
-                                      : "bg-amber-300/10 text-amber-200"
-                                }`}
-                              >
-                                {
+                              {/* Status */}
+
+                              <PlatformStatusBadge
+                                status={
                                   platform.status
                                 }
-                              </span>
+                              />
                             </div>
                           </div>
 
-                          <p className="mt-2 text-xs leading-5 text-slate-400">
+                          {/* Description */}
+
+                          <p className="mt-3 text-xs leading-5 text-slate-400">
                             {
                               platform.description
                             }
@@ -368,17 +375,18 @@ export default function PlatformSwitcher({
               )}
             </div>
 
-            {/* Core */}
+            {/* =====================================
+                SHARED CORE
+            ===================================== */}
 
-            <div className="mx-2 mt-2 rounded-2xl border border-white/10 bg-black/10 px-4 py-3">
+            <div className="mx-2 mt-3 rounded-2xl border border-white/10 bg-black/10 px-4 py-3">
               <p className="text-[9px] font-bold tracking-[0.14em] text-slate-500">
                 SHARED CORE
               </p>
 
               <p className="mt-1 text-[11px] leading-5 text-slate-400">
-                Device · AI ·
-                Events · Weather ·
-                Alerts · Data
+                Device · AI · Events ·
+                Weather · Alerts · Data
               </p>
             </div>
           </div>
@@ -387,6 +395,38 @@ export default function PlatformSwitcher({
     </div>
   );
 }
+
+
+/* =========================================================
+   STATUS BADGE
+========================================================= */
+
+function PlatformStatusBadge({
+  status,
+}: {
+  status: PlatformStatus;
+}) {
+  if (
+    status === "LIVE"
+  ) {
+    return (
+      <span className="inline-flex min-w-[42px] items-center justify-center rounded-full bg-emerald-400 px-2.5 py-1 text-[8px] font-extrabold tracking-[0.06em] text-[#10251f]">
+        LIVE
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex min-w-[42px] items-center justify-center rounded-full bg-sky-300/10 px-2.5 py-1 text-[8px] font-extrabold tracking-[0.06em] text-sky-200">
+      MVP
+    </span>
+  );
+}
+
+
+/* =========================================================
+   CURRENT PLATFORM
+========================================================= */
 
 function getCurrentPlatform(
   pathname: string,
@@ -455,6 +495,11 @@ function getCurrentPlatform(
   return null;
 }
 
+
+/* =========================================================
+   ROUTE HELPERS
+========================================================= */
+
 function matchesAnyRoute(
   pathname: string,
   routes: string[],
@@ -467,6 +512,7 @@ function matchesAnyRoute(
       ),
   );
 }
+
 
 function routeMatches(
   pathname: string,

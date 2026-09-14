@@ -153,7 +153,7 @@ export default function EnterprisePage() {
                   href="/enterprise/app"
                   className="group inline-flex items-center gap-2 rounded-xl bg-emerald-400 px-5 py-3.5 text-sm font-bold text-[#10251f] transition hover:bg-emerald-300"
                 >
-                  Mở Enterprise Preview
+                  Mở Enterprise 
 
                   <ArrowRight
                     size={17}
@@ -220,7 +220,7 @@ export default function EnterprisePage() {
 
                   <span className="flex items-center gap-2 rounded-full bg-emerald-300/10 px-3 py-1.5 text-[9px] font-bold text-emerald-300">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
-                    LIVE PREVIEW
+                    LIVE
                   </span>
                 </div>
 
@@ -657,7 +657,7 @@ export default function EnterprisePage() {
 
             <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-emerald-50/80">
               Trải nghiệm workspace Enterprise hiện tại
-              với dữ liệu preview trước khi tích hợp
+              với dữ liệu trước khi tích hợp
               backend và dữ liệu hiện trường.
             </p>
 
