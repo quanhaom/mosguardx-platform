@@ -52,7 +52,7 @@ type Card = {
 type PlatformSegment = {
   icon: LucideIcon;
   label: "B2C" | "B2B" | "B2G";
-  status: "LIVE" | "COMING SOON" | "MVP";
+  status: "LIVE" | "LIVE" | "MVP";
 
   audience: BilingualText;
   title: BilingualText;
@@ -402,7 +402,7 @@ const segments: PlatformSegment[] = [
   {
     icon: Factory,
     label: "B2B",
-    status: "COMING SOON",
+    status: "LIVE",
 
     audience: {
       vi: "Doanh nghiệp & đơn vị vận hành",
@@ -2411,7 +2411,7 @@ function LandingContent() {
 
                   <span className="text-xs text-slate-400">
                     B2B ·
-                    Coming soon
+                    Live
                   </span>
                 </div>
 

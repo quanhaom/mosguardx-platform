@@ -84,6 +84,22 @@ export const SCNC_COPY = {
       "Continue guide",
   },
 
+  nextGuide: {
+    vi:
+      "Tiếp tục",
+
+    en:
+      "Continue",
+  },
+
+  finishGuide: {
+    vi:
+      "Hoàn tất",
+
+    en:
+      "Finish",
+  },
+
   hideSCNC: {
     vi:
       "Ẩn SCNC",
@@ -119,15 +135,20 @@ export const SCNC_COPY = {
 
 const websiteTour: SCNCTourStep[] = [
   {
-    id: "website-hero",
+    id:
+      "website-hero",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#hero",
+    target:
+      "#hero",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "top-left",
+    corner:
+      "top-left",
 
     message: {
       vi:
@@ -139,15 +160,20 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-problem",
+    id:
+      "website-problem",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#problem",
+    target:
+      "#problem",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "top-right",
+    corner:
+      "top-right",
 
     message: {
       vi:
@@ -159,15 +185,20 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-product",
+    id:
+      "website-product",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#product",
+    target:
+      "#product",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "bottom-left",
+    corner:
+      "bottom-left",
 
     message: {
       vi:
@@ -178,22 +209,24 @@ const websiteTour: SCNCTourStep[] = [
     },
   },
 
-  /*
-   * PRODUCT 3D BUTTON
-   */
   {
-    id: "website-product-3d",
+    id:
+      "website-product-3d",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
     target:
       '#product a[href="/product-3d"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "top-right",
+    corner:
+      "top-right",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -205,15 +238,20 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-solution",
+    id:
+      "website-solution",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#solution",
+    target:
+      "#solution",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "top-left",
+    corner:
+      "top-left",
 
     message: {
       vi:
@@ -225,15 +263,20 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-ai",
+    id:
+      "website-ai",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#ai",
+    target:
+      "#ai",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "bottom-right",
+    corner:
+      "bottom-right",
 
     message: {
       vi:
@@ -245,15 +288,20 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-demo",
+    id:
+      "website-demo",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#demo",
+    target:
+      "#demo",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "top-right",
+    corner:
+      "top-right",
 
     message: {
       vi:
@@ -264,22 +312,24 @@ const websiteTour: SCNCTourStep[] = [
     },
   },
 
-  /*
-   * VIDEO PLAYER
-   */
   {
-    id: "website-demo-video",
+    id:
+      "website-demo-video",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
     target:
       "#demo video",
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "bottom-left",
+    corner:
+      "bottom-left",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -291,15 +341,20 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-experiment",
+    id:
+      "website-experiment",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#experiment",
+    target:
+      "#experiment",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "top-left",
+    corner:
+      "top-left",
 
     message: {
       vi:
@@ -311,15 +366,20 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-platforms",
+    id:
+      "website-platforms",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#segments",
+    target:
+      "#segments",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "bottom-right",
+    corner:
+      "bottom-right",
 
     message: {
       vi:
@@ -331,18 +391,23 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-open-home",
+    id:
+      "website-open-home",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
     target:
       '#segments a[href="/household"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "top-left",
+    corner:
+      "top-left",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -354,18 +419,23 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-open-enterprise",
+    id:
+      "website-open-enterprise",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
     target:
       '#segments a[href="/enterprise"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "top-right",
+    corner:
+      "top-right",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -377,18 +447,23 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-open-command",
+    id:
+      "website-open-command",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
     target:
       '#segments a[href="/dashboard"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "bottom-left",
+    corner:
+      "bottom-left",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -400,15 +475,20 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-business",
+    id:
+      "website-business",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#business",
+    target:
+      "#business",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "top-left",
+    corner:
+      "top-left",
 
     message: {
       vi:
@@ -420,15 +500,20 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-expansion",
+    id:
+      "website-expansion",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#expansion",
+    target:
+      "#expansion",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "bottom-right",
+    corner:
+      "bottom-right",
 
     message: {
       vi:
@@ -440,15 +525,20 @@ const websiteTour: SCNCTourStep[] = [
   },
 
   {
-    id: "website-team",
+    id:
+      "website-team",
 
-    routes: ["/"],
+    routes:
+      ["/"],
 
-    target: "#team",
+    target:
+      "#team",
 
-    trigger: "scroll",
+    trigger:
+      "scroll",
 
-    corner: "top-right",
+    corner:
+      "top-right",
 
     message: {
       vi:
@@ -467,15 +557,17 @@ const websiteTour: SCNCTourStep[] = [
 
 const householdTour: SCNCTourStep[] = [
   {
-    id: "household-intro",
+    id:
+      "household-intro",
 
-    routes: [
-      "/household",
-    ],
+    routes:
+      ["/household"],
 
-    trigger: "page",
+    trigger:
+      "page",
 
-    corner: "top-left",
+    corner:
+      "top-left",
 
     message: {
       vi:
@@ -487,20 +579,23 @@ const householdTour: SCNCTourStep[] = [
   },
 
   {
-    id: "household-open-app",
+    id:
+      "household-open-app",
 
-    routes: [
-      "/household",
-    ],
+    routes:
+      ["/household"],
 
     target:
       'a[href="/home"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "bottom-right",
+    corner:
+      "bottom-right",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -519,7 +614,8 @@ const householdTour: SCNCTourStep[] = [
 
 const homeTour: SCNCTourStep[] = [
   {
-    id: "home-main",
+    id:
+      "home-main",
 
     routes: [
       "/home",
@@ -529,9 +625,11 @@ const homeTour: SCNCTourStep[] = [
       "/home-settings",
     ],
 
-    trigger: "page",
+    trigger:
+      "page",
 
-    corner: "bottom-right",
+    corner:
+      "bottom-right",
 
     message: {
       vi:
@@ -543,20 +641,23 @@ const homeTour: SCNCTourStep[] = [
   },
 
   {
-    id: "home-activity",
+    id:
+      "home-activity",
 
-    routes: [
-      "/home",
-    ],
+    routes:
+      ["/home"],
 
     target:
       'a[href="/activity"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "top-left",
+    corner:
+      "top-left",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -568,20 +669,23 @@ const homeTour: SCNCTourStep[] = [
   },
 
   {
-    id: "home-device",
+    id:
+      "home-device",
 
-    routes: [
-      "/home",
-    ],
+    routes:
+      ["/home"],
 
     target:
       'a[href="/my-device"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "bottom-left",
+    corner:
+      "bottom-left",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -593,20 +697,23 @@ const homeTour: SCNCTourStep[] = [
   },
 
   {
-    id: "home-alerts",
+    id:
+      "home-alerts",
 
-    routes: [
-      "/home",
-    ],
+    routes:
+      ["/home"],
 
     target:
       'a[href="/home-alerts"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "top-right",
+    corner:
+      "top-right",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -625,15 +732,17 @@ const homeTour: SCNCTourStep[] = [
 
 const enterpriseTour: SCNCTourStep[] = [
   {
-    id: "enterprise-main",
+    id:
+      "enterprise-main",
 
-    routes: [
-      "/enterprise",
-    ],
+    routes:
+      ["/enterprise"],
 
-    trigger: "page",
+    trigger:
+      "page",
 
-    corner: "top-right",
+    corner:
+      "top-right",
 
     message: {
       vi:
@@ -645,20 +754,23 @@ const enterpriseTour: SCNCTourStep[] = [
   },
 
   {
-    id: "enterprise-open-app",
+    id:
+      "enterprise-open-app",
 
-    routes: [
-      "/enterprise",
-    ],
+    routes:
+      ["/enterprise"],
 
     target:
       'a[href="/enterprise/app"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "bottom-left",
+    corner:
+      "bottom-left",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -670,18 +782,22 @@ const enterpriseTour: SCNCTourStep[] = [
   },
 ];
 
+
 const enterpriseAppTour: SCNCTourStep[] = [
   {
-    id: "enterprise-app-main",
+    id:
+      "enterprise-app-main",
 
     routes: [
       "/enterprise/app",
       "/enterprise/app/*",
     ],
 
-    trigger: "page",
+    trigger:
+      "page",
 
-    corner: "bottom-right",
+    corner:
+      "bottom-right",
 
     message: {
       vi:
@@ -700,15 +816,17 @@ const enterpriseAppTour: SCNCTourStep[] = [
 
 const commandCenterTour: SCNCTourStep[] = [
   {
-    id: "command-main",
+    id:
+      "command-main",
 
-    routes: [
-      "/dashboard",
-    ],
+    routes:
+      ["/dashboard"],
 
-    trigger: "page",
+    trigger:
+      "page",
 
-    corner: "top-left",
+    corner:
+      "top-left",
 
     message: {
       vi:
@@ -720,20 +838,23 @@ const commandCenterTour: SCNCTourStep[] = [
   },
 
   {
-    id: "command-map",
+    id:
+      "command-map",
 
-    routes: [
-      "/dashboard",
-    ],
+    routes:
+      ["/dashboard"],
 
     target:
       'a[href="/map"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "top-right",
+    corner:
+      "top-right",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -745,20 +866,23 @@ const commandCenterTour: SCNCTourStep[] = [
   },
 
   {
-    id: "command-alerts",
+    id:
+      "command-alerts",
 
-    routes: [
-      "/dashboard",
-    ],
+    routes:
+      ["/dashboard"],
 
     target:
       'a[href="/alerts"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "bottom-left",
+    corner:
+      "bottom-left",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -770,20 +894,23 @@ const commandCenterTour: SCNCTourStep[] = [
   },
 
   {
-    id: "command-devices",
+    id:
+      "command-devices",
 
-    routes: [
-      "/dashboard",
-    ],
+    routes:
+      ["/dashboard"],
 
     target:
       'a[href="/devices"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "top-left",
+    corner:
+      "top-left",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -795,20 +922,23 @@ const commandCenterTour: SCNCTourStep[] = [
   },
 
   {
-    id: "command-ai",
+    id:
+      "command-ai",
 
-    routes: [
-      "/dashboard",
-    ],
+    routes:
+      ["/dashboard"],
 
     target:
       'a[href="/ai-api"]',
 
-    trigger: "visible",
+    trigger:
+      "visible",
 
-    corner: "bottom-right",
+    corner:
+      "bottom-right",
 
-    highlight: true,
+    highlight:
+      true,
 
     message: {
       vi:
@@ -822,7 +952,7 @@ const commandCenterTour: SCNCTourStep[] = [
 
 
 /* =========================================================
-   ALL STEPS
+   ALL
 ========================================================= */
 
 export const scncTourSteps: SCNCTourStep[] = [
@@ -836,7 +966,7 @@ export const scncTourSteps: SCNCTourStep[] = [
 
 
 /* =========================================================
-   ROUTES
+   ROUTE
 ========================================================= */
 
 export function matchesSCNCRoute(
@@ -860,7 +990,9 @@ export function matchesSCNCRoute(
     );
   }
 
-  return pathname === route;
+  return (
+    pathname === route
+  );
 }
 
 

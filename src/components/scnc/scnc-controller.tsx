@@ -3,9 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import {
-  usePathname,
-} from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import {
   type CSSProperties,
@@ -16,13 +14,9 @@ import {
   useState,
 } from "react";
 
-import {
-  ArrowLeft,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
-import {
-  useLanguage,
-} from "@/components/i18n/language-context";
+import { useLanguage } from "@/components/i18n/language-context";
 
 import {
   DEFAULT_SCNC_SETTINGS,
@@ -34,53 +28,33 @@ import {
   type SCNCTourStep,
 } from "@/lib/scnc/config";
 
-
 type Position = {
   x: number;
   y: number;
 };
 
+const DESKTOP_MASCOT_SIZE = 108;
+const MOBILE_MASCOT_SIZE = 72;
 
-const DESKTOP_MASCOT_SIZE =
-  108;
+const MOVE_DURATION = 680;
 
-const MOBILE_MASCOT_SIZE =
-  82;
+const DESKTOP_TOP_SAFE = 92;
+const MOBILE_TOP_SAFE = 78;
 
-const MOVE_DURATION =
-  680;
-
-const DESKTOP_TOP_SAFE =
-  92;
-
-const MOBILE_TOP_SAFE =
-  86;
-
-const DESKTOP_PADDING =
-  22;
-
-const MOBILE_PADDING =
-  12;
-
+const DESKTOP_PADDING = 22;
+const MOBILE_PADDING = 10;
 
 /* =========================================================
    SCREEN
 ========================================================= */
 
 function isMobile() {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
+  if (typeof window === "undefined") {
     return false;
   }
 
-  return (
-    window.innerWidth <
-    768
-  );
+  return window.innerWidth < 768;
 }
-
 
 function getMascotSize() {
   return isMobile()
@@ -88,20 +62,17 @@ function getMascotSize() {
     : DESKTOP_MASCOT_SIZE;
 }
 
-
 function getSafeTop() {
   return isMobile()
     ? MOBILE_TOP_SAFE
     : DESKTOP_TOP_SAFE;
 }
 
-
 function getPadding() {
   return isMobile()
     ? MOBILE_PADDING
     : DESKTOP_PADDING;
 }
-
 
 function clamp(
   value: number,
@@ -117,9 +88,8 @@ function clamp(
   );
 }
 
-
 /* =========================================================
-   FOUR CORNERS
+   CORNERS
 ========================================================= */
 
 function getCornerPosition(
@@ -135,8 +105,7 @@ function getCornerPosition(
     getPadding();
 
   const left =
-    edge +
-    half;
+    edge + half;
 
   const right =
     window.innerWidth -
@@ -152,7 +121,6 @@ function getCornerPosition(
     edge -
     half;
 
-
   switch (corner) {
     case "top-left":
       return {
@@ -160,20 +128,17 @@ function getCornerPosition(
         y: top,
       };
 
-
     case "top-right":
       return {
         x: right,
         y: top,
       };
 
-
     case "bottom-left":
       return {
         x: left,
         y: bottom,
       };
-
 
     case "bottom-right":
     default:
@@ -184,14 +149,35 @@ function getCornerPosition(
   }
 }
 
+function isRightCorner(
+  corner?: SCNCCorner,
+) {
+  return (
+    corner ===
+      "top-right" ||
+    corner ===
+      "bottom-right"
+  );
+}
+
+function isBottomCorner(
+  corner?: SCNCCorner,
+) {
+  return (
+    corner ===
+      "bottom-left" ||
+    corner ===
+      "bottom-right"
+  );
+}
 
 /* =========================================================
-   DIALOG
+   DIALOG POSITION
 ========================================================= */
 
 function getDialogPosition(
-  mascot:
-    Position,
+  mascot: Position,
+  corner?: SCNCCorner,
 ): CSSProperties {
   const size =
     getMascotSize();
@@ -199,25 +185,94 @@ function getDialogPosition(
   const edge =
     getPadding();
 
-  const width =
-    isMobile()
-      ? Math.min(
-          292,
-          window.innerWidth -
-            edge * 2,
-        )
-      : 320;
-
-  const estimatedHeight =
-    isMobile()
-      ? 166
-      : 174;
-
   const gap =
     isMobile()
       ? 7
       : 12;
 
+  /* =========================
+     MOBILE
+  ========================= */
+
+  if (isMobile()) {
+    const availableWidth =
+      window.innerWidth -
+      size -
+      edge * 3 -
+      gap;
+
+    const width =
+      Math.max(
+        188,
+        Math.min(
+          238,
+          availableWidth,
+        ),
+      );
+
+    let left: number;
+
+    if (
+      isRightCorner(
+        corner,
+      )
+    ) {
+      left =
+        mascot.x -
+        size / 2 -
+        gap -
+        width;
+    } else {
+      left =
+        mascot.x +
+        size / 2 +
+        gap;
+    }
+
+    left = clamp(
+      left,
+      edge,
+      window.innerWidth -
+        width -
+        edge,
+    );
+
+    if (
+      isBottomCorner(
+        corner,
+      )
+    ) {
+      return {
+        left,
+        bottom: edge,
+        width,
+        maxHeight: `calc(100dvh - ${
+          getSafeTop() +
+          edge
+        }px)`,
+      };
+    }
+
+    return {
+      left,
+      top: getSafeTop(),
+      width,
+      maxHeight: `calc(100dvh - ${
+        getSafeTop() +
+        edge
+      }px)`,
+    };
+  }
+
+  /* =========================
+     DESKTOP
+  ========================= */
+
+  const width =
+    320;
+
+  const estimatedHeight =
+    205;
 
   let left =
     mascot.x +
@@ -227,7 +282,6 @@ function getDialogPosition(
   let top =
     mascot.y -
     28;
-
 
   if (
     left +
@@ -242,28 +296,21 @@ function getDialogPosition(
       width;
   }
 
-
   left = clamp(
     left,
-
     edge,
-
     window.innerWidth -
       width -
       edge,
   );
 
-
   top = clamp(
     top,
-
     getSafeTop(),
-
     window.innerHeight -
       estimatedHeight -
       edge,
   );
-
 
   return {
     left,
@@ -272,9 +319,8 @@ function getDialogPosition(
   };
 }
 
-
 /* =========================================================
-   ELEMENT HELPERS
+   DOM HELPERS
 ========================================================= */
 
 function getElements(
@@ -284,7 +330,6 @@ function getElements(
     return [];
   }
 
-
   return Array.from(
     document.querySelectorAll(
       selector,
@@ -292,27 +337,20 @@ function getElements(
   ) as HTMLElement[];
 }
 
-
 function isElementVisible(
-  element:
-    HTMLElement,
+  element: HTMLElement,
 ) {
   const rect =
     element.getBoundingClientRect();
 
-
   return (
-    rect.width >
-      0 &&
-    rect.height >
-      0 &&
-    rect.bottom >
-      0 &&
+    rect.width > 0 &&
+    rect.height > 0 &&
+    rect.bottom > 0 &&
     rect.top <
       window.innerHeight
   );
 }
-
 
 function getVisibleTarget(
   selector?: string,
@@ -322,14 +360,12 @@ function getVisibleTarget(
       selector,
     );
 
-
   if (
     elements.length ===
     0
   ) {
     return null;
   }
-
 
   return (
     elements.find(
@@ -338,7 +374,6 @@ function getVisibleTarget(
     elements[0]
   );
 }
-
 
 /* =========================================================
    HIGHLIGHT
@@ -350,17 +385,16 @@ function clearHighlight() {
       '[data-scnc-highlighted="true"]',
     );
 
-
   highlighted.forEach(
-    (node) => {
+    (
+      node,
+    ) => {
       const element =
         node as HTMLElement;
-
 
       element.removeAttribute(
         "data-scnc-highlighted",
       );
-
 
       element.style.removeProperty(
         "position",
@@ -389,25 +423,20 @@ function clearHighlight() {
   );
 }
 
-
 function highlightTarget(
-  element:
-    HTMLElement,
+  element: HTMLElement,
 ) {
   clearHighlight();
-
 
   element.setAttribute(
     "data-scnc-highlighted",
     "true",
   );
 
-
   const computed =
     window.getComputedStyle(
       element,
     );
-
 
   if (
     computed.position ===
@@ -417,32 +446,21 @@ function highlightTarget(
       "relative";
   }
 
-
-  /*
-   * Header dùng z-[220].
-   * Target chỉ z30 nên không
-   * bao giờ đè navigation.
-   */
   element.style.zIndex =
     "30";
-
 
   element.style.outline =
     "2px solid rgba(52,211,153,.78)";
 
-
   element.style.outlineOffset =
     "5px";
 
-
   element.style.boxShadow =
-    "0 0 0 5px rgba(52,211,153,.09)";
-
+    "0 0 0 5px rgba(52,211,153,.08)";
 
   element.style.transition =
     "outline 220ms ease, box-shadow 220ms ease";
 }
-
 
 /* =========================================================
    SETTINGS
@@ -455,29 +473,21 @@ function readSettings():
       SCNC_STORAGE.settings,
     );
 
-
   if (!raw) {
-    return (
-      DEFAULT_SCNC_SETTINGS
-    );
+    return DEFAULT_SCNC_SETTINGS;
   }
-
 
   try {
     return {
       ...DEFAULT_SCNC_SETTINGS,
-
       ...JSON.parse(
         raw,
       ),
     };
   } catch {
-    return (
-      DEFAULT_SCNC_SETTINGS
-    );
+    return DEFAULT_SCNC_SETTINGS;
   }
 }
-
 
 /* =========================================================
    COMPONENT
@@ -487,17 +497,14 @@ export default function SCNCController() {
   const pathname =
     usePathname();
 
-
   const {
     t,
   } = useLanguage();
-
 
   const [
     mounted,
     setMounted,
   ] = useState(false);
-
 
   const [
     settings,
@@ -506,18 +513,15 @@ export default function SCNCController() {
     DEFAULT_SCNC_SETTINGS,
   );
 
-
   const [
     tourActive,
     setTourActive,
   ] = useState(false);
 
-
   const [
     stepIndex,
     setStepIndex,
   ] = useState(0);
-
 
   const [
     position,
@@ -527,18 +531,15 @@ export default function SCNCController() {
     y: 0,
   });
 
-
   const [
     moving,
     setMoving,
   ] = useState(false);
 
-
   const [
     menuOpen,
     setMenuOpen,
   ] = useState(false);
-
 
   const moveTimer =
     useRef<
@@ -547,12 +548,20 @@ export default function SCNCController() {
       > | null
     >(null);
 
+  const autoNavigateTimer =
+    useRef<
+      ReturnType<
+        typeof setTimeout
+      > | null
+    >(null);
 
   const scrollFrame =
     useRef<
       number | null
     >(null);
 
+  const autoNavigating =
+    useRef(false);
 
   const routeSteps =
     useMemo(
@@ -560,18 +569,15 @@ export default function SCNCController() {
         getSCNCStepsForRoute(
           pathname,
         ),
-
       [
         pathname,
       ],
     );
 
-
   const currentStep =
     routeSteps[
       stepIndex
     ];
-
 
   const saveSettings =
     useCallback(
@@ -583,23 +589,19 @@ export default function SCNCController() {
           next,
         );
 
-
         localStorage.setItem(
           SCNC_STORAGE.settings,
-
           JSON.stringify(
             next,
           ),
         );
       },
-
       [],
     );
 
-
-/* =========================================================
-   FIND STEP AT CURRENT VIEWPORT
-========================================================= */
+  /* =======================================================
+     FIND CURRENT STEP
+  ======================================================= */
 
   const findCurrentStepIndex =
     useCallback(() => {
@@ -607,59 +609,47 @@ export default function SCNCController() {
         routeSteps.length ===
         0
       ) {
-        return 0;
+        return null;
       }
-
 
       const probe =
         window.innerHeight *
         0.45;
 
-
       let bestIndex:
         number | null =
         null;
 
-
       let bestDistance =
         Number.POSITIVE_INFINITY;
-
 
       routeSteps.forEach(
         (
           step,
           index,
         ) => {
-          /*
-           * Page introduction chỉ được
-           * chọn khi đang gần đầu trang.
-           */
           if (
             step.trigger ===
-              "page"
+            "page"
           ) {
             if (
               window.scrollY <
-                160
+              150
             ) {
-              const distance =
-                index;
-
               if (
-                distance <
+                index <
                 bestDistance
               ) {
                 bestIndex =
                   index;
 
                 bestDistance =
-                  distance;
+                  index;
               }
             }
 
             return;
           }
-
 
           if (
             !step.target
@@ -667,12 +657,10 @@ export default function SCNCController() {
             return;
           }
 
-
           const elements =
             getElements(
               step.target,
             );
-
 
           for (
             const element
@@ -681,11 +669,6 @@ export default function SCNCController() {
             const rect =
               element.getBoundingClientRect();
 
-
-            /*
-             * Element phải thực sự nằm
-             * trong viewport.
-             */
             if (
               rect.bottom <=
                 0 ||
@@ -695,26 +678,17 @@ export default function SCNCController() {
               continue;
             }
 
-
-            /*
-             * Section cắt qua probe line.
-             */
             if (
               rect.top <=
                 probe &&
               rect.bottom >=
                 probe
             ) {
-              const bonus =
+              const score =
                 step.trigger ===
                   "visible"
-                  ? 5
+                  ? 4
                   : 0;
-
-
-              const score =
-                bonus;
-
 
               if (
                 score <
@@ -727,16 +701,13 @@ export default function SCNCController() {
                   score;
               }
 
-
               continue;
             }
-
 
             const center =
               rect.top +
               rect.height /
                 2;
-
 
             let distance =
               Math.abs(
@@ -744,54 +715,36 @@ export default function SCNCController() {
                   probe,
               );
 
-
-            /*
-             * Với button / video / CTA,
-             * ưu tiên hơn section cha
-             * khi cùng visible.
-             */
             if (
               step.trigger ===
-                "visible"
+              "visible"
             ) {
               distance *=
                 0.45;
             }
 
-
             if (
               distance <
               bestDistance
             ) {
-              bestDistance =
-                distance;
-
               bestIndex =
                 index;
+
+              bestDistance =
+                distance;
             }
           }
         },
       );
 
-
-      /*
-       * QUAN TRỌNG:
-       *
-       * Nếu không có gì được track
-       * trong viewport → trả null.
-       *
-       * Không return 0.
-       * Không quay về Hero.
-       */
       return bestIndex;
     }, [
       routeSteps,
     ]);
 
-
-/* =========================================================
-   MOVE
-========================================================= */
+  /* =======================================================
+     MOVE
+  ======================================================= */
 
   const moveToStep =
     useCallback(
@@ -803,16 +756,13 @@ export default function SCNCController() {
           true,
         );
 
-
         setPosition(
           getCornerPosition(
             step.corner,
           ),
         );
 
-
         clearHighlight();
-
 
         if (
           step.highlight &&
@@ -822,7 +772,6 @@ export default function SCNCController() {
             getVisibleTarget(
               step.target,
             );
-
 
           if (
             target &&
@@ -836,7 +785,6 @@ export default function SCNCController() {
           }
         }
 
-
         if (
           moveTimer.current
         ) {
@@ -845,7 +793,6 @@ export default function SCNCController() {
           );
         }
 
-
         moveTimer.current =
           setTimeout(
             () => {
@@ -853,48 +800,79 @@ export default function SCNCController() {
                 false,
               );
             },
-
             MOVE_DURATION,
           );
       },
-
       [],
     );
 
+  /* =======================================================
+     SCROLL TO STEP
+  ======================================================= */
 
-/* =========================================================
-   INITIAL / ROUTE CHANGE
-========================================================= */
+  const scrollToStep =
+    useCallback(
+      (
+        step:
+          SCNCTourStep,
+      ) => {
+        if (
+          !step.target
+        ) {
+          return;
+        }
+
+        const elements =
+          getElements(
+            step.target,
+          );
+
+        const target =
+          elements[0];
+
+        if (!target) {
+          return;
+        }
+
+        target.scrollIntoView({
+          behavior:
+            "smooth",
+
+          block:
+            step.trigger ===
+            "visible"
+              ? "center"
+              : "start",
+
+          inline:
+            "nearest",
+        });
+      },
+      [],
+    );
+
+  /* =======================================================
+     INIT / ROUTE
+  ======================================================= */
 
   useEffect(() => {
     const loaded =
       readSettings();
 
-
     setSettings(
       loaded,
     );
-
 
     setMounted(
       true,
     );
 
-
     setMenuOpen(
       false,
     );
 
-
     clearHighlight();
 
-
-    /*
-     * Route mới:
-     * chọn step phù hợp với nơi
-     * user đang nhìn, không mặc định
-     * luôn là Hero.
-     */
     const timer =
       window.setTimeout(
         () => {
@@ -915,29 +893,45 @@ export default function SCNCController() {
             return;
           }
 
-
           const detected =
             findCurrentStepIndex();
 
+          const stored =
+            Number(
+              localStorage.getItem(
+                SCNC_STORAGE.step,
+              ),
+            );
 
-          const initialIndex =
+          let initialIndex =
             detected ??
             0;
 
+          if (
+            Number.isInteger(
+              stored,
+            ) &&
+            stored >=
+              0 &&
+            stored <
+              routeSteps.length
+          ) {
+            initialIndex =
+              detected ??
+              stored;
+          }
 
           setStepIndex(
             initialIndex,
           );
 
-
           if (
             loaded.guidance ===
-              "full"
+            "full"
           ) {
             setTourActive(
               true,
             );
-
 
             moveToStep(
               routeSteps[
@@ -949,7 +943,6 @@ export default function SCNCController() {
               false,
             );
 
-
             setPosition(
               getCornerPosition(
                 "bottom-right",
@@ -957,17 +950,13 @@ export default function SCNCController() {
             );
           }
         },
-
-        120,
+        100,
       );
-
 
     localStorage.setItem(
       SCNC_STORAGE.route,
-
       pathname,
     );
-
 
     return () => {
       window.clearTimeout(
@@ -975,6 +964,25 @@ export default function SCNCController() {
       );
 
       clearHighlight();
+
+      if (
+        moveTimer.current
+      ) {
+        clearTimeout(
+          moveTimer.current,
+        );
+      }
+
+      if (
+        autoNavigateTimer.current
+      ) {
+        clearTimeout(
+          autoNavigateTimer.current,
+        );
+      }
+
+      autoNavigating.current =
+        false;
     };
   }, [
     findCurrentStepIndex,
@@ -983,10 +991,9 @@ export default function SCNCController() {
     routeSteps,
   ]);
 
-
-/* =========================================================
-   SCROLL DETECTION
-========================================================= */
+  /* =======================================================
+     NATURAL SCROLL TRACKING
+  ======================================================= */
 
   useEffect(() => {
     if (
@@ -998,25 +1005,22 @@ export default function SCNCController() {
       return;
     }
 
-
     function detect() {
+      if (
+        autoNavigating.current
+      ) {
+        return;
+      }
+
       const detected =
         findCurrentStepIndex();
 
-
-      /*
-       * Đây là fix lỗi Hero.
-       *
-       * Không có tracked section
-       * ở viewport → KHÔNG thay step.
-       */
       if (
         detected ===
         null
       ) {
         return;
       }
-
 
       setStepIndex(
         (
@@ -1029,7 +1033,6 @@ export default function SCNCController() {
       );
     }
 
-
     function requestDetect() {
       if (
         scrollFrame.current !==
@@ -1040,49 +1043,37 @@ export default function SCNCController() {
         );
       }
 
-
       scrollFrame.current =
         requestAnimationFrame(
           detect,
         );
     }
 
-
     requestDetect();
-
 
     window.addEventListener(
       "scroll",
-
       requestDetect,
-
       {
         passive: true,
       },
     );
 
-
     window.addEventListener(
       "resize",
-
       requestDetect,
     );
-
 
     return () => {
       window.removeEventListener(
         "scroll",
-
         requestDetect,
       );
-
 
       window.removeEventListener(
         "resize",
-
         requestDetect,
       );
-
 
       if (
         scrollFrame.current !==
@@ -1100,10 +1091,9 @@ export default function SCNCController() {
     tourActive,
   ]);
 
-
-/* =========================================================
-   STEP CHANGE
-========================================================= */
+  /* =======================================================
+     STEP CHANGED
+  ======================================================= */
 
   useEffect(() => {
     if (
@@ -1114,15 +1104,12 @@ export default function SCNCController() {
       return;
     }
 
-
     moveToStep(
       currentStep,
     );
 
-
     localStorage.setItem(
       SCNC_STORAGE.step,
-
       String(
         stepIndex,
       ),
@@ -1135,32 +1122,82 @@ export default function SCNCController() {
     tourActive,
   ]);
 
+  /* =======================================================
+     RESIZE
+  ======================================================= */
 
-/* =========================================================
-   STOP GUIDE
-========================================================= */
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    function handleResize() {
+      if (
+        tourActive &&
+        currentStep
+      ) {
+        setPosition(
+          getCornerPosition(
+            currentStep.corner,
+          ),
+        );
+      } else {
+        setPosition(
+          getCornerPosition(
+            "bottom-right",
+          ),
+        );
+      }
+    }
+
+    window.addEventListener(
+      "resize",
+      handleResize,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "resize",
+        handleResize,
+      );
+    };
+  }, [
+    currentStep,
+    mounted,
+    tourActive,
+  ]);
+
+  /* =======================================================
+     STOP
+  ======================================================= */
 
   function stopGuidance() {
     clearHighlight();
 
+    autoNavigating.current =
+      false;
+
+    if (
+      autoNavigateTimer.current
+    ) {
+      clearTimeout(
+        autoNavigateTimer.current,
+      );
+    }
 
     setTourActive(
       false,
     );
 
-
     setMenuOpen(
       false,
     );
 
-
     saveSettings({
       ...settings,
-
       guidance:
         "manual",
     });
-
 
     setPosition(
       getCornerPosition(
@@ -1169,50 +1206,30 @@ export default function SCNCController() {
     );
   }
 
-
-/* =========================================================
-   CONTINUE GUIDE
-
-   Không scroll.
-   Không về Hero.
-
-   Xác định đúng section hiện user đang xem,
-   rồi tiếp tục từ đó.
-========================================================= */
+  /* =======================================================
+     CONTINUE CURRENT VIEW
+  ======================================================= */
 
   function continueGuide() {
     clearHighlight();
 
-
     saveSettings({
       ...settings,
-
       guidance:
         "full",
     });
-
 
     setMenuOpen(
       false,
     );
 
-
     const detected =
       findCurrentStepIndex();
 
-
-    /*
-     * Nếu user đang đúng một tracked area,
-     * tiếp tục ngay tại đó.
-     *
-     * Nếu đang ở khoảng trống,
-     * giữ step cuối cùng thay vì Hero.
-     */
     const resumeIndex =
       detected ??
       Math.min(
         stepIndex,
-
         Math.max(
           routeSteps.length -
             1,
@@ -1220,22 +1237,18 @@ export default function SCNCController() {
         ),
       );
 
-
     setStepIndex(
       resumeIndex,
     );
-
 
     setTourActive(
       true,
     );
 
-
     const step =
       routeSteps[
         resumeIndex
       ];
-
 
     if (step) {
       moveToStep(
@@ -1244,52 +1257,146 @@ export default function SCNCController() {
     }
   }
 
+  /* =======================================================
+     NEXT
+  ======================================================= */
 
-/* =========================================================
-   HIDE / SHOW
-========================================================= */
+  function goToNextStep() {
+    if (
+      routeSteps.length ===
+      0
+    ) {
+      return;
+    }
+
+    const lastIndex =
+      routeSteps.length -
+      1;
+
+    if (
+      stepIndex >=
+      lastIndex
+    ) {
+      stopGuidance();
+
+      return;
+    }
+
+    const nextIndex =
+      stepIndex +
+      1;
+
+    const nextStep =
+      routeSteps[
+        nextIndex
+      ];
+
+    if (!nextStep) {
+      return;
+    }
+
+    autoNavigating.current =
+      true;
+
+    if (
+      autoNavigateTimer.current
+    ) {
+      clearTimeout(
+        autoNavigateTimer.current,
+      );
+    }
+
+    setStepIndex(
+      nextIndex,
+    );
+
+    moveToStep(
+      nextStep,
+    );
+
+    localStorage.setItem(
+      SCNC_STORAGE.step,
+      String(
+        nextIndex,
+      ),
+    );
+
+    window.setTimeout(
+      () => {
+        scrollToStep(
+          nextStep,
+        );
+      },
+      70,
+    );
+
+    autoNavigateTimer.current =
+      setTimeout(
+        () => {
+          autoNavigating.current =
+            false;
+
+          if (
+            nextStep.highlight &&
+            nextStep.target
+          ) {
+            const target =
+              getVisibleTarget(
+                nextStep.target,
+              );
+
+            if (
+              target &&
+              isElementVisible(
+                target,
+              )
+            ) {
+              highlightTarget(
+                target,
+              );
+            }
+          }
+        },
+        1100,
+      );
+  }
+
+  /* =======================================================
+     HIDE / SHOW
+  ======================================================= */
 
   function hideSCNC() {
     clearHighlight();
-
 
     setTourActive(
       false,
     );
 
-
     setMenuOpen(
       false,
     );
 
-
     saveSettings({
       ...settings,
-
       guidance:
         "off",
     });
   }
 
-
   function showSCNC() {
     saveSettings({
       ...settings,
-
       guidance:
         "manual",
     });
-
 
     setTourActive(
       false,
     );
 
-
     setMenuOpen(
       false,
     );
-
 
     setPosition(
       getCornerPosition(
@@ -1298,19 +1405,17 @@ export default function SCNCController() {
     );
   }
 
-
-/* =========================================================
-   EARLY RETURN
-========================================================= */
+  /* =======================================================
+     CLIENT ONLY
+  ======================================================= */
 
   if (!mounted) {
     return null;
   }
 
-
-/* =========================================================
-   HIDDEN MODE
-========================================================= */
+  /* =======================================================
+     OFF MODE
+  ======================================================= */
 
   if (
     settings.guidance ===
@@ -1318,11 +1423,9 @@ export default function SCNCController() {
   ) {
     return (
       <>
-        {pathname !==
-          "/" && (
+        {pathname !== "/" && (
           <Link
             href="/"
-
             className="fixed left-3 top-[82px] z-[210] inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-[#16352a] shadow-lg backdrop-blur-md transition hover:border-emerald-300 hover:text-emerald-700 md:left-5"
           >
             <ArrowLeft
@@ -1336,25 +1439,18 @@ export default function SCNCController() {
           </Link>
         )}
 
-
         <button
           type="button"
-
           onClick={
             showSCNC
           }
-
-          className="fixed bottom-4 right-4 z-[190] flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/45 px-3 py-2 text-xs font-semibold text-white/75 shadow-lg backdrop-blur-md"
+          className="fixed bottom-3 right-3 z-[190] flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/55 px-3 py-2 text-xs font-semibold text-white/80 shadow-lg backdrop-blur-md"
         >
           <Image
             src="/scnc.png"
-
             alt=""
-
-            width={24}
-
-            height={24}
-
+            width={22}
+            height={22}
             unoptimized
           />
 
@@ -1364,35 +1460,31 @@ export default function SCNCController() {
     );
   }
 
-
-/* =========================================================
-   RENDER VALUES
-========================================================= */
-
   const size =
     getMascotSize();
-
 
   const dialog =
     getDialogPosition(
       position,
+      currentStep?.corner,
     );
 
+  const mirrored =
+    isRightCorner(
+      currentStep?.corner,
+    );
 
-/* =========================================================
-   RENDER
-========================================================= */
+  /* =======================================================
+     UI
+  ======================================================= */
 
   return (
     <>
-      {/* =================================================
-          BACK TO MAIN WEBSITE
-      ================================================= */}
+      {/* BACK WEBSITE */}
 
       {pathname !== "/" && (
         <Link
           href="/"
-
           className="fixed left-3 top-[82px] z-[210] inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-[#16352a] shadow-lg backdrop-blur-md transition hover:border-emerald-300 hover:text-emerald-700 md:left-5"
         >
           <ArrowLeft
@@ -1406,14 +1498,10 @@ export default function SCNCController() {
         </Link>
       )}
 
-
-      {/* =================================================
-          MASCOT
-      ================================================= */}
+      {/* MASCOT */}
 
       <div
         className="pointer-events-none fixed left-0 top-0 z-[180]"
-
         style={{
           transform:
             `translate3d(${
@@ -1437,16 +1525,13 @@ export default function SCNCController() {
         >
           <button
             type="button"
-
             aria-label="SCNC"
-
             onClick={() => {
               if (
                 tourActive
               ) {
                 return;
               }
-
 
               setMenuOpen(
                 (
@@ -1455,60 +1540,60 @@ export default function SCNCController() {
                   !previous,
               );
             }}
-
             className="pointer-events-auto border-0 bg-transparent p-0"
           >
-            <Image
-              src="/scnc.png"
+            <div
+              style={{
+                transform:
+                  mirrored
+                    ? "scaleX(-1)"
+                    : "scaleX(1)",
 
-              alt="SCNC"
-
-              width={
-                DESKTOP_MASCOT_SIZE
-              }
-
-              height={
-                DESKTOP_MASCOT_SIZE
-              }
-
-              priority
-
-              unoptimized
-
-              className="h-[82px] w-[82px] object-contain drop-shadow-[0_8px_15px_rgba(0,0,0,.20)] md:h-[108px] md:w-[108px]"
-            />
+                transition:
+                  "transform 420ms cubic-bezier(.22,1,.36,1)",
+              }}
+            >
+              <Image
+                src="/scnc.png"
+                alt="SCNC"
+                width={
+                  DESKTOP_MASCOT_SIZE
+                }
+                height={
+                  DESKTOP_MASCOT_SIZE
+                }
+                priority
+                unoptimized
+                className="h-[72px] w-[72px] object-contain drop-shadow-[0_7px_12px_rgba(0,0,0,.18)] md:h-[108px] md:w-[108px]"
+              />
+            </div>
           </button>
         </div>
       </div>
 
-
-      {/* =================================================
-          ACTIVE DIALOG
-      ================================================= */}
+      {/* DIALOG */}
 
       {tourActive &&
         currentStep && (
           <div
-            className="fixed z-[190] rounded-2xl border border-white/10 bg-slate-950/38 p-3.5 text-white shadow-[0_12px_30px_rgba(0,0,0,.14)] backdrop-blur-md"
-
+            className="fixed z-[190] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950/60 text-white shadow-[0_12px_30px_rgba(0,0,0,.2)] backdrop-blur-md md:p-3.5"
             style={{
               ...dialog,
 
               transition:
-                `left ${MOVE_DURATION}ms cubic-bezier(.22,1,.36,1), top ${MOVE_DURATION}ms cubic-bezier(.22,1,.36,1)`,
+                `left ${MOVE_DURATION}ms cubic-bezier(.22,1,.36,1), top ${MOVE_DURATION}ms cubic-bezier(.22,1,.36,1), bottom ${MOVE_DURATION}ms cubic-bezier(.22,1,.36,1)`,
             }}
           >
-            <div className="mb-2 flex items-center gap-2">
+            {/* HEADER */}
 
+            <div className="flex shrink-0 items-center gap-2 px-3 pt-3 md:px-0 md:pt-0">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
 
-
-              <span className="text-[11px] font-bold tracking-[0.15em] text-emerald-300">
+              <span className="text-[10px] font-bold tracking-[0.14em] text-emerald-300 md:text-[11px]">
                 SCNC
               </span>
 
-
-              <span className="ml-auto text-[10px] text-white/30">
+              <span className="ml-auto text-[9px] text-white/35 md:text-[10px]">
                 {stepIndex + 1}
                 /
                 {
@@ -1517,46 +1602,121 @@ export default function SCNCController() {
               </span>
             </div>
 
+            {/* MESSAGE */}
 
-            <p className="text-sm leading-6 text-white/85">
-              {t(
-                currentStep.message,
-              )}
-            </p>
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-2 pt-2 md:overflow-visible md:px-0">
+              <p className="text-[11px] leading-[1.55] text-white/90 md:text-sm md:leading-6">
+                {t(
+                  currentStep.message,
+                )}
+              </p>
+            </div>
 
+            {/* ACTIONS */}
 
-            <button
-              type="button"
+            <div className="shrink-0 border-t border-white/10 bg-slate-950/20 p-2.5 md:mt-3 md:border-0 md:bg-transparent md:p-0">
+              {/* MOBILE NEXT */}
 
-              onClick={
-                stopGuidance
-              }
+              <button
+                type="button"
+                onClick={
+                  goToNextStep
+                }
+                className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-400 px-3 py-2 text-[11px] font-bold text-[#10251f] shadow-sm transition hover:bg-emerald-300 active:scale-[0.98] md:hidden"
+              >
+                {stepIndex ===
+                routeSteps.length -
+                  1
+                  ? t(
+                      SCNC_COPY
+                        .finishGuide,
+                    )
+                  : t(
+                      SCNC_COPY
+                        .nextGuide,
+                    )}
 
-              className="mt-3 text-xs text-white/40 transition hover:text-white/75"
-            >
-              {t(
-                SCNC_COPY
-                  .stopGuide,
-              )}
-            </button>
+                {stepIndex <
+                  routeSteps.length -
+                    1 && (
+                  <ArrowRight
+                    size={13}
+                  />
+                )}
+              </button>
+
+              {/* MOBILE STOP */}
+
+              <button
+                type="button"
+                onClick={
+                  stopGuidance
+                }
+                className="mt-2 w-full text-center text-[9px] text-white/40 transition hover:text-white/70 md:hidden"
+              >
+                {t(
+                  SCNC_COPY
+                    .stopGuide,
+                )}
+              </button>
+
+              {/* DESKTOP ACTIONS */}
+
+              <div className="hidden items-center justify-between gap-3 md:flex">
+                <button
+                  type="button"
+                  onClick={
+                    stopGuidance
+                  }
+                  className="text-left text-[11px] leading-4 text-white/40 transition hover:text-white/75"
+                >
+                  {t(
+                    SCNC_COPY
+                      .stopGuide,
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    goToNextStep
+                  }
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-400 px-4 py-2.5 text-xs font-bold text-[#10251f] shadow-lg shadow-emerald-950/10 transition hover:bg-emerald-300 active:scale-[0.97]"
+                >
+                  {stepIndex ===
+                  routeSteps.length -
+                    1
+                    ? t(
+                        SCNC_COPY
+                          .finishGuide,
+                      )
+                    : t(
+                        SCNC_COPY
+                          .nextGuide,
+                      )}
+
+                  {stepIndex <
+                    routeSteps.length -
+                      1 && (
+                    <ArrowRight
+                      size={14}
+                    />
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
-
-      {/* =================================================
-          MANUAL MENU
-      ================================================= */}
+      {/* MANUAL MENU */}
 
       {!tourActive &&
         menuOpen && (
-          <div className="fixed bottom-[126px] right-3 z-[190] w-[230px] rounded-2xl border border-white/10 bg-slate-950/45 p-2 text-white shadow-xl backdrop-blur-md md:right-5">
-
+          <div className="fixed bottom-[100px] right-3 z-[190] w-[220px] rounded-2xl border border-white/10 bg-slate-950/65 p-2 text-white shadow-xl backdrop-blur-md md:bottom-[126px] md:right-5 md:w-[230px]">
             <div className="px-3 py-2">
-
               <p className="text-sm font-bold">
                 SCNC
               </p>
-
 
               <p className="mt-1 text-xs text-white/45">
                 {t(
@@ -1566,16 +1726,13 @@ export default function SCNCController() {
               </p>
             </div>
 
-
             {routeSteps.length >
               0 && (
               <button
                 type="button"
-
                 onClick={
                   continueGuide
                 }
-
                 className="w-full rounded-xl px-3 py-2.5 text-left text-sm text-white/80 transition hover:bg-white/5 hover:text-white"
               >
                 {t(
@@ -1585,14 +1742,11 @@ export default function SCNCController() {
               </button>
             )}
 
-
             <button
               type="button"
-
               onClick={
                 hideSCNC
               }
-
               className="w-full rounded-xl px-3 py-2.5 text-left text-sm text-white/45 transition hover:bg-white/5 hover:text-white/70"
             >
               {t(
@@ -1603,10 +1757,7 @@ export default function SCNCController() {
           </div>
         )}
 
-
-      {/* =================================================
-          ANIMATION
-      ================================================= */}
+      {/* ANIMATION */}
 
       <style jsx global>{`
         @keyframes scnc-idle {
@@ -1619,11 +1770,10 @@ export default function SCNCController() {
 
           50% {
             transform:
-              translateY(-5px)
+              translateY(-4px)
               rotate(1deg);
           }
         }
-
 
         @keyframes scnc-flying {
           0% {
@@ -1635,7 +1785,7 @@ export default function SCNCController() {
 
           45% {
             transform:
-              translateY(-8px)
+              translateY(-7px)
               rotate(3deg)
               scale(1.025);
           }
@@ -1648,7 +1798,6 @@ export default function SCNCController() {
           }
         }
 
-
         .scnc-idle {
           animation:
             scnc-idle
@@ -1657,7 +1806,6 @@ export default function SCNCController() {
             infinite;
         }
 
-
         .scnc-flying {
           animation:
             scnc-flying
@@ -1665,7 +1813,6 @@ export default function SCNCController() {
             ease-in-out
             infinite;
         }
-
 
         @media (
           prefers-reduced-motion:
