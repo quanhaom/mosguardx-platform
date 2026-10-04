@@ -102,18 +102,18 @@ export const SCNC_COPY = {
 
   hideSCNC: {
     vi:
-      "Ẩn SCNC",
+      "Ẩn MOS",
 
     en:
-      "Hide SCNC",
+      "Hide MOS",
   },
 
   showSCNC: {
     vi:
-      "Hiện SCNC",
+      "Hiện MOS",
 
     en:
-      "Show SCNC",
+      "Show MOS",
   },
 
   backWebsite: {
@@ -152,10 +152,10 @@ const websiteTour: SCNCTourStep[] = [
 
     message: {
       vi:
-        "Xin chào! Mình là SCNC. Mình sẽ đồng hành cùng bạn để khám phá cách MosGuardX hoạt động.",
+        "Xin chào! Mình là MOS. Mình sẽ đồng hành cùng bạn để khám phá cách MosGuardX hoạt động.",
 
       en:
-        "Hi! I'm SCNC. I'll guide you through how MosGuardX works.",
+        "Hi! I'm MOS. I'll guide you through how MosGuardX works.",
     },
   },
 

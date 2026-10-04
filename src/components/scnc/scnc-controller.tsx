@@ -1454,7 +1454,7 @@ export default function SCNCController() {
             unoptimized
           />
 
-          SCNC
+          MOS
         </button>
       </>
     );
@@ -1525,7 +1525,7 @@ export default function SCNCController() {
         >
           <button
             type="button"
-            aria-label="SCNC"
+            aria-label="MOS"
             onClick={() => {
               if (
                 tourActive
@@ -1555,7 +1555,7 @@ export default function SCNCController() {
             >
               <Image
                 src="/scnc.png"
-                alt="SCNC"
+                alt="MOS"
                 width={
                   DESKTOP_MASCOT_SIZE
                 }
@@ -1590,7 +1590,7 @@ export default function SCNCController() {
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
 
               <span className="text-[10px] font-bold tracking-[0.14em] text-emerald-300 md:text-[11px]">
-                SCNC
+                MOS
               </span>
 
               <span className="ml-auto text-[9px] text-white/35 md:text-[10px]">
@@ -1715,7 +1715,7 @@ export default function SCNCController() {
           <div className="fixed bottom-[100px] right-3 z-[190] w-[220px] rounded-2xl border border-white/10 bg-slate-950/65 p-2 text-white shadow-xl backdrop-blur-md md:bottom-[126px] md:right-5 md:w-[230px]">
             <div className="px-3 py-2">
               <p className="text-sm font-bold">
-                SCNC
+                MOS
               </p>
 
               <p className="mt-1 text-xs text-white/45">
